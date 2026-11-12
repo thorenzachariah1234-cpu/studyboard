@@ -41,7 +41,7 @@ main { width: min(1500px, calc(100% - 64px)); margin-inline: auto; padding: 25px
 .context-header { margin-bottom: 17px; background: var(--surface); border: 1px solid var(--line); border-top-color: var(--maroon); border-radius: var(--radius); }
 .context-top { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 15px 17px 13px; }
 .context-title { min-width: 0; }
-.context-title h1 { font-size: 1.55rem; line-height: 1.15; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.context-title h1 { font-size: 1.55rem; font-weight: 700; line-height: 1.15; letter-spacing: -.045em; overflow-wrap: anywhere; }
 .context-title p { font-size: .78rem; color: var(--muted); line-height: 1.45; margin-top: 4px; }
 .context-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; min-width: 0; }
 .context-actions > button { min-height: 37px; }
@@ -109,8 +109,12 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .empty-day { padding: 5px 4px; color: var(--muted); font-size: .72rem; }
 .board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 9px; }
 .board.day-view { grid-template-columns: minmax(0, 1fr); }
+.confetti { position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+.confetti-rain { position: fixed; z-index: 20; }
+.confetti-piece { position: absolute; width: 7px; height: 5px; border-radius: 1px; }
 .day-view .tasks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); align-items: start; }
 .day {
+  position: relative;
   min-width: 0; border-radius: 13px; border: 1px solid var(--line); background: var(--surface);
   overflow: hidden; display: flex; flex-direction: column;
 }
@@ -213,6 +217,9 @@ dialog::backdrop { background: #08080acb; }
 .session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .6fr) auto auto; }
 .course-extras { display: flex; grid-column: 1 / -1; justify-content: space-between; align-items: end; gap: 8px; }
 .course-extras .field { width: min(100%, 190px); }
+.suggestion-field { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+.suggestion-field .field { flex: 1 1 240px; }
+.suggestion-field button { min-height: 37px; }
 .course-row button, .session-row button { min-height: 37px; }
 .accent-field { display: flex; align-items: end; gap: 4px; }
 .accent-field input[type=color] { width: 48px; padding: 4px; cursor: pointer; }
@@ -449,7 +456,7 @@ dialog::backdrop { background: #08080acb; }
           <summary aria-label="Actions" title="Actions">⋯</summary>
           <div class="action-menu-panel">
             <button type="button" id="open-settings">Settings</button>
-            <button type="button" id="edit">Add classes</button>
+            <button type="button" id="edit">Add Classes</button>
             <button type="button" id="manage-habits">Manage Habits</button>
             <button type="button" id="backup">Backups</button>
           </div>
@@ -591,11 +598,6 @@ dialog::backdrop { background: #08080acb; }
 <dialog id="settings-dialog" class="compact-dialog" aria-labelledby="settings-title">
   <div class="dialog-shell">
     <div class="dialog-head"><div><h2 id="settings-title">Settings</h2></div><button type="button" id="close-settings" class="close-control" aria-label="Close settings">×</button></div>
-    <section class="settings-section" aria-labelledby="settings-roadmap-title">
-      <h3 id="settings-roadmap-title">Roadmap</h3>
-      <button type="button" id="manage-roadmap">Manage classes and terms</button>
-      <p class="dialog-note">Edit terms, sessions, courses, Canvas IDs, and individual accents.</p>
-    </section>
     <section class="settings-section" aria-labelledby="study-settings-title">
       <h3 id="study-settings-title">Study tracking</h3>
       <label class="settings-toggle"><input type="checkbox" id="study-tracking">Show weekly study hours per class</label>
@@ -605,7 +607,7 @@ dialog::backdrop { background: #08080acb; }
 <dialog id="editor" aria-labelledby="editor-title">
   <form id="editor-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
-      <div><h2 id="editor-title">Add classes</h2></div>
+      <div><h2 id="editor-title">Add Classes</h2></div>
       <button type="button" id="close-editor" class="close-control" aria-label="Close class editor">×</button>
     </div>
     <div class="editor-toolbar">
@@ -631,13 +633,15 @@ dialog::backdrop { background: #08080acb; }
       </div>
       <div id="course-fields"></div>
       <p class="dialog-note">For Canvas events that omit a course name, enter the number after <code>/courses/</code> in the course URL.</p>
-      <label class="field" id="suggestion-field">Add a course option
-        <select id="suggestions" aria-label="Add a course option">
-          <option value="">Choose an unscheduled option…</option>
-          <option value="DAT 300">DAT 300 · Mathematical Tools for Data Science</option>
-          <option value="CSE 476">CSE 476 · Introduction to Natural Language Processing</option>
-        </select>
-      </label>
+      <div class="suggestion-field">
+        <label class="field">Course suggestions
+          <select id="suggestions">
+            <option value="DAT 300">DAT 300 · Mathematical Tools for Data Science</option>
+            <option value="CSE 476">CSE 476 · Introduction to Natural Language Processing</option>
+          </select>
+        </label>
+        <button type="button" id="add-suggestion">Add selected course</button>
+      </div>
     </div>
     <div id="json-pane" hidden>
       <label class="field">Course schedule JSON<textarea class="json-input" id="json-input" spellcheck="false"></textarea></label>
@@ -1611,10 +1615,9 @@ function buildBoard(day) {
 
 function courseIdentity(course) { return course.trackId ?? course.code; }
 
-function weekTerm(monday, today) {
+function weekTerm(monday) {
   const terms = state.schedule.filter((term) => dayFromISO(term.startDate) <= monday + 6 && dayFromISO(term.endDate) >= monday);
-  return (monday === mondayOf(today) ? planForDate(today).term : null) ??
-    terms.find((term) => term.id === viewedTermId) ?? terms[0] ?? null;
+  return terms.find((term) => term.id === viewedTermId) ?? terms[0] ?? null;
 }
 
 function visibleCourses(term) {
@@ -1692,18 +1695,10 @@ function sessionLabel(sessions, courses) {
 
 function renderTerm(board, day) {
   const { term, sessions, courses, readOnly } = board;
-  const date = dateLabel(day, contextDate);
-  if (term) {
-    const status = readOnly ? (day < clockDay ? "Past Term" : "Upcoming Term") : "Current Term";
-    const view = sessionLabel(sessions, courses);
-    setText("term-title", term.term);
-    setText("term-detail", status + " · " + view + " · " + date);
-    return;
-  }
-  const next = state.schedule.find((entry) => dayFromISO(entry.startDate) > day);
-  setText("term-title", "Semester Break");
-  const details = next ? next.term + " starts in " + countLabel(dayFromISO(next.startDate) - day, "day") : "No upcoming term on the roadmap";
-  setText("term-detail", details + " · " + date);
+  byId("term-detail").hidden = !term;
+  setText("term-title", term ? term.term : dateLabel(clockDay, fullDate));
+  const status = readOnly ? (day < clockDay ? "Past Term" : "Upcoming Term") : "Current Term";
+  setText("term-detail", term ? status + " · " + sessionLabel(sessions, courses) + " · " + dateLabel(day, contextDate) : "");
 }
 
 function renderTask(task, checked, dayName, readOnly) {
@@ -1798,6 +1793,74 @@ function updateProgress(board) {
   }
 }
 
+function changeChecklistTask(board, taskId, checked) {
+  const before = currentChecks(board);
+  const checks = { ...before };
+  if (checked) checks[taskId] = true;
+  else delete checks[taskId];
+  recordWeek(board, checks);
+  if (!checked || before[taskId] || board.monday !== mondayOf(localDay())) return null;
+  const days = checklistDays(board);
+  const day = days.find((entry) => entry.tasks.some((task) => task.id === taskId));
+  if (!day || !day.tasks.every((task) => checks[task.id])) return null;
+  return { day: day.date, week: days.every((entry) => entry.tasks.every((task) => checks[task.id])) ? board.key : null };
+}
+
+const confettiCooldowns = new Map();
+const confettiLayers = new Map();
+
+function playConfetti(target, key, rain) {
+  const now = performance.now();
+  const cooldown = rain ? 30000 : 15000;
+  for (const [id, expiry] of confettiCooldowns) {
+    if (expiry <= now) confettiCooldowns.delete(id);
+  }
+  if (confettiCooldowns.has(key)) return;
+  confettiCooldowns.set(key, now + cooldown);
+  confettiLayers.get(rain)?.remove();
+
+  const layer = document.createElement("div");
+  layer.className = rain ? "confetti confetti-rain" : "confetti confetti-day";
+  layer.setAttribute("aria-hidden", "true");
+  target.append(layer);
+  confettiLayers.set(rain, layer);
+
+  const colors = ["#ffc627", "#d54b73", "#ffffff", "#78c6bb", "#b5a3ed"];
+  const count = rain ? 64 : 20;
+  const { width, height } = layer.getBoundingClientRect();
+  for (let index = 0; index < count; index++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.backgroundColor = colors[index % colors.length];
+    piece.style.left = (rain ? Math.random() * 100 : 8 + Math.random() * 84) + "%";
+    piece.style.top = rain ? "-8px" : "35%";
+    layer.append(piece);
+    const drift = (Math.random() - 0.5) * (rain ? 140 : Math.min(width, 240) * 0.8);
+    const spin = (Math.random() - 0.5) * 900;
+    const rise = rain ? 0 : -28 - Math.random() * 56;
+    const fall = rain ? height + 16 : Math.min(height * 0.65, 170);
+    piece.animate([
+      { transform: "translate(0, 0) rotate(0deg)", opacity: rain ? 1 : 0 },
+      { transform: "translate(" + drift * 0.45 + "px, " + (rain ? fall * 0.5 : rise) + "px) rotate(" + spin * 0.45 + "deg)", opacity: 1 },
+      { transform: "translate(" + drift + "px, " + fall + "px) rotate(" + spin + "deg)", opacity: 0 }
+    ], {
+      duration: rain ? 1300 + Math.random() * 800 : 650 + Math.random() * 450,
+      delay: Math.random() * (rain ? 600 : 120), fill: "both", easing: rain ? "linear" : "ease-out"
+    });
+  }
+  setTimeout(() => {
+    layer.remove();
+    if (confettiLayers.get(rain) === layer) confettiLayers.delete(rain);
+  }, rain ? 2800 : 1250);
+}
+
+function celebrateChecklist(completion) {
+  if (!completion || document.hidden || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const card = byId("board").querySelector('.day[data-day="' + completion.day + '"]');
+  if (card) playConfetti(card, "day:" + completion.day, false);
+  if (completion.week) playConfetti(document.body, "week:" + completion.week, true);
+}
+
 function renderHistory(liveMonday) {
   const weeks = Object.entries(state.weeks).filter(([, entry]) => entry.monday < liveMonday)
     .sort((left, right) => right[1].monday - left[1].monday);
@@ -1834,7 +1897,7 @@ function renderPreviewOptions() {
 
 function renderFilters(term, courses) {
   const element = byId("board-filters");
-  element.hidden = !term?.courses.length;
+  element.hidden = !state.studyTracking || !term?.courses.length;
   const boardProgress = byId("board-progress");
   const progress = byId("weekly-progress");
   boardProgress.hidden = !element.hidden;
@@ -1890,7 +1953,7 @@ function render() {
   const dayView = viewedDay !== null;
   const monday = dayView ? mondayOf(viewedDay) : (viewedMonday ?? liveMonday);
   const readOnly = monday !== liveMonday;
-  const term = dayView ? planForDate(viewedDay).term : weekTerm(monday, clockDay);
+  const term = dayView || !readOnly ? planForDate(viewedDay ?? clockDay).term : weekTerm(monday);
   if ((term?.id ?? "") !== viewedTermId) hiddenCourses.clear();
   viewedTermId = term?.id ?? "";
   for (const id of hiddenCourses) {
@@ -1902,7 +1965,8 @@ function render() {
     : clockDay;
   const anchor = viewedDay ?? weekAnchor;
   const board = buildBoard(anchor);
-  currentBoard = { ...(term && hiddenCourses.size ? filteredBoard(board, term, courses, true) : board), readOnly, filterTerm: term };
+  const filtering = state.studyTracking && term && hiddenCourses.size;
+  currentBoard = { ...(filtering ? filteredBoard(board, term, courses, true) : board), readOnly, filterTerm: term };
   renderPreviewOptions();
   const mode = !readOnly ? "" : monday < liveMonday ? " · Past week" : " · Upcoming week";
   const date = dayView ? dateLabel(viewedDay, fullDate) : rangeLabel(monday);
@@ -2035,13 +2099,11 @@ byId("board").addEventListener("change", (event) => {
   }
   const { checked, dataset: { task } } = input;
   const key = currentBoard.key;
+  let celebration;
   commit(() => {
     const live = buildBoard(localDay());
     if (live.key !== key) return recordWeek(live, currentChecks(live));
-    const checks = { ...currentChecks(live) };
-    if (checked) checks[task] = true;
-    else delete checks[task];
-    recordWeek(live, checks);
+    celebration = changeChecklistTask(live, task, checked);
     return true;
   }, () => {
     if (clockDay !== localDay() || currentBoard.readOnly || currentBoard.key !== key) {
@@ -2054,6 +2116,7 @@ byId("board").addEventListener("change", (event) => {
     renderFilteredProgress(currentBoard.filterTerm, visibleCourses(currentBoard.filterTerm));
     renderStreak(mondayOf(clockDay));
     if (selectedCalendarDay !== null) renderDayInspector();
+    celebrateChecklist(celebration);
   });
 });
 
@@ -2128,6 +2191,7 @@ function renderEditor() {
   ).join("");
   byId("add-course").disabled = !sessions.length;
   byId("suggestions").disabled = !sessions.length;
+  byId("add-suggestion").disabled = !sessions.length;
   byId("course-fields").innerHTML = term.courses.map((course, index) => {
     const sessionInfo = sessions.find((session) => session.id === course.session);
     const options = sessions.map((session) => '<option value="' + escapeHTML(session.id) + '"' +
@@ -2142,7 +2206,6 @@ function renderEditor() {
         escapeHTML(course.weeklyHours ?? "") + '" placeholder="' + escapeHTML(automaticTargetPlaceholder(course, sessionInfo)) + '"></label>' : "") +
       '<button type="button" class="danger" data-remove aria-label="Remove course ' + (index + 1) + '">Remove</button></div></div>';
   }).join("");
-  byId("suggestions").value = "";
 }
 
 function normalizeSchedule(input) {
@@ -2242,7 +2305,7 @@ function automaticTargetPlaceholder(course, sessionInfo) {
   return Number.isFinite(hours) ? numberLabel.format(hours) + " automatic" : "Automatic";
 }
 
-function openRoadmapEditor(manage = false) {
+function openRoadmapEditor() {
   syncState();
   draftSchedule = JSON.parse(JSON.stringify(state.schedule));
   const today = localDay();
@@ -2250,13 +2313,11 @@ function openRoadmapEditor(manage = false) {
   editingId = planForDate(today).term?.id ?? next?.id ?? draftSchedule[0]?.id ?? "";
   if (!selectedTerm()) editingId = draftSchedule[0]?.id ?? "";
   editingJSON = false;
-  setText("editor-title", manage ? "Manage classes and terms" : "Add classes");
-  setText("save-classes", manage ? "Save changes" : "Save classes");
   showError();
   renderEditor();
   editor.showModal();
 }
-byId("edit").addEventListener("click", () => openRoadmapEditor());
+byId("edit").addEventListener("click", openRoadmapEditor);
 
 const settingsDialog = byId("settings-dialog");
 byId("open-settings").addEventListener("click", () => {
@@ -2265,10 +2326,6 @@ byId("open-settings").addEventListener("click", () => {
   settingsDialog.showModal();
 });
 byId("close-settings").addEventListener("click", () => settingsDialog.close());
-byId("manage-roadmap").addEventListener("click", () => {
-  settingsDialog.close();
-  openRoadmapEditor(true);
-});
 byId("study-tracking").addEventListener("change", (event) => {
   const enabled = event.target.checked;
   commit(() => {
@@ -2359,12 +2416,11 @@ byId("add-course").addEventListener("click", () => {
   byId("course-fields").lastElementChild.querySelector("input").focus();
 });
 
-byId("suggestions").addEventListener("change", (event) => {
-  const code = event.target.value;
+byId("add-suggestion").addEventListener("click", () => {
+  const code = byId("suggestions").value;
   if (!code) return;
   if (selectedTerm().courses.some((course) => course.code.trim().toUpperCase() === code)) {
     showError(code + " is already in this term.");
-    event.target.value = "";
     return;
   }
   showError();
@@ -2652,7 +2708,8 @@ function calendarHeading(start, next) {
   const term = planForDate(start + 14).term ??
     state.schedule.find((entry) => dayFromISO(entry.startDate) >= start && dayFromISO(entry.startDate) < next);
   const year = String(new Date(start * DAY_MS).getUTCFullYear()).slice(-2);
-  const termLabel = !term ? "Break " + year : /\b\d{4}$/.test(term.term)
+  if (!term) return dateLabel(start, monthLabel) + " " + new Date(start * DAY_MS).getUTCFullYear();
+  const termLabel = /\b\d{4}$/.test(term.term)
     ? term.term.replace(/\d{4}$/, (value) => value.slice(-2)) : term.term + " " + year;
   return dateLabel(start, monthLabel) + " · " + termLabel;
 }
@@ -2887,7 +2944,8 @@ function renderDayInspector(calendar = calendarEvents(), resolve) {
   const milestones = calendarMilestones(day, day).get(day) ?? [];
   setText("jump-board-week", viewedDay === null ? "Jump to this week" : "Jump to this day");
   setText("inspector-date", dateLabel(day, fullDate));
-  setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.sessions, board.courses) : "Semester break");
+  byId("inspector-term").hidden = !board.term;
+  setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.sessions, board.courses) : "");
   setText("inspector-study", studyLabel(entry.study) + " study");
   byId("inspector-study").hidden = !state.studyTracking;
   byId("inspector-study-checklist").hidden = !state.studyTracking;
@@ -3268,13 +3326,12 @@ function notifyCompletion(timer) {
 }
 
 function completeTimerTask(timer) {
-  if (!timer.autoCheck) return "manual";
+  if (!timer.autoCheck) return { completion: "manual" };
   const day = localDay(new Date(timer.endsAt));
   const board = buildBoard(day);
   const task = board.days[day - board.monday].tasks.find((entry) => entry.courseKey && entry.courseKey === timer.courseKey);
-  if (!task) return "unavailable";
-  recordWeek(board, { ...currentChecks(board), [task.id]: true });
-  return "checked";
+  if (!task) return { completion: "unavailable" };
+  return { completion: "checked", celebration: changeChecklistTask(board, task.id, true) };
 }
 
 function tickTimer() {
@@ -3282,15 +3339,18 @@ function tickTimer() {
   if (timer?.endsAt && !timeRemaining(timer) && !timerFinishing) {
     timerFinishing = true;
     let completed;
+    let celebration;
     commit(() => {
       const active = state.timer;
       if (active?.id !== timer.id || !active.endsAt || timeRemaining(active)) return false;
-      const completion = completeTimerTask(active);
-      state.timer = completed = { ...active, endsAt: null, remaining: 0, completion };
+      const result = completeTimerTask(active);
+      celebration = result.celebration;
+      state.timer = completed = { ...active, endsAt: null, remaining: 0, completion: result.completion };
       return true;
     }, () => {
       timerFinishing = false;
       render();
+      celebrateChecklist(celebration);
       if (completed) notifyCompletion(completed);
     });
   } else {
