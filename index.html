@@ -60,10 +60,13 @@ main { width: min(1500px, calc(100% - 64px)); margin-inline: auto; padding: 25px
 .action-menu-panel button { text-align: start; border-color: transparent; background: transparent; white-space: nowrap; }
 .action-menu-panel button:hover:not(:disabled) { background: #26262d; }
 select { padding: 8px 29px 8px 10px; min-height: 37px; }
-.badge { display: inline-flex; align-items: center; font-size: .67rem; line-height: 1; font-weight: 760; border: 1px solid; border-radius: 6px; padding: 5px 7px; white-space: nowrap; }
-.badge.A { color: #ffc4d7; background: #321823; border-color: var(--maroon); }
-.badge.B { color: #ffe091; background: #292516; border-color: #635021; }
-.badge.C { color: #bceade; background: #1b2927; border-color: #41605a; }
+.badge {
+  font-size: .67rem; line-height: 1; font-weight: 760; border: 1px solid; border-radius: 6px; padding: 5px 7px; white-space: nowrap;
+  color: color-mix(in srgb, var(--accent, var(--muted)) 55%, #f4f4f5);
+  background: color-mix(in srgb, var(--accent, var(--muted)) 13%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent, var(--muted)) 55%, var(--surface));
+  min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; display: inline-block;
+}
 .stat { min-width: 0; padding: 5px 12px; border-inline-start: 1px solid var(--line); }
 .stat-label { color: #d0d0d6; font-size: .73rem; font-weight: 650; }
 .stat-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 3px; }
@@ -91,7 +94,11 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .filter-group-label { padding-inline-end: 2px; color: var(--muted); font-size: .68rem; font-weight: 650; }
 .filter-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; font-size: .71rem; padding: 4px 8px; min-height: 29px; overflow-wrap: anywhere; }
 .filter-pill .badge { padding: 3px 4px; font-size: .55rem; }
-.filter-pill[aria-pressed="true"] { color: var(--gold); border-color: #ffc627ba; background: var(--active-bg); }
+.filter-pill[aria-pressed="true"] {
+  color: color-mix(in srgb, var(--accent, var(--gold)) 75%, #f4f4f5);
+  border-color: color-mix(in srgb, var(--accent, var(--gold)) 75%, var(--surface));
+  background: color-mix(in srgb, var(--accent, var(--gold)) 10%, var(--surface));
+}
 .filter-pill[aria-pressed="false"] { opacity: .45; border-style: dashed; border-color: #a1a1aa; }
 .filter-pill[aria-pressed="false"] .filter-label { text-decoration: line-through; }
 .filter-pill[aria-pressed="false"]:focus-visible { opacity: .85; }
@@ -167,6 +174,9 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .habit-list .task:has(input:checked) .task-title { text-decoration: line-through; }
 .task-title { display: block; color: #f4f4f5; font-size: .77rem; line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; }
 .course-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 3px; }
+.course-title .badge { max-width: 45%; }
+.task.course { box-shadow: inset 2px 0 var(--accent); }
+.course .task-title { color: color-mix(in srgb, var(--accent, var(--muted)) 40%, #f4f4f5); }
 .task-detail { display: block; color: var(--muted); font-size: .68rem; line-height: 1.26; margin-top: 4px; overflow-wrap: anywhere; }
 .course-time { display: block; margin-top: 4px; font-size: .67rem; line-height: 1.24; color: #dddde2; font-weight: 650; }
 .task .badge { padding: 3px 4px; font-size: .56rem; }
@@ -192,8 +202,21 @@ dialog::backdrop { background: #08080acb; }
 .field input[type=checkbox] { width: 16px; min-height: 16px; accent-color: var(--gold); }
 .courses-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 8px; }
 .courses-head h3 { font-size: .93rem; }
-.course-row { display: grid; grid-template-columns: 1fr 2fr .62fr .85fr auto; gap: 6px; align-items: end; margin-bottom: 7px; }
-.course-row button { min-height: 37px; }
+.roadmap-section { border-block: 1px solid var(--line); margin: 12px 0; padding-bottom: 10px; }
+.course-row, .session-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, .65fr) minmax(0, 1fr) auto;
+  gap: 8px; align-items: end; padding: 10px; margin: 8px 0; border: 1px solid var(--line); border-radius: 9px;
+}
+.session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .6fr) auto auto; }
+.course-extras { display: flex; grid-column: 1 / -1; justify-content: space-between; align-items: end; gap: 8px; }
+.course-extras .field { width: min(100%, 190px); }
+.course-row button, .session-row button { min-height: 37px; }
+.accent-field { display: flex; align-items: end; gap: 4px; }
+.accent-field input[type=color], .settings-colors input[type=color] { width: 48px; padding: 4px; cursor: pointer; }
+.accent-field button { padding-inline: 7px; }
+.settings-colors { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.settings-section { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.settings-section h3 { font-size: .93rem; margin-bottom: 7px; }
 .form-error { font-size: .79rem; margin-top: 7px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .json-input { resize: vertical; min-height: 280px !important; font-family: ui-monospace, Consolas, monospace; }
@@ -218,13 +241,21 @@ dialog::backdrop { background: #08080acb; }
 .habit-day input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
 #habits-form .dialog-actions { position: sticky; bottom: 0; padding: 8px 0; background: var(--surface); z-index: 1; }
 .day-schedule { margin: 7px 7px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
-.day-schedule summary { cursor: pointer; padding: 7px; color: #e4e4e7; font-size: .68rem; font-weight: 700; overflow-wrap: anywhere; }
-.day-schedule summary span { margin-left: 3px; color: var(--muted); }
+.day-schedule > summary { cursor: pointer; padding: 7px; color: #e4e4e7; font-size: .68rem; font-weight: 700; overflow-wrap: anywhere; }
+.day-schedule > summary > span { margin-left: 3px; color: var(--muted); }
+.day-schedule > summary > .calendar-dots { display: inline-flex; vertical-align: middle; }
 .day-schedule ul { list-style: none; margin: 0; padding: 0 7px 4px; }
 .day-schedule li { padding: 5px 0; border-top: 1px solid var(--line); line-height: 1.35; }
 .day-schedule strong, .day-schedule small { display: block; overflow-wrap: anywhere; }
 .day-schedule strong { font-size: .72rem; }
 .day-schedule small { color: var(--muted); font-size: .65rem; margin-top: 2px; }
+.event-heading { display: inline-block; max-width: 100%; min-width: 0; padding-inline-start: 6px; border-inline-start: 2px solid var(--accent); }
+.event-heading strong { display: block; overflow-wrap: anywhere; }
+.event-details { min-width: 0; width: 100%; }
+.event-details > summary { cursor: pointer; overflow-wrap: anywhere; }
+.event-details > summary > .event-heading { vertical-align: middle; }
+.event-description { padding: 6px 0 2px; font-size: .73rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.event-description a { display: inline-block; margin-top: 4px; }
 .inline-calendar { margin-top: 19px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .calendar-toolbar, .calendar-title-group, .calendar-month-controls, .calendar-actions {
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
@@ -259,7 +290,7 @@ dialog::backdrop { background: #08080acb; }
 .calendar-month-grid, .day-inspector { min-width: 0; }
 .calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .calendar-weekdays { padding: 5px 0; text-align: center; color: var(--muted); font-size: .75rem; font-weight: 650; }
-.calendar-cell { min-height: 58px; display: grid; grid-template-rows: 42px 8px; justify-items: center; align-content: center; }
+.calendar-cell { min-height: 58px; display: grid; grid-template-rows: 42px minmax(8px, auto); justify-items: center; align-content: center; }
 .calendar-date-cell {
   display: grid; place-items: center; width: min(42px, 100%); aspect-ratio: 1; align-self: center; border-radius: 50%;
   padding: 0; border: 0; background: transparent; font-size: .87rem; font-variant-numeric: tabular-nums;
@@ -269,9 +300,9 @@ dialog::backdrop { background: #08080acb; }
 .calendar-date-cell[aria-pressed="true"] { background: #3b1827; color: #fff0f5; box-shadow: inset 0 0 0 1px #f4bacd; }
 .calendar-date-cell[aria-current="date"] { background: var(--gold); color: #1a1200; font-weight: 800; }
 .calendar-date-cell:focus-visible { outline-offset: 1px; }
-.calendar-dots { display: flex; gap: 4px; align-items: center; }
+.calendar-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; align-items: center; max-width: 100%; }
 .calendar-dots span { width: 4px; height: 4px; border-radius: 50%; }
-.calendar-event-dot { background: var(--gold); }
+.calendar-event-dot { background: var(--accent, var(--muted)); }
 .calendar-milestone-dot { background: var(--maroon); }
 .day-inspector { border-inline-start: 1px solid var(--line); padding-inline-start: 16px; }
 .inspector-heading { display: flex; align-items: start; justify-content: space-between; gap: 7px; }
@@ -321,8 +352,7 @@ dialog::backdrop { background: #08080acb; }
   .day-inspector { border-inline-start: 0; padding-inline-start: 0; border-top: 1px solid var(--line); padding-top: 11px; }
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .course-row { grid-template-columns: 1fr 1.2fr; border: 1px solid var(--line); border-radius: 9px; padding: 7px; }
-  .course-row button { grid-column: 1 / -1; justify-self: start; }
+  .course-row, .session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); padding: 8px; }
   .editor-toolbar .push { margin-left: 0; }
 }
 @media (max-width: 370px) {
@@ -361,6 +391,7 @@ dialog::backdrop { background: #08080acb; }
         <details class="action-menu" id="action-menu">
           <summary aria-label="Actions" title="Actions">⋯</summary>
           <div class="action-menu-panel">
+            <button type="button" id="open-settings">Settings</button>
             <button type="button" id="edit">Edit roadmap</button>
             <button type="button" id="manage-habits">Manage Habits</button>
             <button type="button" id="backup">Backups</button>
@@ -383,6 +414,7 @@ dialog::backdrop { background: #08080acb; }
       <div id="board-navigation" class="week-controls" role="group" aria-label="Week navigation">
         <button type="button" id="previous-week" aria-label="Previous week">‹</button>
         <button type="button" id="current-week">This Week</button>
+        <button type="button" id="current-day" hidden>Today</button>
         <button type="button" id="next-week" aria-label="Next week">›</button>
       </div>
     </div>
@@ -473,10 +505,25 @@ dialog::backdrop { background: #08080acb; }
     </div>
   </form>
 </dialog>
+<dialog id="settings-dialog" class="compact-dialog" aria-labelledby="settings-title">
+  <div class="dialog-shell">
+    <div class="dialog-head"><div><h2 id="settings-title">Settings</h2></div><button type="button" id="close-settings">Close</button></div>
+    <section class="settings-section" aria-labelledby="settings-roadmap-title">
+      <h3 id="settings-roadmap-title">Roadmap</h3>
+      <button type="button" id="manage-roadmap">Manage roadmap</button>
+      <p class="dialog-note">Edit terms, sessions, courses, Canvas IDs, and individual accents.</p>
+    </section>
+    <section class="settings-section" aria-labelledby="session-colors-title">
+      <h3 id="session-colors-title">Default session colors</h3>
+      <div class="settings-colors" id="session-colors"></div>
+      <div class="dialog-actions"><button type="button" id="reset-session-colors">Restore default colors</button></div>
+    </section>
+  </div>
+</dialog>
 <dialog id="editor" aria-labelledby="editor-title">
   <form id="editor-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
-      <div><h2 id="editor-title">Edit roadmap</h2><p>BS Computer Science · AI/ML focus · 2025–2026 catalog</p></div>
+      <div><h2 id="editor-title">Edit roadmap</h2><p>Manage terms, session dates, courses, and their accents.</p></div>
       <button type="button" id="close-editor" aria-label="Close roadmap editor">Close</button>
     </div>
     <div class="editor-toolbar">
@@ -488,11 +535,17 @@ dialog::backdrop { background: #08080acb; }
     <div id="form-pane">
       <div class="form-grid" id="term-fields"></div>
       <p id="term-note" class="dialog-note"></p>
+      <section class="roadmap-section" aria-labelledby="roadmap-sessions-title">
+        <div class="courses-head"><h3 id="roadmap-sessions-title">Sessions</h3><button type="button" id="add-session">+ Session</button></div>
+        <p class="dialog-note">Give each session its own dates and study length. Sessions may overlap.</p>
+        <div id="session-fields"></div>
+      </section>
       <div class="courses-head">
         <h3>Courses</h3>
         <button type="button" id="add-course">+ Course</button>
       </div>
       <div id="course-fields"></div>
+      <p class="dialog-note">For Canvas events that omit a course name, enter the number after <code>/courses/</code> in the course URL.</p>
       <label class="field" id="suggestion-field">Add a course option
         <select id="suggestions" aria-label="Add a course option">
           <option value="">Choose an unscheduled option…</option>
@@ -504,8 +557,7 @@ dialog::backdrop { background: #08080acb; }
     <div id="json-pane" hidden>
       <label class="field">Course schedule JSON<textarea class="json-input" id="json-input" spellcheck="false"></textarea></label>
     </div>
-    <p class="dialog-note">Study estimates use 45 hours per credit over 7.5 weeks for A/B and 15 weeks for C. ASU summer sessions are shorter, so check your syllabus for a summer workload estimate.</p>
-    <p class="dialog-note">Term start and end dates are inclusive. Session B begins on the switch date. The optional Session A end lets you leave a gap before B.</p>
+    <p class="dialog-note">Study estimates divide 45 hours per credit by the session’s study length. Start and end dates are inclusive.</p>
     <p id="form-error" class="form-error" role="alert" hidden></p>
     <div class="dialog-actions">
       <button type="button" id="cancel-editor">Cancel</button>
@@ -765,6 +817,52 @@ function calendarText(value) {
   return value.replace(/\\([nN,;\\])/g, (_, character) => /n/i.test(character) ? "\n" : character).trim();
 }
 
+function safeEventURL(value, base) {
+  try {
+    const url = new URL(value, base || undefined);
+    if (["http:", "https:"].includes(url.protocol) && !url.username && !url.password) return url;
+  } catch {}
+  return null;
+}
+
+function canvasEventInfo(value, base) {
+  const url = safeEventURL(value, base);
+  if (!url) return { courseId: "", assignment: "" };
+  const direct = /^\/courses\/(\d+)\/assignments\/\d+(?:\/|$)/.exec(url.pathname);
+  const courseId = direct?.[1] ?? /(?:^|,)course_(\d+)(?:,|$)/.exec(url.searchParams.get("include_contexts") ?? "")?.[1] ?? "";
+  const assignmentId = /^#assignment_(\d+)$/.exec(url.hash)?.[1];
+  const assignment = direct ? url.href : url.pathname === "/calendar" && courseId && assignmentId
+    ? new URL("/courses/" + courseId + "/assignments/" + assignmentId, url.origin).href : "";
+  return { courseId, assignment };
+}
+
+function calendarEventDetails(properties, get, feedContext) {
+  const description = calendarText(get("DESCRIPTION")?.value ?? "");
+  const alternate = calendarText(get("X-ALT-DESC")?.value ?? "");
+  const source = safeEventURL(calendarText(get("URL")?.value ?? get("X-CANVAS-URL")?.value ?? ""))?.href ?? "";
+  const info = canvasEventInfo(source);
+  const metadata = properties.filter(({ name }) => name === "CATEGORIES" || name === "COURSE" ||
+    /^X-(?:CANVAS-)?(?:COURSE|CONTEXT)(?:-|$)/.test(name)).map(({ value }) => calendarText(value));
+  const rawCourseId = get("X-CANVAS-COURSE-ID")?.value ?? get("X-COURSE-ID")?.value ?? "";
+  const canvasId = info.courseId || /^(?:course[_:-])?(\d+)$/i.exec(rawCourseId.trim())?.[1] ||
+    /\bcourse_(\d+)\b/i.exec(metadata.join(" "))?.[1] || "";
+  let alternateText = "";
+  let alternateLinks = [];
+  if (alternate && (!description || !info.assignment)) {
+    const template = document.createElement("template");
+    template.innerHTML = alternate;
+    template.content.querySelectorAll("script, style").forEach((node) => node.remove());
+    template.content.querySelectorAll("br, p, li").forEach((node) => node.before("\n"));
+    alternateText = template.content.textContent.trim();
+    alternateLinks = [...template.content.querySelectorAll("a[href]")].map((link) => link.getAttribute("href"));
+  }
+  const textLinks = description.match(/https?:\/\/[^\s<>"']+/gi) ?? [];
+  const directLink = [...alternateLinks, ...textLinks.map((link) => link.replace(/[),.;]+$/, ""))]
+    .map((link) => canvasEventInfo(link, source).assignment).find(Boolean);
+  return { description: description || alternateText, url: info.assignment || directLink || source,
+    canvasId: canvasId || canvasEventInfo(directLink).courseId, context: metadata.filter(Boolean).join("\n"), feedContext };
+}
+
 function weeklyRule(property, start) {
   if (!property) return null;
   const parts = Object.fromEntries(property.value.toUpperCase().split(";").map((field) => field.split("=")));
@@ -797,7 +895,7 @@ function normalizeCalendarEvent(event) {
     throw new Error("An imported calendar event is invalid.");
   }
   if (start && end && ((start.seconds === null) !== (end.seconds === null) ||
-      (start.seconds === null ? end.day <= start.day : eventInstant(end) <= eventInstant(start)))) {
+      (start.seconds === null ? end.day <= start.day : eventInstant(end) < eventInstant(start)))) {
     throw new Error("An imported calendar event has an invalid end time.");
   }
   if (rule !== null && (!isRecord(rule) || !start || !Number.isSafeInteger(rule.interval) || rule.interval < 1 ||
@@ -811,7 +909,13 @@ function normalizeCalendarEvent(event) {
     interval: rule.interval, count: rule.count, until: rule.until, weekStart: rule.weekStart,
     days: [...new Set(rule.days)].sort((left, right) => (left - rule.weekStart + 7) % 7 - (right - rule.weekStart + 7) % 7)
   };
-  return { id, uid, summary, start, end, recurrence, rule: normalizedRule, exclusions, cancelled };
+  const details = {};
+  for (const key of ["description", "context", "feedContext", "canvasId"]) {
+    if (typeof event[key] === "string" && event[key]) details[key] = event[key];
+  }
+  const url = safeEventURL(event.url);
+  if (url) details.url = url.href;
+  return { id, uid, summary, start, end, recurrence, rule: normalizedRule, exclusions, cancelled, ...details };
 }
 
 function normalizeEvents(input) {
@@ -824,7 +928,7 @@ function normalizeEvents(input) {
   return [...events.values()];
 }
 
-function readCalendarEvent(properties) {
+function readCalendarEvent(properties, feedContext) {
   const get = (name) => properties.find((property) => property.name === name);
   const uid = get("UID")?.value.trim() ?? "";
   const summary = calendarText(get("SUMMARY")?.value ?? "") || "Untitled event";
@@ -839,7 +943,8 @@ function readCalendarEvent(properties) {
     .flatMap((property) => property.value.split(",").map((value) => parseCalendarDate({ ...property, value }, start?.zone)));
   const id = uid ? JSON.stringify([uid, recurrence && (recurrence.seconds === null ? recurrence.day : eventInstant(recurrence))])
     : JSON.stringify([summary, start, end, rule]);
-  return normalizeCalendarEvent({ id, uid, summary, start, end, recurrence, rule, exclusions, cancelled });
+  return normalizeCalendarEvent({ id, uid, summary, start, end, recurrence, rule, exclusions, cancelled,
+    ...calendarEventDetails(properties, get, feedContext) });
 }
 
 function parseCalendar(text) {
@@ -848,6 +953,7 @@ function parseCalendar(text) {
   const stack = [];
   const events = [];
   let properties = [];
+  let feedContext = "";
   let skipped = 0;
   for (const line of lines) {
     const property = calendarProperty(line);
@@ -855,14 +961,17 @@ function parseCalendar(text) {
     if (property.name === "BEGIN") {
       stack.push(property.value.trim().toUpperCase());
       if (stack.at(-1) === "VEVENT") properties = [];
+      if (stack.length === 1) feedContext = "";
     } else if (property.name === "END") {
       const end = property.value.trim().toUpperCase();
       if (end !== stack.pop()) throw new Error("The .ics file has an unclosed calendar component.");
       if (end === "VEVENT") {
-        try { events.push(readCalendarEvent(properties)); } catch { skipped++; }
+        try { events.push(readCalendarEvent(properties, feedContext)); } catch { skipped++; }
       }
     } else if (stack.at(-1) === "VEVENT") {
       properties.push(property);
+    } else if (stack.at(-1) === "VCALENDAR" && ["X-WR-CALNAME", "X-WR-CALDESC"].includes(property.name)) {
+      feedContext = [feedContext, calendarText(property.value)].filter(Boolean).join("\n");
     }
   }
   if (stack.length) throw new Error("The .ics file has an unclosed calendar component.");
@@ -921,7 +1030,7 @@ function matchingCalendarWeek(monday, events) {
       dates.forEach((date, index) => {
         if (allDay ? from <= date && date < to
           : (from < bounds[index + 1] && (duration ? to > bounds[index] : from >= bounds[index]))) {
-          rows[index].push({ summary: event.summary, from, to, allDay, lower: bounds[index], upper: bounds[index + 1] });
+          rows[index].push({ source: event, summary: event.summary, from, to, allDay, lower: bounds[index], upper: bounds[index + 1] });
         }
       });
     }
@@ -940,16 +1049,96 @@ function calendarTime(event) {
   return start + " – " + end;
 }
 
+function courseTokens(value) {
+  return (value?.toUpperCase().match(/[A-Z]+|\d+/g) ?? []).join(" ");
+}
+
+function uniqueCourse(courses, score) {
+  let best = 0;
+  let match = null;
+  for (const course of courses) {
+    const strength = score(course);
+    if (!strength || strength < best) continue;
+    match = strength === best ? null : course;
+    best = strength;
+  }
+  return match;
+}
+
+function namedCalendarCourse(courses, event) {
+  const fields = [event.context, event.summary, event.description, event.feedContext].map((value) => " " + courseTokens(value) + " ");
+  return uniqueCourse(courses, (course) => {
+    const code = courseTokens(course.code);
+    const name = courseTokens(course.name);
+    const codeIndex = fields.findIndex((text) => code && text.includes(" " + code + " "));
+    if (codeIndex !== -1) return 12 - codeIndex;
+    const nameIndex = fields.findIndex((text) => name && text.includes(" " + name + " "));
+    if (nameIndex !== -1) return 8 - nameIndex;
+    const base = /^[A-Z]+ \d+(?= )/.exec(code)?.[0];
+    return base && fields.slice(0, 2).some((text) => text.includes(" " + base + " ")) ? 1 : 0;
+  });
+}
+
+function calendarCourseResolver(events) {
+  const plans = new Map();
+  const learned = new Map();
+  function planAt(day) {
+    if (!plans.has(day)) plans.set(day, planForDate(day));
+    return plans.get(day);
+  }
+  const linkKey = (term, event) => term.id + "|" + (safeEventURL(event.url)?.host ?? "") + "|" + event.canvasId;
+  for (const event of events) {
+    if (!event.canvasId || event.cancelled) continue;
+    const { start } = event;
+    const { term, courses } = planAt(start.seconds === null ? start.day : localDay(new Date(eventInstant(start))));
+    if (!term) continue;
+    const course = namedCalendarCourse(courses, event);
+    if (!course) continue;
+    const key = linkKey(term, event);
+    const ids = learned.get(key) ?? new Set();
+    ids.add(courseIdentity(course));
+    learned.set(key, ids);
+  }
+  return (occurrence) => {
+    const event = occurrence.source;
+    const { term, courses } = planAt(occurrence.allDay ? occurrence.from : localDay(new Date(occurrence.from)));
+    const known = event.canvasId && uniqueCourse(courses, (course) => Number(course.canvasId === event.canvasId));
+    const ids = term && event.canvasId && learned.get(linkKey(term, event));
+    const inferred = ids?.size === 1 && courses.find((course) => ids.has(courseIdentity(course)));
+    const course = known || namedCalendarCourse(courses, event) || inferred;
+    return { ...occurrence, course, color: course ? courseAccent(course) : UNASSIGNED_COLOR };
+  };
+}
+
+function calendarRows(monday, events, resolve = calendarCourseResolver(events)) {
+  return matchingCalendarWeek(monday, events).map((row) => row.map(resolve));
+}
+
+function calendarDots(events) {
+  const colors = [...new Set(events.map((event) => event.color))];
+  return colors.map((color) => '<span class="calendar-event-dot"' + accentStyle(color) + '></span>').join("");
+}
+
 function renderDaySchedule(events, day, open) {
   if (!events.length) return "";
   return '<details class="day-schedule" data-calendar-day="' + day + '"' + (open ? " open" : "") +
-    '><summary>Schedule &amp; Deadlines <span>' + events.length + '</span></summary><ul>' +
+    '><summary>Schedule &amp; Deadlines <span>' + events.length + '</span><span class="calendar-dots" aria-hidden="true">' +
+    calendarDots(events) + '</span></summary><ul>' +
     calendarItems(events) + "</ul></details>";
 }
 
 function calendarItems(events) {
-  return events.map((event) => "<li><strong>" + escapeHTML(event.summary) + "</strong><small>" +
-    escapeHTML(calendarTime(event)) + "</small></li>").join("");
+  return events.map((event) => {
+    const { description, url } = event.source;
+    const heading = '<span class="event-heading"><strong>' + escapeHTML(event.summary) + "</strong><small>" +
+      escapeHTML(calendarTime(event)) + (event.course ? " · " + escapeHTML(event.course.code) : "") + "</small></span>";
+    const details = description || url ? '<details class="event-details"><summary>' + heading + '</summary><div class="event-description">' +
+      (description ? "<p>" + escapeHTML(description) + "</p>" : "") +
+      (url ? '<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener noreferrer">' +
+        (canvasEventInfo(url).assignment ? "Open assignment in Canvas" : "Open event link") + "</a>" : "") +
+      "</div></details>" : heading;
+    return '<li class="calendar-event"' + accentStyle(event.color) + ">" + details + "</li>";
+  }).join("");
 }
 
 function calendarWeekCount(rows) {
@@ -998,7 +1187,8 @@ const DEFAULT_HABITS = [
 ];
 const TIMER_MAX_MINUTES = 1440;
 const SESSION_WEEKS = { A: 7.5, B: 7.5, C: 15 };
-const SESSION_VIEWS = { A: "Sessions A + C", B: "Sessions B + C", C: "Session C only" };
+const SESSION_COLORS = { A: "#d76b90", B: "#ffc627", C: "#6bb7a5" };
+const UNASSIGNED_COLOR = "#8c8c98";
 const byId = (id) => document.getElementById(id);
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const shortYearDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -1064,7 +1254,7 @@ function minutesLabel(value) {
   return hours + "h" + (remainder ? " " + remainder + "m" : "");
 }
 
-function weeklyHours(course) { return course.credits * 45 / SESSION_WEEKS[course.session]; }
+function weeklyHours(course) { return course.credits * 45 / (course.sessionInfo?.weeks ?? SESSION_WEEKS[course.session]); }
 function studyHours(courses) { return courses.reduce((total, course) => total + weeklyHours(course), 0); }
 function studyLabel(hours) { return hours ? "~" + minutesLabel(hours * 60 / 7) : "0m"; }
 function percent(done, total) {
@@ -1090,7 +1280,7 @@ function normalizeHabits(input) {
 }
 
 function newState() {
-  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
+  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, sessionColors: {}, habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
 }
 
 function decodeState(input, strict = false) {
@@ -1109,7 +1299,7 @@ function decodeState(input, strict = false) {
     // Update the prior default dates in saved schedules and backups.
     if (input.version !== DATA_VERSION) {
       const spring = result.schedule.find((term) => term.id === "spring-2027");
-      if (spring?.sessionAMidpoint === "2027-03-08" && !spring.sessionAEndDate &&
+      if (!spring?.sessions && spring?.sessionAMidpoint === "2027-03-08" && !spring.sessionAEndDate &&
           spring.startDate === "2027-01-11" && spring.endDate === "2027-05-04") {
         const defaults = BASE_SCHEDULE.find((term) => term.id === spring.id);
         spring.sessionAEndDate = defaults.sessionAEndDate;
@@ -1121,6 +1311,13 @@ function decodeState(input, strict = false) {
   }
   if (input.habits !== undefined) {
     try { result.habits = normalizeHabits(input.habits); } catch (error) { repair(error.message); }
+  }
+  if (input.sessionColors !== undefined) {
+    try {
+      if (!isRecord(input.sessionColors)) throw new Error("Session colors must be an object.");
+      result.sessionColors = Object.fromEntries(Object.keys(SESSION_COLORS)
+        .map((id) => [id, normalizeAccent(input.sessionColors[id])]).filter(([, color]) => color));
+    } catch (error) { repair(error.message); }
   }
   if (input.events !== undefined) {
     try { result.events = normalizeEvents(input.events); } catch (error) { repair(error.message); }
@@ -1229,24 +1426,23 @@ function commit(change, after = () => {}) {
   after();
 }
 
-function phaseDates(term, phase) {
-  const switchDay = dayFromISO(term.sessionAMidpoint);
-  const start = phase === "B" ? switchDay : dayFromISO(term.startDate);
-  const end = phase === "A"
-    ? (term.sessionAEndDate ? dayFromISO(term.sessionAEndDate) : switchDay - 1)
-    : dayFromISO(term.endDate);
-  return { start, end, firstMonday: mondayOf(start), lastMonday: mondayOf(end) };
+function termSessions(term) {
+  if (term.sessions) return term.sessions;
+  return Object.entries(SESSION_WEEKS).map(([id, weeks]) => ({
+    id, name: "Session " + id, weeks,
+    startDate: id === "B" ? term.sessionAMidpoint : term.startDate,
+    endDate: id === "A" ? term.sessionAEndDate ?? isoDate(dayFromISO(term.sessionAMidpoint) - 1) : term.endDate
+  }));
 }
 
 function planForDate(day) {
   const term = state.schedule.find((entry) => dayFromISO(entry.startDate) <= day && day <= dayFromISO(entry.endDate));
-  if (!term) return { term: null, phase: null };
-  if (day >= dayFromISO(term.sessionAMidpoint)) return { term, phase: "B" };
-  return { term, phase: day <= phaseDates(term, "A").end ? "A" : "C" };
-}
-
-function coursesFor(term, phase) {
-  return term ? term.courses.filter((course) => course.session === "C" || course.session === phase) : [];
+  if (!term) return { term: null, sessions: [], courses: [] };
+  const sessions = termSessions(term).filter((session) => dayFromISO(session.startDate) <= day && day <= dayFromISO(session.endDate));
+  const bySession = new Map(sessions.map((session) => [session.id, session]));
+  const courses = term.courses.filter((course) => bySession.has(course.session))
+    .map((course) => ({ ...course, sessionInfo: bySession.get(course.session) }));
+  return { term, sessions, courses };
 }
 
 function makeDay(monday, index, term, courses, habits) {
@@ -1266,15 +1462,14 @@ function makeDay(monday, index, term, courses, habits) {
 
 function buildBoard(day) {
   const monday = mondayOf(day);
-  const { term, phase } = planForDate(day);
-  const courses = coursesFor(term, phase);
+  const plan = planForDate(day);
   const key = isoWeekKey(monday);
   const habits = monday < mondayOf(localDay()) ? state.weeks[key]?.habits ?? DEFAULT_HABITS : state.habits;
   const days = DAY_NAMES.map((_, index) => {
     const plan = planForDate(monday + index);
-    return makeDay(monday, index, plan.term, coursesFor(plan.term, plan.phase), habits);
+    return makeDay(monday, index, plan.term, plan.courses, habits);
   });
-  return { term, phase, courses, days, monday, key, habits };
+  return { ...plan, days, monday, key, habits };
 }
 
 function courseIdentity(course) { return course.trackId ?? course.code; }
@@ -1325,22 +1520,38 @@ function prepareCurrentWeek() {
   return recordWeek(live, currentChecks(live));
 }
 
-function badge(session, compact = false) {
-  const label = "Session " + session + " (" + SESSION_WEEKS[session] + "w)";
-  return '<span class="badge ' + session + '" title="' + label + '" aria-label="' + label + '">' + (compact ? session : label) + "</span>";
+function sessionAccent(session) {
+  if (session.color) return session.color;
+  return Object.hasOwn(SESSION_COLORS, session.id) ? state.sessionColors[session.id] ?? SESSION_COLORS[session.id] : UNASSIGNED_COLOR;
 }
 
-function sessionLabel(phase, courses) {
-  return phase === "C" || courses.some((course) => course.session === "C")
-    ? SESSION_VIEWS[phase] : "Session " + phase;
+function courseAccent(course) { return course.color ?? sessionAccent(course.sessionInfo); }
+
+function accentStyle(color) { return ' style="--accent:' + color + '"'; }
+
+function badge(session, compact = false, color = sessionAccent(session)) {
+  const label = session.name + " (" + numberLabel.format(session.weeks) + "w)";
+  const text = compact ? /^Session ([A-Z])$/.exec(session.name)?.[1] ?? session.name : label;
+  return '<span class="badge"' + accentStyle(color) + ' title="' + escapeHTML(label) + '" aria-label="' +
+    escapeHTML(label) + '">' + escapeHTML(text) + "</span>";
+}
+
+function sessionLabel(sessions, courses) {
+  if (!sessions.length) return "Between sessions";
+  if (!sessions.every((session) => /^[ABC]$/.test(session.id) && session.name === "Session " + session.id)) {
+    return sessions.map((session) => session.name).join(" + ");
+  }
+  if (sessions.length === 1) return sessions[0].id === "C" ? "Session C only" : sessions[0].name;
+  const visible = sessions.filter((session) => session.id !== "C" || courses.some((course) => course.session === "C"));
+  return visible.length === 1 ? visible[0].name : "Sessions " + visible.map((session) => session.id).join(" + ");
 }
 
 function renderTerm(board, day) {
-  const { term, phase, courses, readOnly } = board;
+  const { term, sessions, courses, readOnly } = board;
   const date = dateLabel(day, contextDate);
   if (term) {
     const status = readOnly ? (day < clockDay ? "Past Term" : "Upcoming Term") : "Current Term";
-    const view = sessionLabel(phase, courses);
+    const view = sessionLabel(sessions, courses);
     setText("term-title", term.term);
     setText("term-detail", status + " · " + view + " · " + date);
     return;
@@ -1360,8 +1571,9 @@ function renderTask(task, checked, dayName, readOnly) {
   }
   const weekly = weeklyHours(task);
   const study = minutesLabel(weekly * 60 / 7);
-  return '<label class="task course">' + input + '<span class="task-copy"><span class="course-title"><span class="task-title">' +
-    escapeHTML(task.code) + "</span>" + badge(task.session, true) + '</span><span class="task-detail">' +
+  const accent = courseAccent(task);
+  return '<label class="task course"' + accentStyle(accent) + '>' + input + '<span class="task-copy"><span class="course-title"><span class="task-title">' +
+    escapeHTML(task.code) + "</span>" + badge(task.sessionInfo, true) + '</span><span class="task-detail">' +
     escapeHTML(task.name) + '</span><span class="course-time">~' + study + "/day · " + numberLabel.format(weekly) + " hrs/wk</span></span></label>";
 }
 
@@ -1396,7 +1608,7 @@ function renderDays(board) {
   const dayView = viewedDay !== null;
   const days = dayView ? [board.days[viewedDay - board.monday]] : board.days;
   const events = calendarEvents();
-  const calendar = events.length ? matchingCalendarWeek(board.monday, events) : null;
+  const calendar = events.length ? calendarRows(board.monday, events) : null;
   element.classList.toggle("read-only", board.readOnly);
   element.classList.toggle("day-view", dayView);
   element.innerHTML = days.map((entry) => {
@@ -1477,18 +1689,20 @@ function renderFilters(term, courses) {
   element.hidden = !term?.courses.length;
   if (element.hidden) return;
   const ids = new Set(courses.map(courseIdentity));
-  const pill = (value, label, active, session = "") => '<button type="button" class="filter-pill" data-filter="' +
+  const sessions = termSessions(term);
+  const pill = (value, label, active, color, session = null) => '<button type="button" class="filter-pill"' + accentStyle(color) + ' data-filter="' +
     escapeHTML(value) + '" aria-pressed="' + active + '" aria-label="' + escapeHTML(label) + '">' +
     '<span class="filter-label">' + escapeHTML(label) + '</span>' +
-    (active && session ? badge(session, true) : '<span class="filter-indicator" aria-hidden="true">' + (active ? "✓" : "✕") + "</span>") + "</button>";
-  const sessions = ["A", "B", "C"].filter((session) => term.courses.some((course) => course.session === session))
-    .map((session) => pill("session:" + session, "Session " + session, courses.some((course) => course.session === session)));
+    (active && session ? badge(session, true, color) : '<span class="filter-indicator" aria-hidden="true">' + (active ? "✓" : "✕") + "</span>") + "</button>";
+  const sessionPills = sessions.filter((session) => term.courses.some((course) => course.session === session.id))
+    .map((session) => pill("session:" + session.id, session.name, courses.some((course) => course.session === session.id), sessionAccent(session)));
   const classes = term.courses.map((course) => {
     const id = courseIdentity(course);
-    return pill("course:" + id, course.code, ids.has(id), course.session);
+    const session = sessions.find((entry) => entry.id === course.session);
+    return pill("course:" + id, course.code, ids.has(id), course.color ?? sessionAccent(session), session);
   });
   element.innerHTML = '<div class="filter-group" role="group" aria-label="Sessions"><span class="filter-group-label">Sessions</span>' +
-    sessions.join("") +
+    sessionPills.join("") +
     '</div><div class="filter-group" role="group" aria-label="Courses"><span class="filter-group-label">Courses</span>' +
     classes.join("") + "</div>";
 }
@@ -1500,8 +1714,8 @@ function renderFilteredProgress(term, courses) {
   if (!filtering) return;
   let done = 0;
   let total = 0;
-  const dates = phaseDates(term, "C");
-  for (let monday = dates.firstMonday; courses.length && monday <= dates.lastMonday; monday += 7) {
+  const lastMonday = mondayOf(dayFromISO(term.endDate));
+  for (let monday = mondayOf(dayFromISO(term.startDate)); courses.length && monday <= lastMonday; monday += 7) {
     const week = filteredBoard(buildBoard(monday), term, courses);
     const counts = tally(week, visibleChecks(week), true);
     done += counts.done;
@@ -1545,6 +1759,7 @@ function render() {
   setText("next-week", dayView ? ">" : "›");
   byId("current-week").hidden = dayView;
   byId("current-week").disabled = !readOnly;
+  byId("current-day").hidden = !dayView;
   renderFilters(term, courses);
   const weekStudy = currentBoard.days.reduce((hours, day) => hours + day.study / 7, 0);
   const study = !dayView && readOnly ? weekStudy : currentBoard.days[anchor - monday].study;
@@ -1606,6 +1821,10 @@ function moveBoard(offset) {
 
 byId("previous-week").addEventListener("click", () => moveBoard(-1));
 byId("next-week").addEventListener("click", () => moveBoard(1));
+byId("current-day").addEventListener("click", () => {
+  const today = localDay();
+  showBoardWeek(mondayOf(today), today);
+});
 byId("current-week").addEventListener("click", () => {
   hiddenCourses.clear();
   viewedTermId = "";
@@ -1711,6 +1930,12 @@ function showError(message = "") {
   byId("form-error").hidden = !message;
 }
 
+function accentField(target, fallback) {
+  return '<div class="accent-field">' + field("Accent", "color", target.color ?? fallback, "color") +
+    '<button type="button" data-reset-accent aria-label="Use default accent" title="Use default accent"' +
+    (target.color ? "" : " hidden") + '>↺</button></div>';
+}
+
 function renderEditor() {
   const term = selectedTerm();
   byId("form-pane").hidden = editingJSON || !term;
@@ -1727,20 +1952,33 @@ function renderEditor() {
   byId("term-fields").innerHTML = [
     field("Term name", "term", term.term),
     field("Start date", "startDate", term.startDate, "date"),
-    field("Session B starts", "sessionAMidpoint", term.sessionAMidpoint, "date"),
     field("End date", "endDate", term.endDate, "date"),
-    field("Session A ends (optional)", "sessionAEndDate", term.sessionAEndDate, "date"),
     '<label class="field">Planning template<input type="checkbox" data-field="planned"' + (term.planned ? " checked" : "") + "></label>"
   ].join("");
   byId("term-note").textContent = term.planned ? "Planning dates and session assignments are editable." : "";
+  const sessions = termSessions(term);
+  byId("session-fields").innerHTML = sessions.map((session, index) =>
+    '<div class="session-row" data-session-index="' + index + '">' +
+    field("Session name", "name", session.name) +
+    field("Starts", "startDate", session.startDate, "date") +
+    field("Ends", "endDate", session.endDate, "date") +
+    '<label class="field">Study weeks<input type="number" min="0.1" max="520" step="0.1" data-field="weeks" value="' +
+    escapeHTML(session.weeks) + '"></label>' + accentField(session, sessionAccent(session)) +
+    '<button type="button" class="danger" data-remove-session aria-label="Remove session ' + escapeHTML(session.name) + '">Remove</button></div>'
+  ).join("");
+  byId("add-course").disabled = !sessions.length;
+  byId("suggestions").disabled = !sessions.length;
   byId("course-fields").innerHTML = term.courses.map((course, index) => {
-    const options = Object.entries(SESSION_WEEKS).map(([session, weeks]) => '<option value="' + session + '"' +
-      (course.session === session ? " selected" : "") + ">" + session + " (" + weeks + "w)</option>").join("");
+    const sessionInfo = sessions.find((session) => session.id === course.session);
+    const options = sessions.map((session) => '<option value="' + escapeHTML(session.id) + '"' +
+      (course.session === session.id ? " selected" : "") + ">" + escapeHTML(session.name) + "</option>").join("");
     return '<div class="course-row" data-index="' + index + '">' +
       field("Course code", "code", course.code) + field("Course name", "name", course.name) +
       field("Credits", "credits", course.credits, "number") +
       '<label class="field">Session<select data-field="session" aria-label="Session">' + options + "</select></label>" +
-      '<button type="button" class="danger" data-remove aria-label="Remove course ' + (index + 1) + '">Remove</button></div>';
+      accentField(course, sessionInfo ? sessionAccent(sessionInfo) : UNASSIGNED_COLOR) +
+      '<div class="course-extras">' + field("Canvas course ID (optional)", "canvasId", course.canvasId) +
+      '<button type="button" class="danger" data-remove aria-label="Remove course ' + (index + 1) + '">Remove</button></div></div>';
   }).join("");
   byId("suggestions").value = "";
 }
@@ -1755,14 +1993,37 @@ function normalizeSchedule(input) {
     if (!/^[a-z0-9][a-z0-9-]*$/i.test(id) || ids.has(id)) throw new Error(name + " needs a unique ID using only letters, numbers, and hyphens.");
     ids.add(id);
     const { startDate, endDate, sessionAMidpoint, sessionAEndDate } = term;
-    const [start, midpoint, end] = [startDate, sessionAMidpoint, endDate].map(dayFromISO);
-    if (![start, midpoint, end].every(Number.isFinite) || !(start < midpoint && midpoint <= end)) {
-      throw new Error(name + " needs valid dates with the Session B start after the term start and on or before the term end.");
+    const [start, end] = [startDate, endDate].map(dayFromISO);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) {
+      throw new Error(name + " needs a valid start date on or before its end date.");
     }
-    if (sessionAEndDate) {
-      const aEnd = dayFromISO(sessionAEndDate);
-      if (!(start <= aEnd && aEnd < midpoint)) throw new Error(name + " needs Session A to end before Session B starts.");
+    const legacy = term.sessions === undefined && Boolean(sessionAMidpoint);
+    if (legacy) {
+      const midpoint = dayFromISO(sessionAMidpoint);
+      if (!(start < midpoint && midpoint <= end)) throw new Error(name + " needs Session B to start within the term after its first day.");
+      if (sessionAEndDate && !(start <= dayFromISO(sessionAEndDate) && dayFromISO(sessionAEndDate) < midpoint)) {
+        throw new Error(name + " needs Session A to end before Session B starts.");
+      }
     }
+    const source = legacy ? termSessions(term) : term.sessions === undefined ? [fullTermSession(term)] : term.sessions;
+    if (!Array.isArray(source)) throw new Error(name + " needs a sessions array.");
+    const sessionIds = new Set();
+    const sessions = source.map((session) => {
+      const id = String(session?.id ?? "").trim();
+      const label = String(session?.name ?? "").trim();
+      const weeks = Number(session?.weeks);
+      const from = dayFromISO(session?.startDate);
+      const to = dayFromISO(session?.endDate);
+      if (!/^[a-z0-9][a-z0-9-]*$/i.test(id) || sessionIds.has(id) || !label || label.length > 60) {
+        throw new Error(name + " needs a unique ID and a name of up to 60 characters for each session.");
+      }
+      if (!(start <= from && from <= to && to <= end) || !Number.isFinite(weeks) || weeks < 0.1 || weeks > 520) {
+        throw new Error(label + " needs dates within " + name + " and a study length from 0.1 to 520 weeks.");
+      }
+      sessionIds.add(id);
+      const color = normalizeAccent(session.color);
+      return { id, name: label, startDate: session.startDate, endDate: session.endDate, weeks, ...(color ? { color } : {}) };
+    });
     if (!Array.isArray(term.courses)) throw new Error(name + " needs a courses array.");
     const codes = new Set();
     const trackIds = new Set();
@@ -1770,9 +2031,10 @@ function normalizeSchedule(input) {
       const code = String(course?.code ?? "").trim().toUpperCase().replace(/\s+/g, " ");
       const courseName = String(course?.name ?? "").trim();
       const credits = Number(course?.credits);
-      const session = String(course?.session ?? "").toUpperCase();
-      if (!code || !courseName || !Number.isFinite(credits) || credits <= 0 || !Object.hasOwn(SESSION_WEEKS, session)) {
-        throw new Error(name + " has a course missing a code, name, positive credit amount, or A/B/C session.");
+      const requested = String(course?.session ?? (sessions.length === 1 ? sessions[0].id : "")).trim();
+      const session = sessionIds.has(requested) ? requested : legacy ? requested.toUpperCase() : requested;
+      if (!code || !courseName || !Number.isFinite(credits) || credits <= 0 || !sessionIds.has(session)) {
+        throw new Error(name + " has a course missing a code, name, positive credit amount, or valid session.");
       }
       if (codes.has(code)) throw new Error(name + " lists " + code + " more than once.");
       codes.add(code);
@@ -1781,9 +2043,13 @@ function normalizeSchedule(input) {
         throw new Error(name + " needs a unique tracking ID for " + code + ".");
       }
       trackIds.add(trackId);
-      return { code, name: courseName, credits, session, trackId };
+      const color = normalizeAccent(course.color);
+      const canvasId = String(course.canvasId ?? "").trim();
+      if (canvasId && !/^\d+$/.test(canvasId)) throw new Error("Enter a numeric Canvas course ID for " + code + ".");
+      return { code, name: courseName, credits, session, trackId, ...(color ? { color } : {}), ...(canvasId ? { canvasId } : {}) };
     });
-    return { id, term: name, startDate, endDate, sessionAMidpoint, ...(sessionAEndDate ? { sessionAEndDate } : {}), planned: Boolean(term.planned), courses };
+    const dates = legacy ? { sessionAMidpoint, ...(sessionAEndDate ? { sessionAEndDate } : {}) } : { sessions };
+    return { id, term: name, startDate, endDate, ...dates, planned: Boolean(term.planned), courses };
   }).sort((left, right) => left.startDate.localeCompare(right.startDate));
   for (let index = 1; index < normalized.length; index++) {
     if (normalized[index].startDate <= normalized[index - 1].endDate) {
@@ -1793,7 +2059,18 @@ function normalizeSchedule(input) {
   return normalized;
 }
 
-byId("edit").addEventListener("click", () => {
+function normalizeAccent(value) {
+  if (value == null || value === "") return "";
+  if (typeof value !== "string" || !/^#[\da-f]{6}$/i.test(value)) throw new Error("Use a six-digit hex accent color.");
+  return value.toLowerCase();
+}
+
+function fullTermSession(term) {
+  const weeks = Math.max(0.1, Math.round((dayFromISO(term.endDate) - dayFromISO(term.startDate) + 1) * 10 / 7) / 10);
+  return { id: "full-term", name: "Full term", startDate: term.startDate, endDate: term.endDate, weeks };
+}
+
+function openRoadmapEditor() {
   syncState();
   draftSchedule = JSON.parse(JSON.stringify(state.schedule));
   const next = draftSchedule.find((term) => dayFromISO(term.startDate) > localDay());
@@ -1803,6 +2080,44 @@ byId("edit").addEventListener("click", () => {
   showError();
   renderEditor();
   editor.showModal();
+}
+byId("edit").addEventListener("click", openRoadmapEditor);
+
+const settingsDialog = byId("settings-dialog");
+function renderSessionColors() {
+  byId("session-colors").innerHTML = Object.entries(SESSION_COLORS).map(([id, color]) =>
+    '<label class="field">Session ' + id + '<input type="color" data-session-color="' + id +
+    '" value="' + (state.sessionColors[id] ?? color) + '"></label>').join("");
+}
+
+byId("open-settings").addEventListener("click", () => {
+  syncState();
+  renderSessionColors();
+  settingsDialog.showModal();
+});
+byId("close-settings").addEventListener("click", () => settingsDialog.close());
+byId("manage-roadmap").addEventListener("click", () => {
+  settingsDialog.close();
+  openRoadmapEditor();
+});
+byId("session-colors").addEventListener("change", (event) => {
+  const id = event.target.dataset.sessionColor;
+  if (!Object.hasOwn(SESSION_COLORS, id)) return;
+  const color = normalizeAccent(event.target.value);
+  commit(() => {
+    if (color === SESSION_COLORS[id]) delete state.sessionColors[id];
+    else state.sessionColors[id] = color;
+    return true;
+  }, render);
+});
+byId("reset-session-colors").addEventListener("click", () => {
+  commit(() => {
+    state.sessionColors = {};
+    return true;
+  }, () => {
+    renderSessionColors();
+    render();
+  });
 });
 
 for (const id of ["cancel-editor", "close-editor"]) {
@@ -1817,15 +2132,58 @@ byId("edit-term").addEventListener("change", (event) => {
 
 function updateDraftField(event) {
   const input = event.target;
-  if (!input.dataset.field) return;
+  const key = input.dataset.field;
+  if (!key) return;
   const term = selectedTerm();
   const row = input.closest("[data-index]");
-  const target = row ? term.courses[Number(row.dataset.index)] : term;
-  target[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
-  if (input.dataset.field === "term") byId("edit-term").selectedOptions[0].textContent = input.value || "Untitled term";
+  const sessionRow = input.closest("[data-session-index]");
+  const target = row ? term.courses[Number(row.dataset.index)]
+    : sessionRow ? (term.sessions ??= termSessions(term))[Number(sessionRow.dataset.sessionIndex)] : term;
+  if (target === term && (key === "startDate" || key === "endDate")) {
+    const sessions = term.sessions ??= termSessions(term);
+    sessions.forEach((session, index) => {
+      if (session[key] !== term[key]) return;
+      session[key] = input.value;
+      byId("session-fields").children[index].querySelector('[data-field="' + key + '"]').value = input.value;
+    });
+  }
+  target[key] = input.type === "checkbox" ? input.checked : input.value;
+  if (key === "term") byId("edit-term").selectedOptions[0].textContent = input.value || "Untitled term";
+  if (key === "color") input.closest(".accent-field").querySelector("[data-reset-accent]").hidden = false;
+  if (key === "name" && sessionRow) {
+    for (const option of byId("course-fields").querySelectorAll("option")) {
+      if (option.value === target.id) option.textContent = input.value;
+    }
+    sessionRow.querySelector("[data-remove-session]").setAttribute("aria-label", "Remove session " + input.value);
+  }
+  if (key === "session" && !target.color) {
+    const session = termSessions(term).find((entry) => entry.id === input.value);
+    row.querySelector('[data-field="color"]').value = sessionAccent(session);
+  }
+  if (key === "color" && sessionRow) {
+    for (const courseRow of byId("course-fields").children) {
+      const course = term.courses[Number(courseRow.dataset.index)];
+      if (course.session === target.id && !course.color) courseRow.querySelector('[data-field="color"]').value = input.value;
+    }
+  }
 }
-byId("term-fields").addEventListener("input", updateDraftField);
-byId("course-fields").addEventListener("input", updateDraftField);
+byId("form-pane").addEventListener("input", updateDraftField);
+
+byId("form-pane").addEventListener("click", (event) => {
+  const reset = event.target.closest("[data-reset-accent]");
+  if (!reset) return;
+  const term = selectedTerm();
+  const courseRow = reset.closest("[data-index]");
+  const sessionRow = reset.closest("[data-session-index]");
+  const target = courseRow ? term.courses[Number(courseRow.dataset.index)]
+    : (term.sessions ??= termSessions(term))[Number(sessionRow.dataset.sessionIndex)];
+  delete target.color;
+  const row = courseRow ?? sessionRow;
+  const parent = row.parentElement;
+  const index = [...parent.children].indexOf(row);
+  renderEditor();
+  parent.children[index].querySelector('[data-field="color"]').focus();
+});
 
 function newIdentity(prefix) {
   const [random] = crypto.getRandomValues(new Uint32Array(1));
@@ -1837,7 +2195,8 @@ function newCourse(code, name, session) {
 }
 
 byId("add-course").addEventListener("click", () => {
-  selectedTerm().courses.push(newCourse("", "", "A"));
+  const term = selectedTerm();
+  term.courses.push(newCourse("", "", termSessions(term)[0].id));
   renderEditor();
   byId("course-fields").lastElementChild.querySelector("input").focus();
 });
@@ -1851,7 +2210,9 @@ byId("suggestions").addEventListener("change", (event) => {
     return;
   }
   showError();
-  selectedTerm().courses.push(newCourse(code, COURSE_OPTIONS[code], "B"));
+  const term = selectedTerm();
+  const sessions = termSessions(term);
+  term.courses.push(newCourse(code, COURSE_OPTIONS[code], (sessions.find((session) => session.id === "B") ?? sessions[0]).id));
   renderEditor();
   byId("course-fields").lastElementChild.querySelector("select").focus();
 });
@@ -1868,10 +2229,36 @@ byId("add-term").addEventListener("click", () => {
   const dates = draftSchedule.map((term) => dayFromISO(term.endDate)).filter(Number.isFinite);
   const start = Math.max(localDay(), ...dates) + 7;
   editingId = "term-" + Date.now().toString(36);
-  draftSchedule.push({ id: editingId, term: "New term", startDate: isoDate(start), endDate: isoDate(start + 110),
-    sessionAMidpoint: isoDate(start + 55), planned: true, courses: [] });
+  const term = { id: editingId, term: "New term", startDate: isoDate(start), endDate: isoDate(start + 110), planned: true, courses: [] };
+  term.sessions = [fullTermSession(term)];
+  draftSchedule.push(term);
   renderEditor();
   byId("term-fields").querySelector("input").select();
+});
+
+byId("add-session").addEventListener("click", () => {
+  const term = selectedTerm();
+  const sessions = term.sessions ??= termSessions(term);
+  sessions.push({ ...fullTermSession(term), id: newIdentity("session"), name: "New session" });
+  showError();
+  renderEditor();
+  byId("session-fields").lastElementChild.querySelector("input").select();
+});
+
+byId("session-fields").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-session]");
+  if (!button) return;
+  const term = selectedTerm();
+  const sessions = term.sessions ??= termSessions(term);
+  const index = Number(button.closest("[data-session-index]").dataset.sessionIndex);
+  if (term.courses.some((course) => course.session === sessions[index].id)) {
+    showError("Reassign the courses in " + sessions[index].name + " before removing it.");
+    return;
+  }
+  sessions.splice(index, 1);
+  showError();
+  renderEditor();
+  byId("add-session").focus();
 });
 
 byId("remove-term").addEventListener("click", () => {
@@ -2087,6 +2474,12 @@ function calendarMilestones(start, end) {
       [term.sessionAMidpoint, "Session B starts"],
       [term.endDate, "Term end"]
     ];
+    if (term.sessions) {
+      for (const session of term.sessions) {
+        if (session.startDate !== term.startDate) markers.push([session.startDate, session.name + " starts"]);
+        if (session.endDate !== term.endDate) markers.push([session.endDate, session.name + " ends"]);
+      }
+    }
     for (const [date, label] of markers) {
       const day = dayFromISO(date);
       if (!(day >= start && day <= end)) continue;
@@ -2108,6 +2501,7 @@ function calendarHeading(start, next) {
 
 function renderInlineCalendar(focusDay = false) {
   const calendar = calendarEvents();
+  const resolve = calendarCourseResolver(calendar);
   byId("refresh-calendar").disabled = !calendarFeed;
   byId("clear-calendar").disabled = !state.events.length && !calendarFeed;
   const today = localDay();
@@ -2119,7 +2513,7 @@ function renderInlineCalendar(focusDay = false) {
   setText("calendar-month", calendarHeading(start, next));
   const cells = [];
   for (let monday = mondayOf(start); monday < next; monday += 7) {
-    const rows = calendar.length ? matchingCalendarWeek(monday, calendar) : Array.from({ length: 7 }, () => []);
+    const rows = calendar.length ? calendarRows(monday, calendar, resolve) : Array.from({ length: 7 }, () => []);
     rows.forEach((events, index) => {
       const day = monday + index;
       const selected = day === selectedCalendarDay;
@@ -2130,20 +2524,20 @@ function renderInlineCalendar(focusDay = false) {
         '" data-calendar-date="' + day + '" aria-label="' + escapeHTML(label) + '" aria-pressed="' + selected +
         '" tabindex="' + (day === calendarFocusDay ? "0" : "-1") + '"' + (day === today ? ' aria-current="date"' : "") +
         '>' + date + '</button><span class="calendar-dots" aria-hidden="true">' +
-        (events.length ? '<span class="calendar-event-dot"></span>' : "") +
+        calendarDots(events) +
         (markers.length ? '<span class="calendar-milestone-dot"></span>' : "") + "</span></div>");
     });
   }
   grid.innerHTML = cells.join("");
   if (keepFocus) grid.querySelector('[tabindex="0"]')?.focus({ preventScroll: true });
-  renderDayInspector();
+  renderDayInspector(calendar, resolve);
 }
 
 function inspectorTasks(tasks, checks, upcoming) {
   return tasks.map((task) => {
     const status = checks[task.id] === true ? "Completed" : upcoming ? "Upcoming" : "Incomplete";
     const description = task.type === "course"
-      ? '<strong>' + escapeHTML(task.code) + " " + badge(task.session, true) + '</strong><small>' +
+      ? '<strong>' + escapeHTML(task.code) + " " + badge(task.sessionInfo, true) + '</strong><small>' +
         escapeHTML(task.name) + '</small><small>' + studyLabel(weeklyHours(task)) + "/day</small>"
       : '<span>' + escapeHTML(task.title) + '</span>';
     return '<li><div class="inspector-task-copy">' + description + '</div><span class="inspector-status ' +
@@ -2151,7 +2545,7 @@ function inspectorTasks(tasks, checks, upcoming) {
   }).join("");
 }
 
-function renderDayInspector() {
+function renderDayInspector(calendar = calendarEvents(), resolve) {
   const day = selectedCalendarDay;
   const inspector = byId("day-inspector");
   inspector.hidden = day === null;
@@ -2161,13 +2555,13 @@ function renderDayInspector() {
   const board = buildBoard(day);
   const index = day - board.monday;
   const entry = board.days[index];
-  const events = matchingCalendarWeek(board.monday, calendarEvents())[index];
+  const events = calendarRows(board.monday, calendar, resolve)[index];
   const checks = currentChecks(board);
   const upcoming = day > localDay();
   const milestones = calendarMilestones(day, day).get(day) ?? [];
   setText("jump-board-week", viewedDay === null ? "Jump to this week" : "Jump to this day");
   setText("inspector-date", dateLabel(day, fullDate));
-  setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.phase, board.courses) : "Semester break");
+  setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.sessions, board.courses) : "Semester break");
   setText("inspector-study", studyLabel(entry.study) + " study");
   byId("inspector-milestones").innerHTML = milestones.map((label) => "<li>" + escapeHTML(label) + "</li>").join("");
   byId("inspector-milestones").hidden = !milestones.length;
