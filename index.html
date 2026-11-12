@@ -59,9 +59,7 @@ main { width: min(1500px, calc(100% - 64px)); margin-inline: auto; padding: 25px
 }
 .action-menu-panel button { text-align: start; border-color: transparent; background: transparent; white-space: nowrap; }
 .action-menu-panel button:hover:not(:disabled) { background: #26262d; }
-.preview-field { display: flex; align-items: center; gap: 10px; font-size: .77rem; color: var(--muted); }
 select { padding: 8px 29px 8px 10px; min-height: 37px; }
-.preview-field select { max-width: 170px; min-width: 0; color: #f4f4f5; }
 .badge { display: inline-flex; align-items: center; font-size: .67rem; line-height: 1; font-weight: 760; border: 1px solid; border-radius: 6px; padding: 5px 7px; white-space: nowrap; }
 .badge.A { color: #ffc4d7; background: #321823; border-color: var(--maroon); }
 .badge.B { color: #ffe091; background: #292516; border-color: #635021; }
@@ -233,7 +231,20 @@ dialog::backdrop { background: #08080acb; }
 .calendar-month-controls button { min-height: 32px; padding: 4px 9px; border: 0; background: transparent; color: var(--muted); }
 .calendar-month-controls button:hover { color: #f4f4f5; background: #ffffff0a; }
 .calendar-month-controls button[aria-label] { min-width: 31px; font-size: 1.2rem; line-height: 1; }
-.calendar-actions { justify-content: flex-end; }
+.calendar-actions { justify-content: flex-end; flex-wrap: nowrap; max-width: 100%; }
+#preview, #refresh-calendar, #ics-menu > summary {
+  height: 37px; padding-block: 0; border-radius: 8px; font-size: .82rem; font-weight: 650;
+}
+.calendar-term-select { display: flex; position: relative; width: 8rem; min-width: 0; }
+#preview { appearance: none; width: 100%; min-width: 0; padding-inline: 9px 22px; }
+.calendar-term-select::after {
+  content: ""; position: absolute; inset-block: 0; inset-inline-end: 10px; margin-block: auto;
+  width: 7px; height: 7px; border: solid var(--muted); border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg); pointer-events: none;
+}
+#refresh-calendar { display: grid; place-items: center; flex: 0 0 37px; padding-inline: 0; }
+#refresh-calendar svg { width: 17px; height: 17px; }
+#ics-menu > summary { min-width: 54px; padding-inline: 9px; }
 #calendar-message:empty { display: none; }
 .inline-calendar-body {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0fr); gap: 0; margin-top: 14px;
@@ -294,8 +305,6 @@ dialog::backdrop { background: #08080acb; }
   main { width: calc(100% - 24px); padding-top: 13px; }
   .context-top { align-items: flex-start; flex-direction: column; gap: 11px; padding: 12px; }
   .context-actions { width: 100%; justify-content: flex-start; align-items: end; gap: 6px; }
-  .preview-field { display: grid; flex: 1 1 105px; gap: 3px; }
-  .preview-field select { max-width: 100%; width: 100%; padding-inline-end: 19px; }
   .stat { padding: 8px 9px; }
   .stat-label { font-size: .67rem; }
   .stat-line { display: grid; gap: 2px; }
@@ -303,7 +312,6 @@ dialog::backdrop { background: #08080acb; }
   .stat small { font-size: .64rem; }
   .inline-calendar { padding: 12px; }
   .calendar-actions { justify-content: flex-start; }
-  .calendar-actions .preview-field { flex: 1 1 100%; }
   .inline-calendar-body, .inline-calendar-body.has-selection { grid-template-columns: minmax(0, 1fr); }
   .day-inspector { border-inline-start: 0; padding-inline-start: 0; border-top: 1px solid var(--line); padding-top: 11px; }
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -388,10 +396,23 @@ dialog::backdrop { background: #08080acb; }
         </div>
       </div>
       <div class="calendar-actions">
-        <label class="preview-field">Jump to term <select id="preview" aria-label="Jump to term"></select></label>
+        <span class="calendar-term-select">
+          <select id="preview" aria-label="Choose a term"></select>
+        </span>
+        <button type="button" id="refresh-calendar" aria-label="Refresh calendar" title="Refresh calendar" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M20 4v6h-6M20 10a8 8 0 1 0-.9 8"/>
+          </svg>
+        </button>
+        <details class="action-menu" id="ics-menu">
+          <summary>.ics</summary>
+          <div class="action-menu-panel">
+            <button type="button" id="choose-calendar">Import from File</button>
+            <button type="button" id="paste-calendar-link">Paste .ics Link</button>
+            <button type="button" id="clear-calendar" class="danger" disabled>Clear Calendar</button>
+          </div>
+        </details>
         <input type="file" id="calendar-file" accept=".ics,text/calendar" hidden>
-        <button type="button" id="choose-calendar">Import .ics</button>
-        <button type="button" id="clear-calendar" disabled>Clear .ics</button>
       </div>
     </div>
     <p id="calendar-message" class="dialog-note" role="status"></p>
@@ -423,6 +444,32 @@ dialog::backdrop { background: #08080acb; }
     <p><a href="https://asuonline.asu.edu/newsroom/online-learning-tips/discover-weekly-number-hours-online-students-study" target="_blank" rel="noopener">ASU workload guidance</a> · <a href="https://registrar.asu.edu/academic-calendar" target="_blank" rel="noopener">ASU academic calendar</a></p>
   </footer>
 </main>
+<dialog id="calendar-link-dialog" class="compact-dialog" aria-labelledby="calendar-link-title">
+  <form id="calendar-link-form" class="dialog-shell">
+    <div class="dialog-head"><div><h2 id="calendar-link-title">Paste .ics Link</h2><p>Refreshes automatically while the dashboard is open.</p></div></div>
+    <label class="field">Calendar feed URL
+      <input type="url" id="calendar-link-url" placeholder="https://calendar.google.com/calendar/ical/…" required autofocus autocomplete="off" spellcheck="false">
+    </label>
+    <label class="field">CORS proxy URL (optional)
+      <input type="url" id="calendar-proxy-url" placeholder="https://your-proxy.example/ics" autocomplete="off" spellcheck="false" aria-describedby="calendar-proxy-note">
+    </label>
+    <p id="calendar-proxy-note" class="dialog-note">Leave blank to fetch the feed directly. If your calendar blocks browser requests, use a trusted HTTPS proxy that accepts a <code>url</code> query parameter. The proxy receives the feed URL and its events.</p>
+    <p id="calendar-link-error" class="form-error" role="alert" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" id="cancel-calendar-link">Cancel</button>
+      <button type="submit" class="primary">Save and sync</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="calendar-clear-dialog" class="compact-dialog" aria-labelledby="calendar-clear-title">
+  <form method="dialog" class="dialog-shell">
+    <div class="dialog-head"><div><h2 id="calendar-clear-title">Clear Calendar</h2><p>Remove imported events and disconnect the saved calendar link.</p></div></div>
+    <div class="dialog-actions">
+      <button value="cancel" autofocus>Cancel</button>
+      <button value="clear" class="danger">Clear Calendar</button>
+    </div>
+  </form>
+</dialog>
 <dialog id="editor" aria-labelledby="editor-title">
   <form id="editor-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
@@ -945,6 +992,8 @@ function initialCalendarWeek(events, day) {
 
 const STORAGE_KEY = "studyboard.asu.v1";
 const RECOVERY_KEY = STORAGE_KEY + ".recovery";
+const CALENDAR_FEED_KEY = STORAGE_KEY + ".calendar-feed";
+const CALENDAR_REFRESH_MS = 5 * 60 * 1000;
 const DATA_VERSION = 4;
 const DAY_MS = 86400000;
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -1348,7 +1397,8 @@ function renderDays(board, day) {
   const checks = visibleChecks(board);
   const element = byId("board");
   const expandedDays = new Set([...element.querySelectorAll(".day-schedule[open]")].map((details) => Number(details.dataset.calendarDay)));
-  const calendar = state.events.length ? matchingCalendarWeek(board.monday, state.events) : null;
+  const events = calendarEvents();
+  const calendar = events.length ? matchingCalendarWeek(board.monday, events) : null;
   element.classList.toggle("read-only", board.readOnly);
   element.innerHTML = board.days.map((entry, index) => {
     const today = entry.date === day;
@@ -1546,21 +1596,24 @@ byId("current-week").addEventListener("click", () => {
 });
 
 const actionMenu = byId("action-menu");
-const actionMenuToggle = actionMenu.querySelector("summary");
-actionMenu.addEventListener("click", (event) => {
-  if (!event.target.closest(".action-menu-panel button:not(:disabled)")) return;
-  actionMenu.open = false;
-  actionMenuToggle.focus({ preventScroll: true });
-}, true);
-actionMenu.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape" || !actionMenu.open) return;
-  event.preventDefault();
-  actionMenu.open = false;
-  actionMenuToggle.focus();
-});
-document.addEventListener("click", (event) => {
-  if (actionMenu.open && !actionMenu.contains(event.target)) actionMenu.open = false;
-});
+const calendarMenu = byId("ics-menu");
+for (const menu of [actionMenu, calendarMenu]) {
+  const toggle = menu.querySelector("summary");
+  menu.addEventListener("click", (event) => {
+    if (!event.target.closest(".action-menu-panel button:not(:disabled)")) return;
+    menu.open = false;
+    toggle.focus({ preventScroll: true });
+  }, true);
+  menu.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !menu.open) return;
+    event.preventDefault();
+    menu.open = false;
+    toggle.focus();
+  });
+  document.addEventListener("click", (event) => {
+    if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+}
 
 byId("board-filters").addEventListener("click", (event) => {
   const button = event.target.closest("[data-filter]");
@@ -1971,7 +2024,9 @@ let calendarAttempt = 0;
 let calendarMonth = monthStart(localDay());
 let selectedCalendarDay = null;
 let calendarFocusDay = localDay();
-let confirmCalendarClear = false;
+let calendarFeed = readCalendarFeed();
+let calendarRequest = null;
+let lastCalendarRefresh = null;
 let requestedCourse = null;
 let timerFinishing = false;
 let audioContext;
@@ -2076,7 +2131,9 @@ function calendarHeading(start, next) {
 }
 
 function renderInlineCalendar(focusDay = false) {
-  byId("clear-calendar").disabled = !state.events.length;
+  const calendar = calendarEvents();
+  byId("refresh-calendar").disabled = !calendarFeed;
+  byId("clear-calendar").disabled = !state.events.length && !calendarFeed;
   const today = localDay();
   const start = calendarMonth;
   const next = monthStart(start, 1);
@@ -2086,7 +2143,7 @@ function renderInlineCalendar(focusDay = false) {
   setText("calendar-month", calendarHeading(start, next));
   const cells = [];
   for (let monday = mondayOf(start); monday < next; monday += 7) {
-    const rows = state.events.length ? matchingCalendarWeek(monday, state.events) : Array.from({ length: 7 }, () => []);
+    const rows = calendar.length ? matchingCalendarWeek(monday, calendar) : Array.from({ length: 7 }, () => []);
     rows.forEach((events, index) => {
       const day = monday + index;
       const selected = day === selectedCalendarDay;
@@ -2128,7 +2185,7 @@ function renderDayInspector() {
   const board = buildBoard(day);
   const index = day - board.monday;
   const entry = board.days[index];
-  const events = matchingCalendarWeek(board.monday, state.events)[index];
+  const events = matchingCalendarWeek(board.monday, calendarEvents())[index];
   const checks = currentChecks(board);
   const upcoming = day > localDay();
   const milestones = calendarMilestones(day, day).get(day) ?? [];
@@ -2146,8 +2203,140 @@ function renderDayInspector() {
 
 function calendarStatus(message) {
   setText("calendar-message", message);
-  setText("clear-calendar", confirmCalendarClear ? "Confirm clear" : "Clear .ics");
 }
+
+function calendarEntryCount(count) {
+  return count + (count === 1 ? " entry" : " entries");
+}
+
+function httpsCalendarURL(value, label) {
+  let url;
+  try { url = new URL(value); } catch {}
+  if (url?.protocol !== "https:" || url.username || url.password) {
+    throw new Error(label + " must be an HTTPS URL.");
+  }
+  url.hash = "";
+  return url;
+}
+
+function calendarFeedSettings(link, proxy = "") {
+  const proxyURL = proxy.trim();
+  return {
+    link: httpsCalendarURL(link.trim().replace(/^webcal:/i, "https:"), "The calendar feed URL").href,
+    proxy: proxyURL ? httpsCalendarURL(proxyURL, "The CORS proxy URL").href : ""
+  };
+}
+
+function readCalendarFeed() {
+  // Keep the feed and proxy URLs out of dashboard backups.
+  try {
+    const raw = JSON.parse(localStorage.getItem(CALENDAR_FEED_KEY));
+    if (!raw) return null;
+    const settings = calendarFeedSettings(raw.link, raw.proxy);
+    let events = [];
+    try { events = normalizeEvents(raw.events); } catch {}
+    return { ...settings, events };
+  } catch {
+    return null;
+  }
+}
+
+function saveCalendarFeed() {
+  try {
+    if (calendarFeed) localStorage.setItem(CALENDAR_FEED_KEY, JSON.stringify(calendarFeed));
+    else localStorage.removeItem(CALENDAR_FEED_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function calendarEvents() {
+  const synced = calendarFeed?.events ?? [];
+  if (!synced.length) return state.events;
+  if (!state.events.length) return synced;
+  return [...new Map([...state.events, ...synced].map((entry) => [entry.id, entry])).values()];
+}
+
+function sameCalendarFeed(left, right) {
+  return left?.link === right?.link && left?.proxy === right?.proxy;
+}
+
+function stopCalendarRefresh() {
+  calendarRequest?.abort();
+  calendarRequest = null;
+  lastCalendarRefresh = null;
+}
+
+async function refreshCalendarFeed(reveal = false) {
+  if (!calendarFeed || calendarRequest) return;
+  const { link, proxy } = calendarFeed;
+  const url = new URL(proxy || link);
+  if (proxy) {
+    if (url.searchParams.has("url")) url.searchParams.delete("url");
+    url.search += (url.search ? "&" : "?") + "url=" + encodeURIComponent(link);
+  }
+  const request = new AbortController();
+  calendarRequest = request;
+  lastCalendarRefresh = Date.now();
+  const timeout = setTimeout(() => request.abort(), 15000);
+  calendarStatus("Syncing calendar…");
+  try {
+    const response = await fetch(url, {
+      signal: request.signal, cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer"
+    });
+    if (!response.ok) throw new Error((proxy ? "The calendar proxy" : "The calendar feed") + " returned HTTP " + response.status + ".");
+    const text = await response.text();
+    if (calendarRequest !== request) return;
+    let parsed;
+    try { parsed = parseCalendar(text); }
+    catch { throw new Error("The response is not a valid .ics feed."); }
+    const { events, skipped } = parsed;
+    if (!events.length && skipped) throw new Error("The feed contains no supported events.");
+    const changed = JSON.stringify(calendarFeed.events) !== JSON.stringify(events);
+    calendarFeed.events = events;
+    const saved = saveCalendarFeed();
+    if (reveal && events.length) {
+      calendarFocusDay = suggestedCalendarDate(events, localDay());
+      calendarMonth = monthStart(calendarFocusDay);
+      selectedCalendarDay = null;
+    }
+    if (changed || reveal) render();
+    calendarStatus("Calendar synced · " + calendarEntryCount(events.length) + "." +
+      (skipped ? " Skipped " + calendarEntryCount(skipped) + " with unsupported or invalid data." : "") +
+      (saved ? "" : " Available for this visit. Browser storage is unavailable."));
+  } catch (error) {
+    if (calendarRequest !== request) return;
+    let message = error.message;
+    if (request.signal.aborted) message = "The calendar sync timed out.";
+    else if (error instanceof TypeError) {
+      message = proxy
+        ? "Could not reach the calendar through the proxy. Check that it allows this site."
+        : "Could not fetch the calendar directly. If your provider blocks browser requests, add a trusted CORS proxy.";
+    }
+    calendarStatus(message + (calendarFeed.events.length ? " Showing the last successful sync." : ""));
+  } finally {
+    clearTimeout(timeout);
+    if (calendarRequest === request) calendarRequest = null;
+  }
+}
+
+function refreshCalendarWhenVisible() {
+  if (!document.hidden && (lastCalendarRefresh === null || Date.now() - lastCalendarRefresh >= CALENDAR_REFRESH_MS)) {
+    refreshCalendarFeed();
+  }
+}
+
+window.addEventListener("storage", (event) => {
+  if (event.key !== CALENDAR_FEED_KEY && event.key !== null) return;
+  const next = readCalendarFeed();
+  if (!sameCalendarFeed(next, calendarFeed)) {
+    stopCalendarRefresh();
+    calendarStatus("");
+  }
+  calendarFeed = next;
+  render();
+});
 
 function showCalendarMonth(day, focusDay = false) {
   calendarMonth = monthStart(day);
@@ -2196,10 +2385,11 @@ byId("calendar-grid").addEventListener("keydown", (event) => {
 byId("calendar-prev").addEventListener("click", () => moveCalendarMonth(-1));
 byId("calendar-next").addEventListener("click", () => moveCalendarMonth(1));
 byId("calendar-today").addEventListener("click", () => showCalendarMonth(localDay()));
+byId("refresh-calendar").addEventListener("click", () => refreshCalendarFeed());
 byId("close-inspector").addEventListener("click", closeDayInspector);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !event.defaultPrevented && selectedCalendarDay !== null &&
-      !document.querySelector("dialog[open]") && !actionMenu.open) closeDayInspector();
+      !document.querySelector("dialog[open]") && !actionMenu.open && !calendarMenu.open) closeDayInspector();
 });
 byId("jump-board-week").addEventListener("click", () => {
   const targetDay = selectedCalendarDay;
@@ -2228,13 +2418,11 @@ byId("calendar-file").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
   const attempt = ++calendarAttempt;
-  confirmCalendarClear = false;
   calendarStatus("Reading calendar…");
   try {
     const parsed = parseCalendar(await file.text());
     if (attempt !== calendarAttempt) return;
-    const skipped = parsed.skipped ? " Skipped " + parsed.skipped + " unsupported or invalid " +
-      (parsed.skipped === 1 ? "entry." : "entries.") : "";
+    const skipped = parsed.skipped ? " Skipped " + calendarEntryCount(parsed.skipped) + " with unsupported or invalid data." : "";
     if (!parsed.events.length) {
       calendarStatus("No supported events found." + skipped);
       return;
@@ -2252,7 +2440,7 @@ byId("calendar-file").addEventListener("change", async (event) => {
       return true;
     }, () => {
       if (attempt !== calendarAttempt) return;
-      const message = "Imported or updated " + parsed.events.length + (parsed.events.length === 1 ? " entry." : " entries.");
+      const message = "Imported or updated " + calendarEntryCount(parsed.events.length) + ".";
       calendarStatus(message + (storageFailed ? " Available for this visit. Browser storage is unavailable." : "") + skipped);
       render();
     });
@@ -2260,19 +2448,52 @@ byId("calendar-file").addEventListener("change", async (event) => {
     if (attempt === calendarAttempt) calendarStatus(error.message);
   }
 });
-byId("clear-calendar").addEventListener("click", () => {
-  if (!confirmCalendarClear) {
-    confirmCalendarClear = true;
-    calendarStatus("Clear all imported events from the tracker?");
+const calendarLinkDialog = byId("calendar-link-dialog");
+const calendarClearDialog = byId("calendar-clear-dialog");
+
+byId("paste-calendar-link").addEventListener("click", () => {
+  byId("calendar-link-url").value = calendarFeed?.link ?? "";
+  byId("calendar-proxy-url").value = calendarFeed?.proxy ?? "";
+  byId("calendar-link-error").hidden = true;
+  calendarLinkDialog.showModal();
+});
+byId("cancel-calendar-link").addEventListener("click", () => calendarLinkDialog.close());
+byId("calendar-link-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  let settings;
+  try {
+    settings = calendarFeedSettings(byId("calendar-link-url").value, byId("calendar-proxy-url").value);
+  } catch (error) {
+    setText("calendar-link-error", error.message);
+    byId("calendar-link-error").hidden = false;
     return;
   }
+  stopCalendarRefresh();
+  const events = settings.link === calendarFeed?.link ? calendarFeed.events : [];
+  calendarFeed = { ...settings, events };
+  saveCalendarFeed();
+  calendarLinkDialog.close();
+  render();
+  refreshCalendarFeed(true);
+});
+
+byId("clear-calendar").addEventListener("click", () => {
+  calendarClearDialog.returnValue = "cancel";
+  calendarClearDialog.showModal();
+});
+calendarClearDialog.addEventListener("close", () => {
+  if (calendarClearDialog.returnValue !== "clear") return;
   calendarAttempt++;
+  stopCalendarRefresh();
+  calendarFeed = null;
+  const cleared = saveCalendarFeed();
   commit(() => {
     state.events = [];
     return true;
   }, () => {
-    confirmCalendarClear = false;
-    calendarStatus("Imported events cleared.");
+    calendarStatus(cleared && !storageFailed
+      ? "Calendar cleared."
+      : "Calendar cleared for this visit. Browser storage is unavailable.");
     render();
   });
 });
@@ -2522,6 +2743,9 @@ syncState();
 renderStorageStatus();
 render();
 commit(prepareCurrentWeek);
+refreshCalendarWhenVisible();
+document.addEventListener("visibilitychange", refreshCalendarWhenVisible);
+setInterval(refreshCalendarWhenVisible, CALENDAR_REFRESH_MS);
 scheduleMidnight();
 tickTimer();
 setInterval(() => {
