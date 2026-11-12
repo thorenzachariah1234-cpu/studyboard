@@ -219,8 +219,6 @@ dialog::backdrop { background: #08080acb; }
 .accent-field button { padding-inline: 7px; }
 .settings-toggle { display: flex; align-items: center; gap: 8px; font-size: .84rem; }
 .settings-toggle input, .assignment-check { accent-color: var(--gold); }
-.class-session-dates { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.class-session-dates span { padding: 4px 7px; border: 1px solid var(--line); border-radius: 6px; font-size: .72rem; }
 .settings-section { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
 .settings-section h3 { font-size: .93rem; margin-bottom: 7px; }
 .form-error { font-size: .79rem; margin-top: 7px; }
@@ -257,7 +255,7 @@ dialog::backdrop { background: #08080acb; }
 .day-schedule small { color: var(--muted); font-size: .65rem; margin-top: 2px; }
 .calendar-event { --event-inset: 25px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; }
 .event-heading { display: block; min-width: 0; padding-inline-start: 6px; border-inline-start: 2px solid var(--accent); }
-.event-heading strong { display: block; overflow-wrap: anywhere; }
+.event-heading strong, .database-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .event-details { min-width: 0; width: 100%; }
 .event-details > summary, .event-static { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 3px; align-items: start; }
 .event-details > summary { cursor: pointer; list-style: none; }
@@ -342,6 +340,9 @@ dialog::backdrop { background: #08080acb; }
 .calendar-views button { padding: 6px 10px; }
 .calendar-views button[aria-pressed=true] { background: var(--raised); border-color: #71717a; color: #fff; }
 .database-view { margin-top: 12px; }
+.database-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.database-controls button { padding: 5px 8px; font-size: .73rem; }
+.database-controls button[aria-pressed=true] { border-color: var(--muted); }
 .database-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
 .database-table { width: 100%; min-width: 610px; border-collapse: collapse; table-layout: fixed; font-size: .78rem; }
 .database-table th, .database-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
@@ -357,7 +358,20 @@ dialog::backdrop { background: #08080acb; }
 .database-class { display: inline-flex; align-items: baseline; gap: 5px; }
 .database-class::before { content: ""; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--accent); }
 .database-table time small { display: block; color: var(--muted); }
+.day-body > .day-schedule { margin: 0; }
+.board:not(.day-view) .day-body { gap: 5px; padding-block: 5px; }
+.board:not(.day-view) .day-section { padding-block: 0; }
+.board:not(.day-view) .tasks { gap: 3px; }
+.board:not(.day-view) .task { gap: 5px; padding: 4px 5px; min-height: 28px; }
+.board:not(.day-view) .task input { width: 13px; height: 13px; flex-basis: 13px; }
+.board:not(.day-view) .task input::after { left: 3px; top: 0; }
+.board:not(.day-view) .habit-list .task { min-height: 20px; padding: 2px; }
+.board:not(.day-view) .task-detail, .board:not(.day-view) .course-time { margin-top: 2px; }
+.board:not(.day-view) .day-schedule > summary { padding: 5px 6px; }
+.board:not(.day-view) .day-schedule li { padding-block: 3px; }
 @media (pointer: coarse) {
+  .board:not(.day-view) .task { min-height: 32px; }
+  .board:not(.day-view) .habit-list .task { min-height: 28px; }
   .task { min-height: 44px; }
   .habit-list .task { min-height: 34px; }
   .habit-day span { min-height: 40px; }
@@ -511,14 +525,17 @@ dialog::backdrop { background: #08080acb; }
         </div>
         <p id="inspector-study" class="inspector-study"></p>
         <ul id="inspector-milestones" class="inspector-milestones" hidden></ul>
+        <section class="inspector-section" id="inspector-study-checklist"><h4>Courses</h4><div id="inspector-courses"></div></section>
         <section class="inspector-section"><h4>Schedule &amp; Deadlines</h4><div id="inspector-events"></div></section>
         <section class="inspector-section"><h4>Habits</h4><div id="inspector-habits"></div></section>
-        <section class="inspector-section"><h4>Courses</h4><div id="inspector-courses"></div></section>
         <button type="button" class="jump-board-week" id="jump-board-week">Jump to this week</button>
       </aside>
     </div>
     <div class="database-view" id="database-view" hidden>
-      <p id="database-summary" class="dialog-note" role="status"></p>
+      <div class="database-controls">
+        <p id="database-summary" class="dialog-note" role="status"></p>
+        <button type="button" id="database-archive" aria-pressed="false">Show archived</button>
+      </div>
       <div class="database-scroll" id="database-scroll" tabindex="0" role="region" aria-label="Assignments and events">
         <table class="database-table">
           <caption class="sr-only">Assignments and events for the selected month</caption>
@@ -597,9 +614,8 @@ dialog::backdrop { background: #08080acb; }
       <button type="button" id="remove-term" class="danger">Remove term</button>
       <button type="button" id="switch-editor" class="push">Edit JSON</button>
     </div>
-    <p id="classes-empty" class="dialog-note" hidden>Create a term under Settings → Manage classes and terms to add its classes.</p>
+    <p id="classes-empty" class="dialog-note" hidden>Add a term to start setting up sessions and classes.</p>
     <div id="form-pane">
-      <div id="class-session-dates" class="class-session-dates"></div>
       <div id="term-configuration">
         <div class="form-grid" id="term-fields"></div>
         <p id="term-note" class="dialog-note"></p>
@@ -952,6 +968,18 @@ function validCivil(date) {
     (date.zone === null || (typeof date.zone === "string" && date.seconds !== null && Boolean(zoneFormatter(date.zone))));
 }
 
+function cleanEventSummary(summary) {
+  const tags = [];
+  const title = summary.replace(/\[([^\[\]\r\n]+)\]/g, (bracketed, token) => {
+    const systemTag = /^\d{4}[-_]?(?:spring|summer|fall|winter)[a-z]?(?=[-_]|$)/i.test(token) ||
+      /^(?:[A-Z\d]+[-_]){2,}[A-Z]{2,}\d{2,}[-_]\d{3,}$/i.test(token);
+    if (!systemTag) return bracketed;
+    tags.push(token);
+    return " ";
+  }).replace(/\s+/g, " ").trim();
+  return { title: title || "Untitled event", tags };
+}
+
 function normalizeCalendarEvent(event) {
   if (!isRecord(event)) throw new Error("An imported calendar event is invalid.");
   const { id, uid, summary, start, end, recurrence, rule, exclusions, cancelled } = event;
@@ -977,13 +1005,15 @@ function normalizeCalendarEvent(event) {
     interval: rule.interval, count: rule.count, until: rule.until, weekStart: rule.weekStart,
     days: [...new Set(rule.days)].sort((left, right) => (left - rule.weekStart + 7) % 7 - (right - rule.weekStart + 7) % 7)
   };
-  const details = {};
+  const { title, tags } = cleanEventSummary(summary);
+  const titleContext = [typeof event.titleContext === "string" ? event.titleContext : "", ...tags].filter(Boolean).join(" ");
+  const details = titleContext ? { titleContext } : {};
   for (const key of ["description", "context", "feedContext", "canvasId"]) {
     if (typeof event[key] === "string" && event[key]) details[key] = event[key];
   }
   const url = safeEventURL(event.url);
   if (url) details.url = url.href;
-  return { id, uid, summary, start, end, recurrence, rule: normalizedRule, exclusions, cancelled, ...details };
+  return { id, uid, summary: title, start, end, recurrence, rule: normalizedRule, exclusions, cancelled, ...details };
 }
 
 function normalizeEvents(input) {
@@ -1134,7 +1164,8 @@ function uniqueCourse(courses, score) {
 }
 
 function namedCalendarCourse(courses, event) {
-  const fields = [event.context, event.summary, event.description, event.feedContext].map((value) => " " + courseTokens(value) + " ");
+  const fields = [event.context, [event.summary, event.titleContext].filter(Boolean).join(" "), event.description, event.feedContext]
+    .map((value) => " " + courseTokens(value) + " ");
   return uniqueCourse(courses, (course) => {
     const code = courseTokens(course.code);
     const name = courseTokens(course.name);
@@ -1225,7 +1256,7 @@ function calendarItems(events, readOnly = null, expandedEvents = new Set()) {
     const { description, url } = event.source;
     const key = eventKey(event);
     const completed = completedEvents.has(key);
-    const heading = '<span class="event-heading"><strong>' + escapeHTML(event.summary) + "</strong><small>" +
+    const heading = '<span class="event-heading"><strong title="' + escapeHTML(event.summary) + '">' + escapeHTML(event.summary) + "</strong><small>" +
       escapeHTML(calendarTime(event)) + (event.course ? " · " + escapeHTML(event.course.code) : "") + "</small></span>";
     const status = readOnly === null
       ? '<span class="inspector-status" data-event-status="' + escapeHTML(key) + '">' + (completed ? "Done" : "Open") + "</span>"
@@ -1614,9 +1645,15 @@ function tally(board, checks, coursesOnly = false) {
   return { done: tasks.filter((task) => checks[task.id] === true).length, total: tasks.length };
 }
 
+function checklistDays(board) {
+  return state.studyTracking ? board.days : board.days.map((day) => ({
+    ...day, tasks: day.tasks.filter((task) => task.type !== "course")
+  }));
+}
+
 function recordWeek(board, checks) {
   const previous = state.weeks[board.key];
-  const { done, total } = tally(board, checks);
+  const { done, total } = tally({ days: checklistDays(board) }, checks);
   state.weeks[board.key] = { monday: board.monday, checks, done, total, habits: board.habits };
   return !previous?.habits || previous.done !== done || previous.total !== total;
 }
@@ -1685,10 +1722,11 @@ function renderTask(task, checked, dayName, readOnly) {
     escapeHTML(task.name) + "</span>" + target + "</span></label>";
 }
 
-function renderDayTasks(entry, checks, readOnly, today) {
+function renderDayTasks(entry, checks, readOnly, today, schedule) {
   const habits = [];
   const courses = [];
   for (const task of entry.tasks) {
+    if (task.type === "course" && !state.studyTracking) continue;
     const label = renderTask(task, checks[task.id] === true, entry.name, readOnly);
     if (task.type !== "course") {
       habits.push(label);
@@ -1704,7 +1742,7 @@ function renderDayTasks(entry, checks, readOnly, today) {
   }
   const section = (items, name, className) => items.length ? '<section class="day-section ' + className +
     '" aria-label="' + name + '"><div class="tasks">' + items.join("") + "</div></section>" : "";
-  return '<div class="day-body">' + (section(habits, "Habits", "habit-list") + section(courses, "Courses", "course-list") ||
+  return '<div class="day-body">' + (section(courses, "Courses", "course-list") + schedule + section(habits, "Habits", "habit-list") ||
     '<p class="empty-day">No matching tasks</p>') + "</div>";
 }
 
@@ -1735,7 +1773,7 @@ function renderDays(board) {
     const study = state.studyTracking && entry.study ? studyLabel(entry.study) + " study" : "Checklist";
     return heading + '<div class="day-meta"><span class="study-target">' + study + '</span><span class="day-count"></span></div>' +
       '<div class="meter" role="progressbar" aria-label="' + entry.name + ' completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>' + open + "</div>" +
-      schedule + renderDayTasks(entry, checks, board.readOnly, today) + "</article>";
+      renderDayTasks(entry, checks, board.readOnly, today, schedule) + "</article>";
   }).join("");
 }
 
@@ -1746,13 +1784,14 @@ function updateMeter(meter, value) {
 
 function updateProgress(board) {
   const checks = visibleChecks(board);
-  const { done, total } = tally(board, checks);
+  const days = checklistDays(board);
+  const { done, total } = tally({ days }, checks);
   const completion = percent(done, total);
   byId("weekly-percent").textContent = completion + "%";
   byId("weekly-count").textContent = done + " of " + total + " tasks";
   updateMeter(byId("weekly-meter"), completion);
   for (const card of byId("board").children) {
-    const entry = board.days[Number(card.dataset.day) - board.monday];
+    const entry = days[Number(card.dataset.day) - board.monday];
     const completed = entry.tasks.filter((task) => checks[task.id] === true).length;
     card.querySelector(".day-count").textContent = completed + "/" + entry.tasks.length;
     updateMeter(card.querySelector(".meter"), percent(completed, entry.tasks.length));
@@ -1825,7 +1864,7 @@ function renderFilters(term, courses) {
 }
 
 function renderFilteredProgress(term, courses) {
-  const filtering = Boolean(term && courses.length < term.courses.length);
+  const filtering = Boolean(state.studyTracking && term && courses.length < term.courses.length);
   byId("session-stat").hidden = !filtering;
   byId("streak-stat").hidden = filtering;
   if (!filtering) return;
@@ -2033,7 +2072,6 @@ window.addEventListener("storage", (event) => {
 let draftSchedule = [];
 let editingId = "";
 let editingJSON = false;
-let managingTerms = false;
 const editor = byId("editor");
 
 function selectedTerm() { return draftSchedule.find((term) => term.id === editingId); }
@@ -2060,13 +2098,9 @@ function renderEditor() {
   byId("form-pane").hidden = editingJSON || !term;
   byId("json-pane").hidden = !editingJSON;
   byId("edit-term").hidden = editingJSON || !term;
-  for (const id of ["add-term", "remove-term"]) byId(id).hidden = editingJSON || !managingTerms;
-  byId("switch-editor").hidden = !managingTerms;
-  byId("term-configuration").hidden = !managingTerms;
-  byId("class-session-dates").hidden = managingTerms;
-  byId("classes-empty").hidden = Boolean(term || editingJSON || managingTerms);
+  for (const id of ["add-term", "remove-term"]) byId(id).hidden = editingJSON;
+  byId("classes-empty").hidden = Boolean(term || editingJSON);
   byId("study-editor-note").hidden = !state.studyTracking || editingJSON || !term;
-  byId("save-classes").disabled = !term && !managingTerms;
   byId("edit-term").disabled = !term;
   byId("remove-term").disabled = !term;
   byId("switch-editor").textContent = editingJSON ? "Use form" : "Edit JSON";
@@ -2083,9 +2117,6 @@ function renderEditor() {
   ].join("");
   byId("term-note").textContent = term.planned ? "Planning dates and session assignments are editable." : "";
   const sessions = termSessions(term);
-  byId("class-session-dates").innerHTML = sessions.map((session) =>
-    "<span>" + escapeHTML(session.name) + " · " +
-    escapeHTML(dateRange(dayFromISO(session.startDate), dayFromISO(session.endDate))) + "</span>").join("");
   byId("session-fields").innerHTML = sessions.map((session, index) =>
     '<div class="session-row" data-session-index="' + index + '">' +
     field("Session name", "name", session.name) +
@@ -2213,7 +2244,6 @@ function automaticTargetPlaceholder(course, sessionInfo) {
 
 function openRoadmapEditor(manage = false) {
   syncState();
-  managingTerms = manage;
   draftSchedule = JSON.parse(JSON.stringify(state.schedule));
   const today = localDay();
   const next = draftSchedule.find((term) => dayFromISO(term.startDate) > today);
@@ -2243,6 +2273,7 @@ byId("study-tracking").addEventListener("change", (event) => {
   const enabled = event.target.checked;
   commit(() => {
     state.studyTracking = enabled;
+    prepareCurrentWeek();
     return true;
   }, render);
 });
@@ -2628,6 +2659,8 @@ function calendarHeading(start, next) {
 
 let calendarView = "calendar";
 let databaseSort = { column: "due", direction: 1 };
+let showArchived = false;
+let nextArchiveAt = Infinity;
 
 function eventsInRange(start, end, events) {
   const unique = new Map();
@@ -2645,8 +2678,9 @@ function dueTime(event) {
   return event.allDay ? eventInstant({ day: event.from, seconds: null, zone: null }) : event.from;
 }
 
-function renderDatabaseSummary(total, done) {
-  setText("database-summary", total ? done + " of " + total + " complete" : "No events this month.");
+function databaseArchiveAt(event) {
+  if (event.allDay) return dueTime({ ...event, from: event.from + 8 });
+  return event.from + 7 * DAY_MS + 1;
 }
 
 function renderUpcomingEvents(events, today) {
@@ -2662,7 +2696,19 @@ function renderDatabase(events, resolve) {
   const focused = rows.contains(document.activeElement) ? document.activeElement.dataset.eventCheck : null;
   const expanded = new Set([...rows.querySelectorAll("[data-event-detail][open]")].map((item) => item.dataset.eventDetail));
   const completed = new Set(state.completedEvents);
-  const entries = eventsInRange(calendarMonth, monthStart(calendarMonth, 1), events).map(resolve);
+  const now = Date.now();
+  const active = [];
+  const archived = [];
+  nextArchiveAt = Infinity;
+  for (const event of eventsInRange(calendarMonth, monthStart(calendarMonth, 1), events)) {
+    const archiveAt = databaseArchiveAt(event);
+    if (completed.has(eventKey(event)) || archiveAt <= now) archived.push(event);
+    else {
+      active.push(event);
+      nextArchiveAt = Math.min(nextArchiveAt, archiveAt);
+    }
+  }
+  const entries = (showArchived ? archived : active).map(resolve);
   const { column, direction } = databaseSort;
   const compare = {
     course: (a, b) => (a.course?.code ?? "Unassigned").localeCompare(b.course?.code ?? "Unassigned"),
@@ -2671,7 +2717,11 @@ function renderDatabase(events, resolve) {
     done: (a, b) => Number(completed.has(eventKey(a))) - Number(completed.has(eventKey(b)))
   };
   entries.sort((a, b) => direction * compare[column](a, b) || compare.due(a, b) || compare.title(a, b));
-  renderDatabaseSummary(entries.length, entries.filter((event) => completed.has(eventKey(event))).length);
+  const archiveButton = byId("database-archive");
+  archiveButton.setAttribute("aria-pressed", String(showArchived));
+  const count = entries.length;
+  setText("database-summary", count ? countLabel(count, showArchived ? "archived event" : "active event") :
+    (showArchived ? "No archived events this month." : "No active events this month."));
   byId("database-scroll").hidden = entries.length === 0;
   for (const button of byId("database-view").querySelectorAll("[data-sort]")) {
     const active = button.dataset.sort === column;
@@ -2692,7 +2742,7 @@ function renderDatabase(events, resolve) {
     const done = completed.has(key);
     const day = event.allDay ? event.from : localDay(new Date(event.from));
     const date = event.allDay ? isoDate(day) : new Date(event.from).toISOString();
-    const title = '<span class="database-title">' + escapeHTML(event.summary) + "</span>";
+    const title = '<span class="database-title" title="' + escapeHTML(event.summary) + '">' + escapeHTML(event.summary) + "</span>";
     return "<tr" + (done ? " data-completed" : "") + "><td>" +
       eventContent(title, event.source.description, "", key, expanded.has(key)) +
       '</td><td><span class="database-class"' + accentStyle(event.color) + ">" + escapeHTML(event.course?.code ?? "Unassigned") +
@@ -2700,8 +2750,17 @@ function renderDatabase(events, resolve) {
       escapeHTML(event.allDay ? "All day" : LOCAL_TIME.format(event.from)) + "</small></time></td><td>" +
       assignmentCheckbox(key, event.summary, done) + "</td><td>" + (eventLink(event.source.url, true) || "—") + "</td></tr>";
   }).join("");
-  if (focused) [...rows.querySelectorAll("[data-event-check]")].find((input) => input.dataset.eventCheck === focused)?.focus({ preventScroll: true });
+  if (focused) {
+    const controls = [...rows.querySelectorAll("[data-event-check]")];
+    (controls.find((input) => input.dataset.eventCheck === focused) ?? controls[0] ?? archiveButton).focus({ preventScroll: true });
+  }
 }
+
+byId("database-archive").addEventListener("click", () => {
+  showArchived = !showArchived;
+  const events = calendarEvents();
+  renderDatabase(events, calendarCourseResolver(events));
+});
 
 byId("calendar-views").addEventListener("click", (event) => {
   const button = event.target.closest("[data-calendar-view]");
@@ -2751,12 +2810,7 @@ function setAssignmentCompletion(event) {
     }
     const events = calendarEvents();
     renderUpcomingEvents(events, localDay());
-    if (calendarView !== "database") return;
-    if (databaseSort.column === "done") renderDatabase(events, calendarCourseResolver(events));
-    else {
-      const rows = byId("database-rows");
-      renderDatabaseSummary(rows.children.length, rows.querySelectorAll("[data-completed]").length);
-    }
+    if (calendarView === "database") renderDatabase(events, calendarCourseResolver(events));
   });
 }
 
@@ -2836,6 +2890,7 @@ function renderDayInspector(calendar = calendarEvents(), resolve) {
   setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.sessions, board.courses) : "Semester break");
   setText("inspector-study", studyLabel(entry.study) + " study");
   byId("inspector-study").hidden = !state.studyTracking;
+  byId("inspector-study-checklist").hidden = !state.studyTracking;
   byId("inspector-milestones").innerHTML = milestones.map((label) => "<li>" + escapeHTML(label) + "</li>").join("");
   byId("inspector-milestones").hidden = !milestones.length;
   byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events) + "</ul>" : '<p>No events scheduled</p>';
@@ -3397,6 +3452,10 @@ tickTimer();
 setInterval(() => {
   if (localDay() !== clockDay) wakeClock();
   else if (state.timer) tickTimer();
+  if (calendarView === "database" && Date.now() >= nextArchiveAt) {
+    const events = calendarEvents();
+    renderDatabase(events, calendarCourseResolver(events));
+  }
 }, 1000);
 
 </script>
