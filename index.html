@@ -97,11 +97,9 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .filter-pill[aria-pressed="false"]:focus-visible { opacity: .85; }
 .filter-indicator { font-size: .67rem; }
 .empty-day { padding: 5px 4px; color: var(--muted); font-size: .72rem; }
-#focus-toggle[aria-pressed="true"] { color: var(--gold); }
 .board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 9px; }
-.board.focus-mode { grid-template-columns: minmax(0, 1fr); }
-.board.focus-mode .day:not(.today) { display: none; }
-.focus-mode .tasks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); align-items: start; }
+.board.day-view { grid-template-columns: minmax(0, 1fr); }
+.day-view .tasks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); align-items: start; }
 .day {
   min-width: 0; border-radius: 13px; border: 1px solid var(--line); background: var(--surface);
   overflow: hidden; display: flex; flex-direction: column;
@@ -115,13 +113,20 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 @keyframes jump-day-header {
   0%, 22% { background-color: #3b1827; border-color: #f4bacd; }
 }
-.day-head { padding: 10px 10px 9px; background: var(--raised); border-bottom: 1px solid var(--line); }
+.day-head { position: relative; padding: 10px 10px 9px; background: var(--raised); border-bottom: 1px solid var(--line); }
 .today .day-head { background: #1d1c19; border-color: #ffc62724; }
 .day-name { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
 .day-name h3 { font-size: .84rem; line-height: 1.4; letter-spacing: -.015em; }
-.today-pill { background: var(--gold); color: #2a1c02; font-size: .61rem; font-weight: 800; border-radius: 5px; padding: 3px 5px; }
-button.today-pill { border: 0; }
-button.today-pill:hover { background: #ffda72; }
+.open-day { position: absolute; inset: 0; width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.open-day:hover { background: #ffffff08; }
+.open-day:focus-visible { outline-offset: -3px; }
+.day-view .day-head { padding: 12px 14px; }
+.day-view .day-name h3 { font-size: 1.1rem; }
+.close-day {
+  display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  border-color: transparent; background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
+}
+.close-day:hover { color: inherit; background: #ffffff08; }
 .day-date { display: block; color: var(--muted); font-size: .7rem; margin-top: 2px; }
 .day-meta { display: flex; align-items: center; justify-content: space-between; gap: 3px; margin: 9px 0 5px; font-size: .66rem; }
 .study-target { color: #d4d4d8; font-weight: 670; }
@@ -359,8 +364,6 @@ dialog::backdrop { background: #08080acb; }
             <button type="button" id="edit">Edit roadmap</button>
             <button type="button" id="manage-habits">Manage Habits</button>
             <button type="button" id="backup">Backups</button>
-            <button type="button" id="focus-toggle" aria-pressed="false">Today Focus</button>
-            <button type="button" id="reset">Reset Week</button>
           </div>
         </details>
       </div>
@@ -377,7 +380,7 @@ dialog::backdrop { background: #08080acb; }
     <div class="board-head">
       <div><h2 id="board-title" class="sr-only">Daily checklist</h2><p id="board-range" class="week-range" aria-live="polite"></p></div>
       <div id="board-filters" class="board-filters" role="group" aria-label="Filter classes and sessions" hidden></div>
-      <div class="week-controls" role="group" aria-label="Week navigation">
+      <div id="board-navigation" class="week-controls" role="group" aria-label="Week navigation">
         <button type="button" id="previous-week" aria-label="Previous week">‹</button>
         <button type="button" id="current-week">This Week</button>
         <button type="button" id="next-week" aria-label="Next week">›</button>
@@ -507,15 +510,6 @@ dialog::backdrop { background: #08080acb; }
     <div class="dialog-actions">
       <button type="button" id="cancel-editor">Cancel</button>
       <button type="submit" class="primary">Save roadmap</button>
-    </div>
-  </form>
-</dialog>
-<dialog id="reset-dialog" class="compact-dialog" aria-labelledby="reset-title">
-  <form method="dialog" class="dialog-shell">
-    <div class="dialog-head"><div><h2 id="reset-title">Reset Week</h2><p id="reset-description"></p></div></div>
-    <div class="dialog-actions">
-      <button value="cancel" autofocus>Cancel</button>
-      <button value="reset" class="danger">Clear checkboxes</button>
     </div>
   </form>
 </dialog>
@@ -1170,6 +1164,7 @@ let recoveryRaw = null;
 let pendingRecovery = null;
 let repairedStorage = false;
 let viewedMonday = null;
+let viewedDay = null;
 let viewedTermId = "";
 const hiddenCourses = new Set();
 let currentBoard;
@@ -1393,26 +1388,32 @@ function renderDayTasks(entry, checks, readOnly, today) {
     '<p class="empty-day">No matching tasks</p>') + "</div>";
 }
 
-function renderDays(board, day) {
+function renderDays(board) {
   const checks = visibleChecks(board);
   const element = byId("board");
   const expandedDays = new Set([...element.querySelectorAll(".day-schedule[open]")].map((details) => Number(details.dataset.calendarDay)));
+  const previousDay = element.classList.contains("day-view") ? Number(element.firstElementChild?.dataset.day) : null;
+  const dayView = viewedDay !== null;
+  const days = dayView ? [board.days[viewedDay - board.monday]] : board.days;
   const events = calendarEvents();
   const calendar = events.length ? matchingCalendarWeek(board.monday, events) : null;
   element.classList.toggle("read-only", board.readOnly);
-  element.innerHTML = board.days.map((entry, index) => {
-    const today = entry.date === day;
+  element.classList.toggle("day-view", dayView);
+  element.innerHTML = days.map((entry) => {
+    const index = entry.date - board.monday;
+    const today = entry.date === clockDay;
     const dayClass = today ? " today" : "";
-    const todayPill = board.readOnly ? '<span class="today-pill">Today</span>' :
-      '<button type="button" class="today-pill" data-toggle-focus aria-label="Focus on today">Today</button>';
+    const close = dayView ? '<button type="button" class="close-day" aria-label="Close Day View" title="Close Day View">×</button>' : "";
+    const open = dayView ? "" : '<button type="button" class="open-day" aria-label="' +
+      escapeHTML("Open Day View for " + dateLabel(entry.date, fullDate)) + '"></button>';
     const heading = '<article class="day' + dayClass + '" data-day="' + entry.date + '" aria-labelledby="day-' + index + '"' + (today ? ' aria-current="date"' : "") + '>' +
-      '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + "</h3>" +
-      (today ? todayPill : "") +
+      '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + "</h3>" + close +
       '</div><time class="day-date" datetime="' + isoDate(entry.date) + '">' + dateLabel(entry.date) + "</time>";
-    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, expandedDays.has(entry.date)) : "";
+    const scheduleOpen = expandedDays.has(entry.date) || (dayView && previousDay !== entry.date);
+    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, scheduleOpen) : "";
     const study = entry.study ? studyLabel(entry.study) + " study" : "No study";
     return heading + '<div class="day-meta"><span class="study-target">' + study + '</span><span class="day-count"></span></div>' +
-      '<div class="meter" role="progressbar" aria-label="' + entry.name + ' completion" aria-valuemin="0" aria-valuemax="100"><span></span></div></div>' +
+      '<div class="meter" role="progressbar" aria-label="' + entry.name + ' completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>' + open + "</div>" +
       schedule + renderDayTasks(entry, checks, board.readOnly, today) + "</article>";
   }).join("");
 }
@@ -1429,12 +1430,12 @@ function updateProgress(board) {
   byId("weekly-percent").textContent = completion + "%";
   byId("weekly-count").textContent = done + " of " + total + " tasks";
   updateMeter(byId("weekly-meter"), completion);
-  const cards = byId("board").children;
-  board.days.forEach((entry, index) => {
+  for (const card of byId("board").children) {
+    const entry = board.days[Number(card.dataset.day) - board.monday];
     const completed = entry.tasks.filter((task) => checks[task.id] === true).length;
-    cards[index].querySelector(".day-count").textContent = completed + "/" + entry.tasks.length;
-    updateMeter(cards[index].querySelector(".meter"), percent(completed, entry.tasks.length));
-  });
+    card.querySelector(".day-count").textContent = completed + "/" + entry.tasks.length;
+    updateMeter(card.querySelector(".meter"), percent(completed, entry.tasks.length));
+  }
 }
 
 function renderHistory(liveMonday) {
@@ -1516,7 +1517,8 @@ function render() {
   clockDay = localDay();
   const liveMonday = mondayOf(clockDay);
   if (viewedMonday === liveMonday) viewedMonday = null;
-  const monday = viewedMonday ?? liveMonday;
+  const dayView = viewedDay !== null;
+  const monday = dayView ? mondayOf(viewedDay) : (viewedMonday ?? liveMonday);
   const readOnly = monday !== liveMonday;
   const term = weekTerm(monday, clockDay);
   if ((term?.id ?? "") !== viewedTermId) hiddenCourses.clear();
@@ -1525,29 +1527,36 @@ function render() {
     if (!term?.courses.some((course) => courseIdentity(course) === id)) hiddenCourses.delete(id);
   }
   const courses = visibleCourses(term);
-  const anchor = readOnly
+  const weekAnchor = readOnly
     ? Math.max(monday, term ? dayFromISO(term.startDate) : monday)
     : clockDay;
+  const anchor = viewedDay ?? weekAnchor;
   const board = buildBoard(anchor);
   currentBoard = { ...(term && hiddenCourses.size ? filteredBoard(board, term, courses, true) : board), readOnly, filterTerm: term };
   renderPreviewOptions();
   const mode = !readOnly ? "" : monday < liveMonday ? " · Past week" : " · Upcoming week";
-  byId("board-range").textContent = rangeLabel(monday) + " · " + currentBoard.key + mode;
+  const date = dayView ? dateLabel(viewedDay, fullDate) : rangeLabel(monday);
+  setText("board-range", date + " · " + currentBoard.key + mode + (dayView && readOnly ? " · View only" : ""));
+  setText("board-title", dayView ? "Day View" : "Daily checklist");
+  byId("board-navigation").setAttribute("aria-label", dayView ? "Day navigation" : "Week navigation");
+  byId("previous-week").setAttribute("aria-label", dayView ? "Previous day" : "Previous week");
+  byId("next-week").setAttribute("aria-label", dayView ? "Next day" : "Next week");
+  setText("previous-week", dayView ? "<" : "‹");
+  setText("next-week", dayView ? ">" : "›");
+  byId("current-week").hidden = dayView;
   byId("current-week").disabled = !readOnly;
-  byId("focus-toggle").disabled = readOnly;
-  byId("reset").disabled = readOnly;
   renderFilters(term, courses);
   const weekStudy = currentBoard.days.reduce((hours, day) => hours + day.study / 7, 0);
-  byId("study-label").textContent = readOnly ? "Avg. daily study" : "Today’s study target";
-  byId("study-total").textContent = studyLabel(readOnly ? weekStudy : currentBoard.days[clockDay - monday].study);
+  const study = !dayView && readOnly ? weekStudy : currentBoard.days[anchor - monday].study;
+  setText("study-label", dayView ? "Daily study target" : readOnly ? "Avg. daily study" : "Today’s study target");
+  setText("study-total", studyLabel(study));
   byId("study-weekly").textContent = numberLabel.format(weekStudy) + " hrs/wk";
   renderTerm(currentBoard, anchor);
-  renderDays(currentBoard, clockDay);
+  renderDays(currentBoard);
   updateProgress(currentBoard);
   renderFilteredProgress(term, courses);
   renderHistory(liveMonday);
   renderStreak(liveMonday);
-  renderFocusMode();
   renderTimer();
   renderInlineCalendar();
 }
@@ -1580,14 +1589,23 @@ byId("preview").addEventListener("change", (event) => {
   if (term) showCalendarMonth(dayFromISO(term.startDate));
 });
 
-function showBoardWeek(monday) {
+function showBoardWeek(monday, day = null) {
+  viewedDay = day;
   viewedMonday = monday === mondayOf(localDay()) ? null : monday;
   syncState();
   render();
 }
 
-byId("previous-week").addEventListener("click", () => showBoardWeek(currentBoard.monday - 7));
-byId("next-week").addEventListener("click", () => showBoardWeek(currentBoard.monday + 7));
+function moveBoard(offset) {
+  if (viewedDay === null) showBoardWeek(currentBoard.monday + offset * 7);
+  else {
+    const day = viewedDay + offset;
+    showBoardWeek(mondayOf(day), day);
+  }
+}
+
+byId("previous-week").addEventListener("click", () => moveBoard(-1));
+byId("next-week").addEventListener("click", () => moveBoard(1));
 byId("current-week").addEventListener("click", () => {
   hiddenCourses.clear();
   viewedTermId = "";
@@ -1661,25 +1679,6 @@ byId("board").addEventListener("change", (event) => {
     renderStreak(mondayOf(clockDay));
     if (selectedCalendarDay !== null) renderDayInspector();
   });
-});
-
-let resetTarget;
-byId("reset").addEventListener("click", () => {
-  refreshDate();
-  resetTarget = currentBoard;
-  byId("reset-description").textContent = "Clear this week’s checkboxes? Past weeks will stay in your history.";
-  byId("reset-dialog").returnValue = "cancel";
-  byId("reset-dialog").showModal();
-});
-byId("reset-dialog").addEventListener("close", (event) => {
-  if (event.target.returnValue !== "reset") return;
-  const key = resetTarget.key;
-  commit(() => {
-    const live = buildBoard(localDay());
-    if (live.key !== key) return false;
-    recordWeek(live, {});
-    return true;
-  }, render);
 });
 
 window.addEventListener("focus", wakeClock);
@@ -1916,29 +1915,6 @@ byId("editor-form").addEventListener("submit", (event) => {
     showError(error.message);
   }
 });
-
-function renderFocusMode() {
-  const focused = state.focus && !currentBoard.readOnly;
-  byId("board").classList.toggle("focus-mode", focused);
-  byId("focus-toggle").setAttribute("aria-pressed", String(focused));
-  byId("focus-toggle").textContent = focused ? "Show full week" : "Today Focus";
-  const pill = byId("board").querySelector("[data-toggle-focus]");
-  if (pill) {
-    pill.setAttribute("aria-pressed", String(focused));
-    pill.textContent = focused ? "Today · Exit" : "Today";
-  }
-  byId("board-title").textContent = focused ? "Today’s checklist" : "Daily checklist";
-}
-
-function toggleTodayFocus() {
-  if (currentBoard.readOnly) return;
-  commit(() => {
-    state.focus = !state.focus;
-    return true;
-  }, renderFocusMode);
-}
-
-byId("focus-toggle").addEventListener("click", toggleTodayFocus);
 
 const backupDialog = byId("backup-dialog");
 let pendingBackup = null;
@@ -2394,13 +2370,6 @@ document.addEventListener("keydown", (event) => {
 byId("jump-board-week").addEventListener("click", () => {
   const targetDay = selectedCalendarDay;
   if (targetDay === null) return;
-  if (targetDay !== clockDay) {
-    commit(() => {
-      if (!state.focus) return false;
-      state.focus = false;
-      return true;
-    });
-  }
   showBoardWeek(mondayOf(targetDay));
   const column = byId("board").querySelector('.day[data-day="' + targetDay + '"]');
   if (!column) return;
@@ -2656,8 +2625,17 @@ function openTimer(course) {
 }
 
 byId("board").addEventListener("click", (event) => {
-  if (event.target.closest("[data-toggle-focus]")) {
-    toggleTodayFocus();
+  const open = event.target.closest(".open-day");
+  if (open) {
+    const day = Number(open.closest("[data-day]").dataset.day);
+    showBoardWeek(mondayOf(day), day);
+    byId("board").querySelector(".close-day").focus({ preventScroll: true });
+    return;
+  }
+  if (event.target.closest(".close-day")) {
+    const day = viewedDay;
+    showBoardWeek(currentBoard.monday);
+    byId("board").querySelector('.day[data-day="' + day + '"] .open-day')?.focus({ preventScroll: true });
     return;
   }
   const button = event.target.closest("[data-timer]");
