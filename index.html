@@ -74,7 +74,7 @@ select { min-height: 37px; }
 .chevron-down { transform: rotate(90deg); }
 .chevron-up { transform: rotate(-90deg); }
 .more-icon { width: 3px; height: 3px; border-radius: 50%; background: currentColor; box-shadow: -5px 0 currentColor, 5px 0 currentColor; }
-.close-icon { display: flex; align-items: center; justify-content: center; position: relative; width: 12px; height: 12px; font-size: 0; }
+.close-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 12px; position: relative; width: 12px; height: 12px; font-size: 0; }
 .close-icon::before, .close-icon::after {
   content: ""; position: absolute; inset: 0; width: 12px; height: 1.5px; margin: auto;
   border-radius: 1px; background: currentColor; transform: rotate(45deg);
@@ -275,9 +275,9 @@ dialog::backdrop { background: #08080acb; }
 .day-section-heading { justify-content: space-between; margin-bottom: 8px; }
 .day-section-heading h3 { font-size: 1rem; }
 .day-section-heading .dialog-note { margin: 0; }
-.day-event-group + .day-event-group { margin-top: 15px; }
-.day-event-group h4 { margin: 0; font-size: .85rem; }
-.day-event-group .dialog-note { margin-top: 2px; }
+.day-event-group:not([hidden]) + .day-event-group { margin-top: 15px; }
+.day-event-group h4 { margin: 0; font-size: .76rem; font-weight: 650; color: var(--muted); }
+.day-event-group .dialog-note { margin-top: 3px; font-size: .7rem; }
 .day-event-list { display: grid; gap: 5px; padding: 0; margin: 7px 0 0; list-style: none; }
 .day-event-list .calendar-event { border: 1px solid var(--line); border-radius: 8px; padding: 9px; align-items: start; }
 .day-event-list .event-heading { line-height: 1.35; }
@@ -292,6 +292,18 @@ dialog::backdrop { background: #08080acb; }
 .day-item-fields { display: grid; gap: 9px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .day-item-fields textarea { resize: vertical; min-height: 70px; }
 .day-item-description { grid-column: 1 / -1; }
+.day-color-controls {
+  grid-column: 1 / -1; min-width: 0; margin: 0; padding: 0; border: 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 8px 10px;
+}
+.day-color-controls:disabled { opacity: .5; filter: grayscale(1); }
+.day-color-controls :disabled { cursor: default; }
+.day-color-controls input[type="color"] { width: 58px; padding: 4px; cursor: pointer; }
+.day-color-controls input[type="color"]:disabled { cursor: default; }
+.day-preset-name { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.day-preset-name button { display: flex; align-items: center; justify-content: center; min-height: 37px; }
+.day-color-note { grid-column: 1 / -1; margin: 0; }
+.day-color-note:empty { display: none; }
 .day-item-form .dialog-actions { margin: 0; }
 .day-dialog .confetti-rain { position: absolute; }
 .backup-actions, .timer-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
@@ -734,15 +746,16 @@ dialog::backdrop { background: #08080acb; }
     </section>
     <section class="day-dialog-section" aria-labelledby="day-events-title">
       <div class="day-section-heading"><h3 id="day-events-title">Events</h3><button type="button" id="add-day-event">Add event</button></div>
-      <div class="day-event-group">
+      <div class="day-event-group" id="day-synced-group" hidden>
         <h4>Synced Calendar Events</h4><p class="dialog-note">Must be removed from calendar</p>
         <div id="day-synced-events"></div>
       </div>
-      <div class="day-event-group">
+      <div class="day-event-group" id="day-custom-group" hidden>
         <h4>Custom / Added Events</h4>
         <div id="day-custom-events"></div>
-        <div id="day-event-editor"></div>
       </div>
+      <p id="day-events-empty" class="dialog-note" hidden>No events scheduled for this day.</p>
+      <div id="day-event-editor"></div>
     </section>
     <section class="day-dialog-section habit-list" aria-labelledby="day-habits-title">
       <div class="day-section-heading"><h3 id="day-habits-title">Habits</h3><button type="button" id="add-day-habit">Add habit</button></div>
@@ -767,6 +780,17 @@ dialog::backdrop { background: #08080acb; }
         <label class="field">Class
           <span class="select-control"><select id="day-item-course"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
         </label>
+        <fieldset id="day-color-controls" class="day-color-controls" aria-label="Custom event color">
+          <label class="field">Color<input id="day-item-color" type="color"></label>
+          <label class="field">Color preset
+            <span class="select-control"><select id="day-color-preset"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
+          </label>
+          <div class="day-preset-name">
+            <label class="field">Preset name<input id="day-preset-name" type="text" maxlength="40" placeholder="e.g. Meeting"></label>
+            <button type="button" id="save-day-preset" disabled>Save preset</button>
+          </div>
+        </fieldset>
+        <p id="day-color-note" class="dialog-note day-color-note" role="status"></p>
         <label class="field day-item-description">Description<textarea id="day-item-description" rows="3" maxlength="4000"></textarea></label>
       </div>
       <div class="dialog-actions"><button type="submit" id="save-day-item" class="primary">Add event</button></div>
@@ -1298,7 +1322,7 @@ function calendarCourseResolver(events) {
     const event = occurrence.source;
     if (event.custom) {
       const course = assignedEventCourse(event.custom.courseKey)?.course;
-      return { ...occurrence, course, color: course ? courseAccent(course) : UNASSIGNED_COLOR };
+      return { ...occurrence, course, color: course ? courseAccent(course) : event.custom.color || UNASSIGNED_COLOR };
     }
     const { term, courses } = planAt(occurrence.allDay ? occurrence.from : localDay(new Date(occurrence.from)));
     const known = event.canvasId && uniqueCourse(courses, (course) => Number(course.canvasId === event.canvasId));
@@ -1529,12 +1553,27 @@ function normalizeDayItems(input) {
     const { description = "", eventType = "Event", courseKey = "" } = item;
     if (typeof description !== "string" || description.length > 4000 || !DAY_EVENT_TYPES.includes(eventType) ||
         typeof courseKey !== "string" || courseKey.length > 256) throw new Error("A saved custom event is invalid.");
-    return { id, day, title: title.trim(), type: "event", description, eventType, courseKey };
+    const color = normalizeAccent(item.color);
+    return { id, day, title: title.trim(), type: "event", description, eventType, courseKey, ...(color ? { color } : {}) };
+  });
+}
+
+function normalizeEventColorPresets(input) {
+  if (!Array.isArray(input)) throw new Error("Event color presets must be a list.");
+  const names = new Set();
+  return input.map((preset) => {
+    const name = typeof preset?.name === "string" ? preset.name.trim() : "";
+    const color = normalizeAccent(preset?.color);
+    const key = name.toLowerCase();
+    if (!name || name.length > 40 || !color || names.has(key)) throw new Error("A saved event color preset is invalid.");
+    names.add(key);
+    return { name, color };
   });
 }
 
 function newState() {
-  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, studyTracking: false, completedEvents: [], habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
+  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, studyTracking: false, completedEvents: [], habits: DEFAULT_HABITS,
+    events: [], eventColorPresets: [], weeks: {}, focus: false, timer: null };
 }
 
 function decodeState(input, strict = false) {
@@ -1565,6 +1604,9 @@ function decodeState(input, strict = false) {
   }
   if (input.habits !== undefined) {
     try { result.habits = normalizeHabits(input.habits); } catch (error) { repair(error.message); }
+  }
+  if (input.eventColorPresets !== undefined) {
+    try { result.eventColorPresets = normalizeEventColorPresets(input.eventColorPresets); } catch (error) { repair(error.message); }
   }
   if (input.studyTracking !== undefined && typeof input.studyTracking !== "boolean") repair("The study tracking setting is invalid.");
   result.studyTracking = input.studyTracking === true;
@@ -3630,6 +3672,11 @@ const dayDialog = byId("day-dialog");
 const dayItemForm = byId("day-item-form");
 const dayItemName = byId("day-item-name");
 const dayItemDue = byId("day-item-due");
+const dayItemCourse = byId("day-item-course");
+const dayItemColor = byId("day-item-color");
+const dayColorPreset = byId("day-color-preset");
+const dayPresetName = byId("day-preset-name");
+const saveDayPreset = byId("save-day-preset");
 let dayItemDraft = null;
 
 byId("day-item-type").innerHTML = DAY_EVENT_TYPES.map((type) => "<option>" + type + "</option>").join("");
@@ -3664,10 +3711,15 @@ function renderDayDialog(board, events) {
   };
   byId("day-study-list").innerHTML = courses.map(row).join("");
   byId("day-habit-list").innerHTML = habits.map(row).join("") || '<p class="dialog-note">No habits scheduled.</p>';
-  const group = (items, custom, empty) => items.length ?
-    '<ul class="day-event-list">' + calendarItems(items, expanded, day, custom) + "</ul>" : '<p class="dialog-note">' + empty + "</p>";
-  byId("day-synced-events").innerHTML = group(events.filter((event) => !event.source.custom), false, "No synced events.");
-  byId("day-custom-events").innerHTML = group(events.filter((event) => event.source.custom), true, "No custom events.");
+  const group = (id, items, editable) => {
+    byId("day-" + id + "-group").hidden = !items.length;
+    byId("day-" + id + "-events").innerHTML = items.length ?
+      '<ul class="day-event-list">' + calendarItems(items, expanded, day, editable) + "</ul>" : "";
+  };
+  group("synced", events.filter((event) => !event.source.custom), false);
+  group("custom", events.filter((event) => event.source.custom), true);
+  byId("day-events-empty").hidden = Boolean(events.length);
+  if (dayItemDraft?.kind === "event") renderDayColorPresets();
   for (const key of ["task", "eventCheck", "editDayTask", "removeDayTask", "timer", "eventDetail"]) {
     if (!focus[key]) continue;
     const attr = "data-" + key.replace(/[A-Z]/g, (letter) => "-" + letter.toLowerCase());
@@ -3677,14 +3729,47 @@ function renderDayDialog(board, events) {
   }
 }
 
-function setDayItemCourses(day, preferred = byId("day-item-course").value) {
-  const select = byId("day-item-course");
+function renderDayColorPresets(preferred = dayColorPreset.value) {
+  const placeholder = new Option("Choose a preset", "");
+  placeholder.disabled = true;
+  dayColorPreset.replaceChildren(placeholder, new Option("Default color", "default"));
+  for (const preset of state.eventColorPresets) dayColorPreset.add(new Option(preset.name, "preset:" + preset.name));
+  dayColorPreset.value = [...dayColorPreset.options].some((option) => option.value === preferred) ? preferred : "";
+}
+
+function updateDayColorControls(message = "") {
+  const locked = Boolean(dayItemCourse.value);
+  byId("day-color-controls").disabled = locked;
+  saveDayPreset.disabled = locked || !dayPresetName.value.trim();
+  setText("day-color-note", locked ? "This event uses its class color." : message);
+}
+
+function saveEventColorPreset() {
+  const name = dayPresetName.value.trim();
+  if (dayItemDraft?.kind !== "event" || dayItemCourse.value || !name || name.length > 40) return;
+  const preset = { name, color: normalizeAccent(dayItemColor.value) };
+  commit(() => {
+    const index = state.eventColorPresets.findIndex((entry) => entry.name.toLowerCase() === name.toLowerCase());
+    if (index === -1) state.eventColorPresets.push(preset);
+    else state.eventColorPresets[index] = preset;
+    return true;
+  }, () => {
+    dayPresetName.value = "";
+    renderDayColorPresets("preset:" + name);
+    updateDayColorControls("Saved preset “" + name + "”.");
+    dayColorPreset.focus();
+  });
+}
+
+function setDayItemCourses(day, preferred = dayItemCourse.value) {
+  const select = dayItemCourse;
   const { term } = planForDate(day);
   select.replaceChildren(new Option("No class", ""));
   for (const course of term?.courses ?? []) select.add(new Option(course.code, term.id + "|" + courseIdentity(course)));
   const assigned = assignedEventCourse(preferred);
   if (assigned && assigned.term !== term) select.add(new Option(assigned.course.code + " · " + assigned.term.term, preferred));
   if ([...select.options].some((option) => option.value === preferred)) select.value = preferred;
+  updateDayColorControls();
 }
 
 function openDayItemEditor(kind, task, opener) {
@@ -3700,6 +3785,9 @@ function openDayItemEditor(kind, task, opener) {
   dayItemDue.value = isoDate(day);
   byId("day-item-type").value = custom?.eventType ?? DAY_EVENT_TYPES[0];
   byId("day-item-description").value = custom?.description ?? "";
+  dayItemColor.value = custom?.color || UNASSIGNED_COLOR;
+  const preset = state.eventColorPresets.find((entry) => entry.color === custom?.color);
+  renderDayColorPresets(preset ? "preset:" + preset.name : "");
   setDayItemCourses(day, custom?.courseKey ?? "");
   byId("day-item-fields").hidden = !isEvent;
   setText("day-item-title", (task ? "Edit " : "Add ") + kind);
@@ -3757,6 +3845,23 @@ dayDialog.addEventListener("cancel", (event) => {
   closeDayItemEditor(true);
 });
 dayItemName.addEventListener("input", () => dayItemName.setCustomValidity(""));
+dayItemCourse.addEventListener("change", () => updateDayColorControls());
+dayItemColor.addEventListener("input", () => {
+  dayColorPreset.value = "";
+  updateDayColorControls();
+});
+dayColorPreset.addEventListener("change", () => {
+  const preset = state.eventColorPresets.find((entry) => "preset:" + entry.name === dayColorPreset.value);
+  dayItemColor.value = preset?.color ?? UNASSIGNED_COLOR;
+  updateDayColorControls();
+});
+dayPresetName.addEventListener("input", () => updateDayColorControls());
+dayPresetName.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.isComposing) return;
+  event.preventDefault();
+  saveEventColorPreset();
+});
+saveDayPreset.addEventListener("click", saveEventColorPreset);
 dayItemDue.addEventListener("input", () => {
   dayItemDue.setCustomValidity("");
   setDayItemCourses(dayFromISO(dayItemDue.value));
@@ -3782,7 +3887,8 @@ dayItemForm.addEventListener("submit", (event) => {
   }
   const fields = isEvent ? {
     title, description: byId("day-item-description").value.trim(),
-    eventType: byId("day-item-type").value, courseKey: byId("day-item-course").value
+    eventType: byId("day-item-type").value, courseKey: dayItemCourse.value,
+    ...(dayItemColor.value !== UNASSIGNED_COLOR ? { color: normalizeAccent(dayItemColor.value) } : {})
   } : { title };
   let saved;
   commit(() => {
