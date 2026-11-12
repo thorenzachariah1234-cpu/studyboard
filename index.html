@@ -434,7 +434,7 @@ dialog::backdrop { background: #08080acb; }
         <section class="inspector-section"><h4>Schedule &amp; Deadlines</h4><div id="inspector-events"></div></section>
         <section class="inspector-section"><h4>Habits</h4><div id="inspector-habits"></div></section>
         <section class="inspector-section"><h4>Courses</h4><div id="inspector-courses"></div></section>
-        <button type="button" class="jump-board-week" id="jump-board-week">Jump weekly board to this week ↑</button>
+        <button type="button" class="jump-board-week" id="jump-board-week">Jump to this week</button>
       </aside>
     </div>
   </section>
@@ -2165,6 +2165,7 @@ function renderDayInspector() {
   const checks = currentChecks(board);
   const upcoming = day > localDay();
   const milestones = calendarMilestones(day, day).get(day) ?? [];
+  setText("jump-board-week", viewedDay === null ? "Jump to this week" : "Jump to this day");
   setText("inspector-date", dateLabel(day, fullDate));
   setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.phase, board.courses) : "Semester break");
   setText("inspector-study", studyLabel(entry.study) + " study");
@@ -2370,7 +2371,7 @@ document.addEventListener("keydown", (event) => {
 byId("jump-board-week").addEventListener("click", () => {
   const targetDay = selectedCalendarDay;
   if (targetDay === null) return;
-  showBoardWeek(mondayOf(targetDay));
+  showBoardWeek(mondayOf(targetDay), viewedDay === null ? null : targetDay);
   const column = byId("board").querySelector('.day[data-day="' + targetDay + '"]');
   if (!column) return;
   column.classList.add("jump-flash");
