@@ -271,6 +271,37 @@ dialog::backdrop { background: #08080acb; }
 .day-dialog-controls { justify-content: center; }
 .day-dialog .week-controls { flex-shrink: 0; }
 .day-dialog .close-control { --close-size: 36px; }
+.day-dialog :focus { outline: none; }
+.day-dialog :is(button:not(.primary), a, select, input:not([type="checkbox"]), textarea):focus-visible { background-color: #24242b; }
+.day-dialog input[type="checkbox"]:focus-visible { filter: brightness(1.3); }
+.day-dialog:has(.day-dialog-body.has-event-details) { width: min(1130px, calc(100% - 24px)); }
+.day-dialog-body.has-event-details {
+  display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(240px, 1fr); align-items: start; gap: 18px;
+}
+.day-dialog-main, .day-event-details { min-width: 0; }
+.day-event-details {
+  position: sticky; top: 75px; max-height: calc(91dvh - 96px); overflow: auto;
+  padding: 14px; border: 1px solid var(--control-line); border-radius: 10px; background: var(--raised);
+}
+.day-event-details .inspector-heading { align-items: center; margin-bottom: 14px; }
+.day-event-details .close-control { margin-inline-start: auto; }
+.day-event-details h3 { font-size: 1.07rem; line-height: 1.3; overflow-wrap: anywhere; }
+.day-event-details-event { border-inline-start: 3px solid var(--accent, var(--muted)); padding-inline-start: 10px; }
+.day-event-details-description { margin-top: 13px; font-size: .82rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.day-event-details-actions:not(:empty) { margin-top: 13px; }
+.day-event-details-actions a {
+  display: flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; text-align: center;
+  min-height: 36px; padding: 6px 10px; border: 1px solid var(--maroon); border-radius: 8px; font-size: .79rem;
+}
+.day-event-details-actions a:hover { background: #ffffff08; }
+.day-event-back { min-height: 36px; }
+.day-event-trigger {
+  display: flex; align-items: center; justify-content: flex-start; width: 100%; min-width: 0;
+  padding: 0; border: 0; border-radius: 5px; background: transparent; text-align: start; font: inherit;
+}
+.day-event-trigger:hover { background: #ffffff09; }
+.day-event-trigger .event-heading { flex: 1; }
+.day-event-trigger[aria-expanded="true"] { background: #ffffff09; }
 .day-dialog-section { border-top: 1px solid var(--control-line); padding: 15px 0; }
 .day-section-heading { justify-content: space-between; margin-bottom: 8px; }
 .day-section-heading h3 { font-size: 1rem; }
@@ -461,6 +492,9 @@ dialog::backdrop { background: #08080acb; }
   .day-summary { grid-area: 2 / 1 / auto / -1; }
   .day-dialog .dialog-shell { padding-inline: 12px; }
   .day-dialog .dialog-head { justify-content: space-between; }
+  .day-dialog-body.has-event-details { display: block; }
+  .day-dialog-body.has-event-details .day-dialog-main { display: none; }
+  .day-event-details { position: static; max-height: none; }
   .day-event-list .calendar-event { padding: 7px; }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .course-row, .session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); padding: 8px; }
@@ -740,61 +774,77 @@ dialog::backdrop { background: #08080acb; }
         <button type="button" id="close-day" class="close-control" aria-label="Close Day View" autofocus><span class="close-icon" aria-hidden="true">×</span></button>
       </div>
     </div>
-    <section class="day-dialog-section" id="day-study-section" aria-labelledby="day-study-title" hidden>
-      <div class="day-section-heading"><h3 id="day-study-title">Study checklist</h3><p id="day-study-time" class="dialog-note"></p></div>
-      <div id="day-study-list" class="tasks"></div>
-    </section>
-    <section class="day-dialog-section" aria-labelledby="day-events-title">
-      <div class="day-section-heading"><h3 id="day-events-title">Events</h3><button type="button" id="add-day-event">Add event</button></div>
-      <div class="day-event-group" id="day-synced-group" hidden>
-        <h4>Synced Calendar Events</h4><p class="dialog-note">Must be removed from calendar</p>
-        <div id="day-synced-events"></div>
-      </div>
-      <div class="day-event-group" id="day-custom-group" hidden>
-        <h4>Custom / Added Events</h4>
-        <div id="day-custom-events"></div>
-      </div>
-      <p id="day-events-empty" class="dialog-note" hidden>No events scheduled for this day.</p>
-      <div id="day-event-editor"></div>
-    </section>
-    <section class="day-dialog-section habit-list" aria-labelledby="day-habits-title">
-      <div class="day-section-heading"><h3 id="day-habits-title">Habits</h3><button type="button" id="add-day-habit">Add habit</button></div>
-      <div id="day-habit-list" class="tasks"></div>
-      <div id="day-habit-editor"></div>
-    </section>
-    <p id="day-edit-status" class="sr-only" role="status"></p>
-    <form id="day-item-form" class="day-item-form" aria-labelledby="day-item-title" hidden>
-      <div class="day-section-heading">
-        <h4 id="day-item-title">Add event</h4>
-        <button type="button" id="close-day-item" class="close-control" aria-label="Close item editor"><span class="close-icon" aria-hidden="true">×</span></button>
-      </div>
-      <label class="field">Name<input id="day-item-name" type="text" maxlength="120" required></label>
-      <div id="day-item-fields" class="day-item-fields">
-        <label class="field">Event type
-          <span class="select-control">
-            <select id="day-item-type"></select>
-            <span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span>
-          </span>
-        </label>
-        <label class="field">Due date<input id="day-item-due" type="date"></label>
-        <label class="field">Class
-          <span class="select-control"><select id="day-item-course"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
-        </label>
-        <fieldset id="day-color-controls" class="day-color-controls" aria-label="Custom event color">
-          <label class="field">Color<input id="day-item-color" type="color"></label>
-          <label class="field">Color preset
-            <span class="select-control"><select id="day-color-preset"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
-          </label>
-          <div class="day-preset-name">
-            <label class="field">Preset name<input id="day-preset-name" type="text" maxlength="40" placeholder="e.g. Meeting"></label>
-            <button type="button" id="save-day-preset" disabled>Save preset</button>
+    <div class="day-dialog-body" id="day-dialog-body">
+      <div class="day-dialog-main">
+        <section class="day-dialog-section" id="day-study-section" aria-labelledby="day-study-title" hidden>
+          <div class="day-section-heading"><h3 id="day-study-title">Study checklist</h3><p id="day-study-time" class="dialog-note"></p></div>
+          <div id="day-study-list" class="tasks"></div>
+        </section>
+        <section class="day-dialog-section" aria-labelledby="day-events-title">
+          <div class="day-section-heading"><h3 id="day-events-title">Events</h3><button type="button" id="add-day-event">Add event</button></div>
+          <div class="day-event-group" id="day-synced-group" hidden>
+            <h4>Synced Calendar Events</h4><p class="dialog-note">Must be removed from calendar</p>
+            <div id="day-synced-events"></div>
           </div>
-        </fieldset>
-        <p id="day-color-note" class="dialog-note day-color-note" role="status"></p>
-        <label class="field day-item-description">Description<textarea id="day-item-description" rows="3" maxlength="4000"></textarea></label>
+          <div class="day-event-group" id="day-custom-group" hidden>
+            <h4>Custom / Added Events</h4>
+            <div id="day-custom-events"></div>
+          </div>
+          <p id="day-events-empty" class="dialog-note" hidden>No events scheduled for this day.</p>
+          <div id="day-event-editor"></div>
+        </section>
+        <section class="day-dialog-section habit-list" aria-labelledby="day-habits-title">
+          <div class="day-section-heading"><h3 id="day-habits-title">Habits</h3><button type="button" id="add-day-habit">Add habit</button></div>
+          <div id="day-habit-list" class="tasks"></div>
+          <div id="day-habit-editor"></div>
+        </section>
+        <p id="day-edit-status" class="sr-only" role="status"></p>
+        <form id="day-item-form" class="day-item-form" aria-labelledby="day-item-title" hidden>
+          <div class="day-section-heading">
+            <h4 id="day-item-title">Add event</h4>
+            <button type="button" id="close-day-item" class="close-control" aria-label="Close item editor"><span class="close-icon" aria-hidden="true">×</span></button>
+          </div>
+          <label class="field">Name<input id="day-item-name" type="text" maxlength="120" required></label>
+          <div id="day-item-fields" class="day-item-fields">
+            <label class="field">Event type
+              <span class="select-control">
+                <select id="day-item-type"></select>
+                <span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span>
+              </span>
+            </label>
+            <label class="field">Due date<input id="day-item-due" type="date"></label>
+            <label class="field">Class
+              <span class="select-control"><select id="day-item-course"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
+            </label>
+            <fieldset id="day-color-controls" class="day-color-controls" aria-label="Custom event color">
+              <label class="field">Color<input id="day-item-color" type="color"></label>
+              <label class="field">Color preset
+                <span class="select-control"><select id="day-color-preset"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
+              </label>
+              <div class="day-preset-name">
+                <label class="field">Preset name<input id="day-preset-name" type="text" maxlength="40" placeholder="e.g. Meeting"></label>
+                <button type="button" id="save-day-preset" disabled>Save preset</button>
+              </div>
+            </fieldset>
+            <p id="day-color-note" class="dialog-note day-color-note" role="status"></p>
+            <label class="field day-item-description">Description<textarea id="day-item-description" rows="3" maxlength="4000"></textarea></label>
+          </div>
+          <div class="dialog-actions"><button type="submit" id="save-day-item" class="primary">Add event</button></div>
+        </form>
       </div>
-      <div class="dialog-actions"><button type="submit" id="save-day-item" class="primary">Add event</button></div>
-    </form>
+      <aside class="day-event-details" id="day-event-details" aria-labelledby="day-event-details-title" hidden>
+        <div class="inspector-heading">
+          <button type="button" class="maroon-control day-event-back" id="back-day-events">Back to events</button>
+          <button type="button" class="close-control" id="close-day-event-details" aria-label="Close event details"><span class="close-icon" aria-hidden="true">×</span></button>
+        </div>
+        <div class="day-event-details-event" id="day-event-details-event">
+          <h3 id="day-event-details-title"></h3>
+          <p id="day-event-details-meta" class="dialog-note"></p>
+        </div>
+        <p id="day-event-details-description" class="day-event-details-description" hidden></p>
+        <div id="day-event-details-actions" class="day-event-details-actions"></div>
+      </aside>
+    </div>
   </div>
 </dialog>
 <dialog id="timer-dialog" class="compact-dialog" aria-labelledby="timer-title">
@@ -1373,7 +1423,17 @@ function eventContent(heading, description, url, key, open) {
     (description ? "<p>" + escapeHTML(description) + "</p>" : "") + eventLink(url) + "</div></details>";
 }
 
-function calendarItems(events, expandedEvents = new Set(), date, editable = false) {
+function hasDayEventDetails(event) {
+  return Boolean(event.source.description?.trim() || event.source.url);
+}
+
+function dayEventContent(heading, event) {
+  if (!hasDayEventDetails(event)) return heading;
+  return '<button type="button" class="day-event-trigger" data-day-event="' + escapeHTML(eventKey(event)) +
+    '" aria-controls="day-event-details" aria-expanded="false">' + heading + "</button>";
+}
+
+function calendarItems(events, date, { editable = false, sidebar = false } = {}) {
   const completedEvents = new Set(state.completedEvents);
   return events.map((event) => {
     const { description, url, custom } = event.source;
@@ -1386,7 +1446,7 @@ function calendarItems(events, expandedEvents = new Set(), date, editable = fals
     const controls = custom && editable ? '<div class="day-item-actions">' + checkbox +
       dayItemActions(dayItemTaskId(custom), event.summary) + "</div>" : checkbox;
     return '<li class="calendar-event"' + accentStyle(event.color) + (completed ? " data-completed" : "") + ">" +
-      eventContent(heading, description, url, key, expandedEvents.has(key)) +
+      (sidebar ? dayEventContent(heading, event) : eventContent(heading, description, url, key, false)) +
       controls + "</li>";
   }).join("");
 }
@@ -2246,6 +2306,7 @@ function showBoardWeek(monday, day = null) {
   viewedDay = day;
   viewedMonday = monday === mondayOf(localDay()) ? null : monday;
   if (changedDay) {
+    closeDayEventDetails(false);
     closeDayItemEditor();
     dayDialog.scrollTop = 0;
   }
@@ -3191,7 +3252,7 @@ function renderDayInspector(calendar = displayCalendarEvents(), resolve) {
   byId("inspector-study-checklist").hidden = !state.studyTracking;
   byId("inspector-milestones").innerHTML = milestones.map((label) => "<li>" + escapeHTML(label) + "</li>").join("");
   byId("inspector-milestones").hidden = !milestones.length;
-  byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events, undefined, day) + "</ul>" : '<p>No events scheduled</p>';
+  byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events, day) + "</ul>" : '<p>No events scheduled</p>';
   const habits = entry.tasks.filter((task) => !["course", "event"].includes(task.type));
   const courses = entry.tasks.filter((task) => task.type === "course");
   byId("inspector-habits").innerHTML = habits.length ? "<ul>" + inspectorTasks(habits, checks, upcoming, entry.name) + "</ul>" : "<p>No habits scheduled</p>";
@@ -3669,6 +3730,7 @@ function openTimer(course) {
 }
 
 const dayDialog = byId("day-dialog");
+const dayEventDetails = byId("day-event-details");
 const dayItemForm = byId("day-item-form");
 const dayItemName = byId("day-item-name");
 const dayItemDue = byId("day-item-due");
@@ -3678,6 +3740,9 @@ const dayColorPreset = byId("day-color-preset");
 const dayPresetName = byId("day-preset-name");
 const saveDayPreset = byId("save-day-preset");
 let dayItemDraft = null;
+let dayEvents = new Map();
+let selectedDayEvent = null;
+let dayEventScrollTop = 0;
 
 byId("day-item-type").innerHTML = DAY_EVENT_TYPES.map((type) => "<option>" + type + "</option>").join("");
 
@@ -3691,13 +3756,61 @@ function dayItemActions(id, name, editable = true) {
     '" aria-label="' + remove + " " + label + (editable ? "" : " from this day") + '">' + remove + "</button>";
 }
 
+function renderDayEventDetails() {
+  const event = dayEvents.get(selectedDayEvent);
+  const open = Boolean(event && hasDayEventDetails(event));
+  if (!open) selectedDayEvent = null;
+  dayEventDetails.hidden = !open;
+  byId("day-dialog-body").classList.toggle("has-event-details", open);
+  for (const button of dayDialog.querySelectorAll("[data-day-event]")) {
+    button.setAttribute("aria-expanded", String(button.dataset.dayEvent === selectedDayEvent));
+  }
+  if (!open) return false;
+
+  const { custom, description, url } = event.source;
+  const time = custom ? custom.eventType + " · Due " + dateLabel(viewedDay, shortYearDate) :
+    dateLabel(viewedDay, shortYearDate) + " · " + calendarTime(event);
+  setText("day-event-details-title", event.summary);
+  setText("day-event-details-meta", time + (event.course ? " · " + event.course.code : ""));
+  byId("day-event-details-event").style.setProperty("--accent", event.color);
+  setText("day-event-details-description", description?.trim() ?? "");
+  byId("day-event-details-description").hidden = !description?.trim();
+  const actions = byId("day-event-details-actions");
+  const link = eventLink(url);
+  if (actions.innerHTML !== link) actions.innerHTML = link;
+  return true;
+}
+
+function openDayEventDetails(button) {
+  const key = button.dataset.dayEvent;
+  const event = dayEvents.get(key);
+  if (!event || !hasDayEventDetails(event)) return;
+  if (selectedDayEvent === null) dayEventScrollTop = dayDialog.scrollTop;
+  selectedDayEvent = key;
+  renderDayEventDetails();
+  dayEventDetails.scrollTop = 0;
+  if (matchMedia("(max-width: 700px)").matches) dayDialog.scrollTop = 0;
+  byId("close-day-event-details").focus({ preventScroll: true });
+}
+
+function closeDayEventDetails(restoreFocus = true) {
+  if (selectedDayEvent === null) return;
+  const previous = selectedDayEvent;
+  selectedDayEvent = null;
+  renderDayEventDetails();
+  if (!restoreFocus) return;
+  if (matchMedia("(max-width: 700px)").matches) dayDialog.scrollTop = dayEventScrollTop;
+  const trigger = [...dayDialog.querySelectorAll("[data-day-event]")].find((button) => button.dataset.dayEvent === previous);
+  (trigger ?? byId("add-day-event")).focus({ preventScroll: true });
+}
+
 function renderDayDialog(board, events) {
   const day = viewedDay;
   const entry = checklistDays(board)[day - board.monday];
   const checks = currentChecks(board);
   const courses = entry.tasks.filter((task) => task.type === "course");
   const habits = entry.tasks.filter((task) => !["event", "course"].includes(task.type));
-  const expanded = new Set([...dayDialog.querySelectorAll("[data-event-detail][open]")].map((item) => item.dataset.eventDetail));
+  const focusInDetails = dayEventDetails.contains(document.activeElement);
   const focus = dayDialog.contains(document.activeElement) ? document.activeElement.dataset : {};
   setText("day-title", dateLabel(day, fullDate));
   setText("day-study-time", studyLabel(entry.study) + " study");
@@ -3714,13 +3827,15 @@ function renderDayDialog(board, events) {
   const group = (id, items, editable) => {
     byId("day-" + id + "-group").hidden = !items.length;
     byId("day-" + id + "-events").innerHTML = items.length ?
-      '<ul class="day-event-list">' + calendarItems(items, expanded, day, editable) + "</ul>" : "";
+      '<ul class="day-event-list">' + calendarItems(items, day, { editable, sidebar: true }) + "</ul>" : "";
   };
   group("synced", events.filter((event) => !event.source.custom), false);
   group("custom", events.filter((event) => event.source.custom), true);
   byId("day-events-empty").hidden = Boolean(events.length);
+  dayEvents = new Map(events.map((event) => [eventKey(event), event]));
+  if (!renderDayEventDetails() && focusInDetails) byId("add-day-event").focus({ preventScroll: true });
   if (dayItemDraft?.kind === "event") renderDayColorPresets();
-  for (const key of ["task", "eventCheck", "editDayTask", "removeDayTask", "timer", "eventDetail"]) {
+  for (const key of ["task", "eventCheck", "editDayTask", "removeDayTask", "timer", "dayEvent"]) {
     if (!focus[key]) continue;
     const attr = "data-" + key.replace(/[A-Z]/g, (letter) => "-" + letter.toLowerCase());
     const match = [...dayDialog.querySelectorAll("[" + attr + "]")].find((element) => element.dataset[key] === focus[key]);
@@ -3832,6 +3947,8 @@ function saveDayItem(day, due, draft, fields) {
 }
 
 byId("close-day").addEventListener("click", () => dayDialog.close());
+byId("close-day-event-details").addEventListener("click", () => closeDayEventDetails());
+byId("back-day-events").addEventListener("click", () => closeDayEventDetails());
 dayDialog.addEventListener("close", () => {
   if (dayDialog.open || viewedDay === null) return;
   const day = viewedDay;
@@ -3840,9 +3957,10 @@ dayDialog.addEventListener("close", () => {
 });
 byId("close-day-item").addEventListener("click", () => closeDayItemEditor(true));
 dayDialog.addEventListener("cancel", (event) => {
-  if (!dayItemDraft) return;
+  if (selectedDayEvent === null && !dayItemDraft) return;
   event.preventDefault();
-  closeDayItemEditor(true);
+  if (selectedDayEvent !== null) closeDayEventDetails();
+  else closeDayItemEditor(true);
 });
 dayItemName.addEventListener("input", () => dayItemName.setCustomValidity(""));
 dayItemCourse.addEventListener("change", () => updateDayColorControls());
@@ -3940,7 +4058,9 @@ dayDialog.addEventListener("click", (event) => {
   if (!button || viewedDay === null) return;
   const entry = currentBoard.days[viewedDay - currentBoard.monday];
   const find = (id) => entry.tasks.find((task) => task.id === id);
-  if (button.id === "add-day-event" || button.id === "add-day-habit") {
+  if (button.dataset.dayEvent) {
+    openDayEventDetails(button);
+  } else if (button.id === "add-day-event" || button.id === "add-day-habit") {
     openDayItemEditor(button.id === "add-day-event" ? "event" : "habit", null, button);
   } else if (button.dataset.editDayTask) {
     const task = find(button.dataset.editDayTask);
