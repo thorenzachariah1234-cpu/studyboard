@@ -73,7 +73,7 @@ select { min-height: 37px; }
 .chevron-down { transform: rotate(90deg); }
 .chevron-up { transform: rotate(-90deg); }
 .more-icon { width: 3px; height: 3px; border-radius: 50%; background: currentColor; box-shadow: -5px 0 currentColor, 5px 0 currentColor; }
-.close-icon { position: relative; width: 12px; height: 12px; font-size: 0; }
+.close-icon { display: flex; align-items: center; justify-content: center; position: relative; width: 12px; height: 12px; font-size: 0; }
 .close-icon::before, .close-icon::after {
   content: ""; position: absolute; inset: 0; width: 12px; height: 1.5px; margin: auto;
   border-radius: 1px; background: currentColor; transform: rotate(45deg);
@@ -155,6 +155,10 @@ select { min-height: 37px; }
 .day-head { position: relative; padding: 10px 10px 9px; background: var(--raised); border-bottom: 1px solid var(--line); }
 .today .day-head { background: #1d1c19; border-color: #ffc62724; }
 .day-name { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.day-actions { display: flex; align-items: center; justify-content: center; gap: 5px; position: relative; z-index: 1; }
+.day-add { width: 25px; height: 25px; padding: 0; background: transparent; color: var(--muted); }
+.plus-icon { position: relative; width: 11px; height: 11px; background: linear-gradient(currentColor, currentColor) center / 11px 1.5px no-repeat,
+  linear-gradient(currentColor, currentColor) center / 1.5px 11px no-repeat; }
 .day-name h3 { font-size: .84rem; line-height: 1.4; letter-spacing: -.015em; }
 .open-day { position: absolute; inset: 0; width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .open-day:hover { background: #ffffff08; }
@@ -162,10 +166,12 @@ select { min-height: 37px; }
 .day-view .day-head { padding: 12px 14px; }
 .day-view .day-name h3 { font-size: 1.1rem; }
 .close-control {
-  width: 32px; height: 32px; padding: 0;
-  flex: 0 0 32px; border-color: var(--maroon); background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
+  --close-size: 32px;
+  display: flex; align-items: center; justify-content: center; width: var(--close-size); height: var(--close-size); padding: 0;
+  flex: 0 0 var(--close-size); border-color: var(--maroon); background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
 }
 .close-control:hover { border-color: var(--maroon); color: inherit; background: #ffffff08; }
+.close-control:disabled { border-color: var(--maroon); }
 .day-date { display: block; color: var(--muted); font-size: .7rem; margin-top: 2px; }
 .day-meta { display: flex; align-items: center; justify-content: space-between; gap: 3px; margin: 9px 0 5px; font-size: .66rem; }
 .study-target { color: #d4d4d8; font-weight: 670; }
@@ -176,6 +182,9 @@ select { min-height: 37px; }
 .day-section + .day-section { border-top: 1px solid var(--line); padding-top: 8px; }
 .tasks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; }
 .habit-list .tasks { gap: 1px; }
+.task-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 3px; min-width: 0; }
+.task-actions { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.task-actions .close-control { --close-size: 22px; }
 .task, .course-with-timer { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
 .task {
   display: flex; gap: 7px; align-items: flex-start; position: relative; padding: 7px 6px; min-height: 40px;
@@ -193,12 +202,12 @@ select { min-height: 37px; }
 .task input:checked::after { transform: scale(1); }
 .course-with-timer { position: relative; }
 .course-with-timer > .task { border: 0; background: transparent; }
-.course-with-timer .course-title { min-height: 18px; padding-inline-end: 25px; }
 .course-with-timer .timer-start {
-  position: absolute; inset-block-start: 3px; inset-inline-end: 3px; width: 25px; height: 25px;
+  width: 22px; height: 22px;
   padding: 0; font-size: .91rem; line-height: 1; color: #d4d4d8; background: transparent; border-color: transparent;
 }
 .course-with-timer .timer-start:hover { color: var(--gold); background: #ffffff0a; border-color: var(--control-line); }
+.course-with-timer .task-actions { padding: 2px; }
 .timer-icon { position: relative; width: 13px; height: 13px; border: 1.5px solid currentColor; border-radius: 50%; }
 .timer-icon::before { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 50%; width: 3.5px; height: 4px; border: solid currentColor; border-width: 0 0 1.5px 1.5px; }
 .task-copy { min-width: 0; flex: 1; }
@@ -216,7 +225,8 @@ select { min-height: 37px; }
 .history summary { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #d4d4d8; font-size: .83rem; font-weight: 680; list-style: none; }
 .history summary #history-count { font-size: .72rem; color: var(--muted); font-weight: 400; }
 .history-list { list-style: none; padding: 0; margin: 8px 0 0; }
-.history-list li { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 5px 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .79rem; color: #e4e4e7; }
+.history-list li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .79rem; color: #e4e4e7; }
+.history-entry-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .footnote { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 12px; color: var(--muted); font-size: .7rem; line-height: 1.5; }
 .save-state { color: #d4d4d8; }
 .save-state.error, .form-error { color: #ffbbc2; }
@@ -243,7 +253,6 @@ dialog::backdrop { background: #08080acb; }
 .session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .6fr) auto auto; }
 .course-extras { display: flex; grid-column: 1 / -1; justify-content: space-between; align-items: end; gap: 8px; }
 .course-extras .field { width: min(100%, 190px); }
-.course-row button, .session-row button { min-height: 37px; }
 .accent-field { display: flex; align-items: end; gap: 4px; }
 .accent-field input[type=color] { width: 48px; padding: 4px; cursor: pointer; }
 .accent-field button { padding-inline: 7px; }
@@ -255,6 +264,7 @@ dialog::backdrop { background: #08080acb; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .json-input { resize: vertical; min-height: 280px !important; font-family: ui-monospace, Consolas, monospace; }
 .compact-dialog { max-width: 460px; }
+#day-item-form .field + .field { margin-top: 8px; }
 .backup-actions, .timer-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .timer-display { font-size: clamp(2rem, 10vw, 3.25rem); letter-spacing: -.05em; font-weight: 760; font-variant-numeric: tabular-nums; color: var(--gold); }
 .timer-setup { margin-top: 10px; }
@@ -400,8 +410,8 @@ dialog::backdrop { background: #08080acb; }
   .task { min-height: 44px; }
   .habit-list .task { min-height: 34px; }
   .habit-day span { min-height: 40px; }
-  .course-with-timer .course-title { min-height: 30px; padding-inline-end: 32px; }
-  .course-with-timer .timer-start { width: 32px; height: 34px; }
+  .day-add, .task-actions .close-control, .course-with-timer .timer-start { width: 28px; height: 28px; }
+  .task-actions .close-control { --close-size: 28px; }
 }
 @media (max-width: 1100px) {
   main { width: calc(100% - 36px); }
@@ -478,7 +488,7 @@ dialog::backdrop { background: #08080acb; }
           <div class="action-menu-panel">
             <button type="button" id="open-settings">Settings</button>
             <button type="button" id="edit">Classes</button>
-            <button type="button" id="manage-habits">Manage Habits</button>
+            <button type="button" id="manage-habits">Habits</button>
             <button type="button" id="backup">Backups</button>
           </div>
         </details>
@@ -556,7 +566,7 @@ dialog::backdrop { background: #08080acb; }
         <ul id="inspector-milestones" class="inspector-milestones" hidden></ul>
         <section class="inspector-section" id="inspector-study-checklist"><h4>Courses</h4><div id="inspector-courses"></div></section>
         <section class="inspector-section"><h4>Schedule &amp; Deadlines</h4><div id="inspector-events"></div></section>
-        <section class="inspector-section"><h4>Habits</h4><div id="inspector-habits"></div></section>
+        <section class="inspector-section"><h4>Tasks and Habits</h4><div id="inspector-habits"></div></section>
         <button type="button" class="jump-board-week" id="jump-board-week">Jump to this week</button>
       </aside>
     </div>
@@ -638,7 +648,7 @@ dialog::backdrop { background: #08080acb; }
         <span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span>
       </span>
       <button type="button" id="add-term">+ Term</button>
-      <button type="button" id="remove-term" class="danger">Remove term</button>
+      <button type="button" id="remove-term" class="close-control" aria-label="Remove term" title="Remove term"><span class="close-icon" aria-hidden="true">×</span></button>
       <button type="button" id="switch-editor" class="push">Edit JSON</button>
     </div>
     <p id="classes-empty" class="dialog-note" hidden>Add a term to start setting up sessions and classes.</p>
@@ -689,13 +699,29 @@ dialog::backdrop { background: #08080acb; }
 <dialog id="habits-dialog" class="compact-dialog" aria-labelledby="habits-title">
   <form id="habits-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
-      <div><h2 id="habits-title">Manage Habits</h2><p id="habits-scope">Choose the days each habit repeats.</p></div>
+      <div><h2 id="habits-title">Habits</h2><p id="habits-scope">Choose the days each habit repeats.</p></div>
       <button type="button" id="close-habits" class="close-control" aria-label="Close habits"><span class="close-icon" aria-hidden="true">×</span></button>
     </div>
     <div id="habit-list"></div>
     <button type="button" id="add-habit">+ Add habit</button>
     <p id="habit-error" class="form-error" role="alert" hidden></p>
     <div class="dialog-actions"><button type="submit" class="primary">Save habits</button></div>
+  </form>
+</dialog>
+<dialog id="day-item-dialog" class="compact-dialog" aria-labelledby="day-item-title">
+  <form id="day-item-form" class="dialog-shell">
+    <div class="dialog-head">
+      <div><h2 id="day-item-title">Add to day</h2><p id="day-item-date"></p></div>
+      <button type="button" id="close-day-item" class="close-control" aria-label="Close add item"><span class="close-icon" aria-hidden="true">×</span></button>
+    </div>
+    <label class="field">Name<input id="day-item-name" type="text" maxlength="120" required autofocus></label>
+    <label class="field">Type
+      <span class="select-control">
+        <select id="day-item-type" aria-label="Type"><option value="task">Task</option><option value="habit">Habit</option></select>
+        <span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span>
+      </span>
+    </label>
+    <div class="dialog-actions"><button type="submit" class="primary">Add to day</button></div>
   </form>
 </dialog>
 <dialog id="timer-dialog" class="compact-dialog" aria-labelledby="timer-title">
@@ -1423,6 +1449,21 @@ function normalizeHabits(input) {
   });
 }
 
+function normalizeDayItems(input) {
+  if (!Array.isArray(input)) throw new Error("Day items must be a list.");
+  const ids = new Set();
+  return input.map((item) => {
+    const { id, day, title, type } = item ?? {};
+    if (typeof id !== "string" || !/^[a-z0-9-]+$/i.test(id) || ids.has(id) ||
+        !Number.isInteger(day) || day < 0 || day > 6 ||
+        typeof title !== "string" || !title.trim() || title.trim().length > 120 || !["task", "habit"].includes(type)) {
+      throw new Error("A saved day item is invalid.");
+    }
+    ids.add(id);
+    return { id, day, title: title.trim(), type };
+  });
+}
+
 function newState() {
   return { version: DATA_VERSION, schedule: BASE_SCHEDULE, studyTracking: false, completedEvents: [], habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
 }
@@ -1492,6 +1533,14 @@ function decodeState(input, strict = false) {
       try { record.habits = normalizeHabits(entry.habits); } catch (error) { repair(error.message); }
     }
     if (entry.customHabits === true && record.habits) record.customHabits = true;
+    if (entry.dayItems !== undefined) {
+      try { record.dayItems = normalizeDayItems(entry.dayItems); } catch (error) { repair(error.message); }
+    }
+    if (entry.hiddenTasks !== undefined) {
+      if (!Array.isArray(entry.hiddenTasks) || entry.hiddenTasks.some((id) => typeof id !== "string" || !/^[0-6]\|.+/.test(id))) {
+        repair("A saved day removal is invalid.");
+      } else record.hiddenTasks = [...new Set(entry.hiddenTasks)];
+    }
     result.weeks[key] = record;
   }
   if (input.focus !== undefined && typeof input.focus !== "boolean") repair("The saved view setting is invalid.");
@@ -1593,7 +1642,11 @@ function planForDate(day) {
   return { term, sessions, courses };
 }
 
-function makeDay(monday, index, term, courses, habits) {
+function dayItemTaskId(item) {
+  return item.day + "||" + item.id;
+}
+
+function makeDay(monday, index, term, courses, habits, dayItems, hiddenTasks) {
   const name = DAY_NAMES[index];
   const date = monday + index;
   const tasks = habits.filter((habit) => habit.days.includes(index)).map((habit) => ({
@@ -1605,21 +1658,28 @@ function makeDay(monday, index, term, courses, habits) {
     const courseKey = term.id + "|" + (course.trackId ?? course.code);
     tasks.push({ ...course, id: index + "|" + courseKey, courseKey, type: "course" });
   }
-  return { name, date, tasks, study: studyHours(courses) };
+  for (const item of dayItems) {
+    if (item.day === index) tasks.push({ id: dayItemTaskId(item), type: item.type, title: item.title });
+  }
+  const visible = tasks.filter((task) => !hiddenTasks.has(task.id));
+  return { name, date, tasks: visible, study: studyHours(visible.filter((task) => task.type === "course")) };
 }
 
-function buildBoard(day, habitOverride) {
+function buildBoard(day, habitOverride, edits = {}) {
   const monday = mondayOf(day);
   const plan = planForDate(day);
   const key = isoWeekKey(monday);
   const week = state.weeks[key];
   const savedHabits = week?.customHabits || monday < mondayOf(localDay()) ? week?.habits ?? DEFAULT_HABITS : state.habits;
   const habits = habitOverride ?? savedHabits;
+  const dayItems = edits.dayItems ?? week?.dayItems ?? [];
+  const hiddenTasks = edits.hiddenTasks ?? week?.hiddenTasks ?? [];
+  const hidden = new Set(hiddenTasks);
   const days = DAY_NAMES.map((_, index) => {
     const plan = planForDate(monday + index);
-    return makeDay(monday, index, plan.term, plan.courses, habits);
+    return makeDay(monday, index, plan.term, plan.courses, habits, dayItems, hidden);
   });
-  return { ...plan, days, monday, key, habits };
+  return { ...plan, days, monday, key, habits, dayItems, hiddenTasks };
 }
 
 function courseIdentity(course) { return course.trackId ?? course.code; }
@@ -1662,7 +1722,12 @@ function checklistDays(board) {
 function recordWeek(board, checks, customHabits = state.weeks[board.key]?.customHabits === true) {
   const previous = state.weeks[board.key];
   const { done, total } = tally({ days: checklistDays(board) }, checks);
-  state.weeks[board.key] = { monday: board.monday, checks, done, total, habits: board.habits, ...(customHabits ? { customHabits } : {}) };
+  state.weeks[board.key] = {
+    monday: board.monday, checks, done, total, habits: board.habits,
+    ...(customHabits ? { customHabits } : {}),
+    ...(board.dayItems.length ? { dayItems: board.dayItems } : {}),
+    ...(board.hiddenTasks.length ? { hiddenTasks: board.hiddenTasks } : {})
+  };
   return !previous?.habits || previous.done !== done || previous.total !== total;
 }
 
@@ -1710,7 +1775,8 @@ function renderTask(task, checked, dayName) {
   const input = '<input type="checkbox" data-task="' + escapeHTML(task.id) + '"' + (checked ? " checked" : "") +
     ' aria-label="' + escapeHTML(dayName + ": " + (task.code ?? task.title)) + '">';
   if (task.type !== "course") {
-    return '<label class="task ' + task.type + '" title="' + escapeHTML(task.title) + '">' + input + '<span class="task-copy"><span class="task-title">' +
+    return '<label class="task ' + (task.type === "task" ? "custom-task" : task.type) + '" title="' + escapeHTML(task.title) + '">' +
+      input + '<span class="task-copy"><span class="task-title">' +
       escapeHTML(task.title) + "</span></span></label>";
   }
   const accent = courseAccent(task);
@@ -1722,28 +1788,38 @@ function renderTask(task, checked, dayName) {
     escapeHTML(task.name) + "</span>" + target + "</span></label>";
 }
 
+function removeButton(label, attributes) {
+  const name = escapeHTML(label);
+  return '<button type="button" class="close-control" aria-label="' + name + '" title="' + name + '"' + attributes +
+    '><span class="close-icon" aria-hidden="true">×</span></button>';
+}
+
 function renderDayTasks(entry, checks, today, schedule) {
   const habits = [];
   const courses = [];
+  const customTasks = [];
   for (const task of entry.tasks) {
-    if (task.type === "course" && !state.studyTracking) continue;
+    const course = task.type === "course";
+    if (course && !state.studyTracking) continue;
     const label = renderTask(task, checks[task.id] === true, entry.name);
-    if (task.type !== "course") {
-      habits.push(label);
-      continue;
-    }
-    if (!today) {
-      courses.push(label);
-      continue;
-    }
-    const name = "Study timer for " + escapeHTML(task.code);
-    courses.push('<div class="course-with-timer">' + label + '<button type="button" class="timer-start" data-timer="' +
-      escapeHTML(task.id) + '" aria-label="' + name + '" title="' + name + '"><span class="timer-icon" aria-hidden="true"></span></button></div>');
+    const timer = course && today ? renderTaskTimer(task) : "";
+    const remove = removeButton("Remove " + (task.code ?? task.title) + " from " + entry.name,
+      ' data-remove-day-task="' + escapeHTML(task.id) + '"');
+    const row = '<div class="task-row' + (timer ? " course-with-timer" : "") + '">' + label +
+      '<div class="task-actions">' + timer + remove + "</div></div>";
+    (course ? courses : task.type === "task" ? customTasks : habits).push(row);
   }
   const section = (items, name, className) => items.length ? '<section class="day-section ' + className +
     '" aria-label="' + name + '"><div class="tasks">' + items.join("") + "</div></section>" : "";
-  return '<div class="day-body">' + (section(courses, "Courses", "course-list") + schedule + section(habits, "Habits", "habit-list") ||
+  return '<div class="day-body">' + (section(courses, "Courses", "course-list") + schedule +
+    section(customTasks, "Tasks", "custom-task-list") + section(habits, "Habits", "habit-list") ||
     '<p class="empty-day">No matching tasks</p>') + "</div>";
+}
+
+function renderTaskTimer(task) {
+  const name = "Study timer for " + escapeHTML(task.code);
+  return '<button type="button" class="timer-start" data-timer="' + escapeHTML(task.id) + '" aria-label="' + name +
+    '" title="' + name + '"><span class="timer-icon" aria-hidden="true"></span></button>';
 }
 
 function renderDays(board) {
@@ -1762,10 +1838,13 @@ function renderDays(board) {
     const today = entry.date === clockDay;
     const dayClass = today ? " today" : "";
     const close = dayView ? '<button type="button" class="close-control close-day" aria-label="Close Day View" title="Close Day View"><span class="close-icon" aria-hidden="true">×</span></button>' : "";
+    const addLabel = escapeHTML("Add task or habit for " + dateLabel(entry.date, fullDate));
+    const add = '<button type="button" class="day-add" data-add-day-item aria-label="' + addLabel +
+      '" title="' + addLabel + '"><span class="plus-icon" aria-hidden="true"></span></button>';
     const open = dayView ? "" : '<button type="button" class="open-day" aria-label="' +
       escapeHTML("Open Day View for " + dateLabel(entry.date, fullDate)) + '"></button>';
     const heading = '<article class="day' + dayClass + '" data-day="' + entry.date + '" aria-labelledby="day-' + index + '"' + (today ? ' aria-current="date"' : "") + '>' +
-      '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + "</h3>" + close +
+      '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + '</h3><div class="day-actions">' + add + close + "</div>" +
       '</div><time class="day-date" datetime="' + isoDate(entry.date) + '">' + dateLabel(entry.date) + "</time>";
     const scheduleOpen = expandedDays.has(entry.date) || (dayView && previousDay !== entry.date);
     const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, scheduleOpen, expandedEvents) : "";
@@ -1870,11 +1949,29 @@ function renderHistory(liveMonday) {
     .sort((left, right) => right[1].monday - left[1].monday);
   byId("history-count").textContent = countLabel(weeks.length, "week");
   byId("history-list").innerHTML = weeks.length ? weeks.map(([key, entry]) =>
-    "<li><span>" + escapeHTML(key) + " · " + rangeLabel(entry.monday) + "</span><span>" +
+    "<li><span>" + escapeHTML(key) + " · " + rangeLabel(entry.monday) + '</span><div class="history-entry-actions"><span>' +
     (entry.total === null ? entry.done + " checked" : entry.done + "/" + entry.total + " · " + percent(entry.done, entry.total) + "%") +
-    "</span></li>").join("")
-    : "<li>Your first week will appear here after the next Monday reset.</li>";
+    "</span>" + removeButton("Delete week " + rangeLabel(entry.monday), ' data-delete-week="' + escapeHTML(key) + '"') + "</div></li>").join("")
+    : "<li>No saved past weeks.</li>";
 }
+
+byId("history-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-delete-week]");
+  if (!button) return;
+  const key = button.dataset.deleteWeek;
+  const next = button.closest("li").nextElementSibling?.querySelector("[data-delete-week]")?.dataset.deleteWeek;
+  commit(() => {
+    if (!state.weeks[key] || state.weeks[key].monday >= mondayOf(localDay())) return false;
+    delete state.weeks[key];
+    return true;
+  }, () => {
+    render();
+    const history = byId("history-list");
+    const buttons = [...history.querySelectorAll("[data-delete-week]")];
+    (buttons.find((item) => item.dataset.deleteWeek === next) ?? buttons.at(-1) ??
+      history.parentElement.querySelector("summary")).focus({ preventScroll: true });
+  });
+});
 
 function renderStreak(liveMonday) {
   let streak = 0;
@@ -2200,7 +2297,7 @@ function renderEditor() {
     field("Ends", "endDate", session.endDate, "date") +
     (state.studyTracking ? '<label class="field">Study weeks<input type="number" min="0.1" max="520" step="0.1" data-field="weeks" value="' +
     escapeHTML(session.weeks ?? "") + '" placeholder="' + escapeHTML(numberLabel.format(sessionWeeks(session))) + '"></label>' : "") +
-    '<button type="button" class="danger" data-remove-session aria-label="Remove session ' + escapeHTML(session.name) + '">Remove</button></div>'
+    removeButton("Remove session " + session.name, " data-remove-session") + "</div>"
   ).join("");
   byId("add-course").disabled = !sessions.length;
   byId("course-fields").innerHTML = term.courses.map((course, index) => {
@@ -2216,7 +2313,7 @@ function renderEditor() {
       '<div class="course-extras">' + field("Canvas course ID (optional)", "canvasId", course.canvasId) +
       (state.studyTracking ? '<label class="field">Weekly study hours<input type="number" min="0" step="any" data-field="weeklyHours" value="' +
         escapeHTML(course.weeklyHours ?? "") + '" placeholder="' + escapeHTML(automaticTargetPlaceholder(course, sessionInfo)) + '"></label>' : "") +
-      '<button type="button" class="danger" data-remove aria-label="Remove course ' + (index + 1) + '">Remove</button></div></div>';
+      removeButton("Remove course " + (index + 1), " data-remove") + "</div></div>";
   }).join("");
 }
 
@@ -2379,7 +2476,9 @@ function updateDraftField(event) {
     for (const option of byId("course-fields").querySelectorAll("option")) {
       if (option.value === target.id) option.textContent = input.value;
     }
-    sessionRow.querySelector("[data-remove-session]").setAttribute("aria-label", "Remove session " + input.value);
+    const remove = sessionRow.querySelector("[data-remove-session]");
+    remove.setAttribute("aria-label", "Remove session " + input.value);
+    remove.title = "Remove session " + input.value;
   }
   if (key === "code" && !target.color) {
     row.querySelector('[data-field="color"]').value = defaultClassAccent(input.value.trim().toUpperCase().replace(/\s+/g, " "));
@@ -2610,7 +2709,7 @@ function habitRow(habit) {
   const days = DAY_NAMES.map((day, index) => '<label class="habit-day"><input type="checkbox" value="' + index +
     '" aria-label="' + day + '"' + (habit.days.includes(index) ? " checked" : "") + '><span>' + day.slice(0, 3) + "</span></label>").join("");
   return '<div class="habit-row" data-habit="' + escapeHTML(habit.id) + '"><div class="habit-row-head">' +
-    field("Habit name", "name", habit.name) + '<button type="button" class="danger" data-remove-habit>Remove</button></div>' +
+    field("Habit name", "name", habit.name) + removeButton(habit.name ? "Remove " + habit.name : "Remove habit", " data-remove-habit") + "</div>" +
     '<div class="habit-days" role="group" aria-label="Repeat on">' + days + "</div></div>";
 }
 
@@ -2954,7 +3053,7 @@ function renderDayInspector(calendar = calendarEvents(), resolve) {
   byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events) + "</ul>" : '<p>No events scheduled</p>';
   const habits = entry.tasks.filter((task) => task.type !== "course");
   const courses = entry.tasks.filter((task) => task.type === "course");
-  byId("inspector-habits").innerHTML = habits.length ? "<ul>" + inspectorTasks(habits, checks, upcoming, entry.name) + "</ul>" : "<p>No habits scheduled</p>";
+  byId("inspector-habits").innerHTML = habits.length ? "<ul>" + inspectorTasks(habits, checks, upcoming, entry.name) + "</ul>" : "<p>No tasks or habits scheduled</p>";
   byId("inspector-courses").innerHTML = courses.length ? "<ul>" + inspectorTasks(courses, checks, upcoming, entry.name) + "</ul>" : "<p>No courses scheduled</p>";
 }
 
@@ -3414,7 +3513,69 @@ function openTimer(course) {
   tickTimer();
 }
 
+const dayItemDialog = byId("day-item-dialog");
+let dayItemDate = null;
+
+function focusDayAdd(day) {
+  byId("board").querySelector('.day[data-day="' + day + '"] [data-add-day-item]')?.focus({ preventScroll: true });
+}
+
+byId("close-day-item").addEventListener("click", () => dayItemDialog.close());
+byId("day-item-name").addEventListener("input", (event) => event.target.setCustomValidity(""));
+byId("day-item-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = byId("day-item-name");
+  const title = input.value.trim();
+  if (!title) {
+    input.setCustomValidity("Enter a task or habit name.");
+    input.reportValidity();
+    return;
+  }
+  const day = dayItemDate;
+  const type = byId("day-item-type").value;
+  const item = { id: newIdentity("item"), day: day - mondayOf(day), title, type };
+  commit(() => {
+    const board = buildBoard(day);
+    const updated = buildBoard(day, undefined, { dayItems: [...board.dayItems, item] });
+    recordWeek(updated, currentChecks(board));
+    return true;
+  }, () => {
+    dayItemDialog.close();
+    render();
+    const checkbox = [...byId("board").querySelectorAll("[data-task]")].find((control) => control.dataset.task === dayItemTaskId(item));
+    checkbox?.focus();
+  });
+});
+
 byId("board").addEventListener("click", (event) => {
+  const add = event.target.closest("[data-add-day-item]");
+  if (add) {
+    dayItemDate = Number(add.closest("[data-day]").dataset.day);
+    byId("day-item-form").reset();
+    byId("day-item-name").setCustomValidity("");
+    setText("day-item-date", dateLabel(dayItemDate, fullDate));
+    dayItemDialog.showModal();
+    return;
+  }
+  const remove = event.target.closest("[data-remove-day-task]");
+  if (remove) {
+    const day = Number(remove.closest("[data-day]").dataset.day);
+    const taskId = remove.dataset.removeDayTask;
+    commit(() => {
+      const board = buildBoard(day);
+      if (!board.days[day - board.monday].tasks.some((task) => task.id === taskId)) return false;
+      const dayItems = board.dayItems.filter((item) => dayItemTaskId(item) !== taskId);
+      const hiddenTasks = dayItems.length === board.dayItems.length ? [...board.hiddenTasks, taskId] : board.hiddenTasks;
+      const checks = { ...currentChecks(board) };
+      delete checks[taskId];
+      recordWeek(buildBoard(day, undefined, { dayItems, hiddenTasks }), checks);
+      return true;
+    }, () => {
+      render();
+      focusDayAdd(day);
+    });
+    return;
+  }
   const open = event.target.closest(".open-day");
   if (open) {
     const day = Number(open.closest("[data-day]").dataset.day);
