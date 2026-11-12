@@ -81,6 +81,9 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .weekly-progress .meter { height: 8px; }
 .meter > span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--gold); transition: width .25s ease; }
 .board-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 15px; margin-bottom: 11px; }
+.board-progress { grid-column: 2; }
+.board-progress .weekly-progress { padding: 0; border: 0; }
+.board-progress .meter { height: 5px; }
 .week-range { font-size: .77rem; line-height: 1.4; color: #d4d4d8; font-variant-numeric: tabular-nums; }
 .week-controls { display: inline-flex; grid-column: 3; align-items: stretch; justify-self: end; }
 .week-controls button { position: relative; min-height: 32px; padding: 5px 10px; border-radius: 0; font-size: .74rem; }
@@ -129,11 +132,11 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .open-day:focus-visible { outline-offset: -3px; }
 .day-view .day-head { padding: 12px 14px; }
 .day-view .day-name h3 { font-size: 1.1rem; }
-.close-day {
+.close-control {
   display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
-  border-color: transparent; background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
+  flex: 0 0 32px; border-color: transparent; background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
 }
-.close-day:hover { color: inherit; background: #ffffff08; }
+.close-control:hover { color: inherit; background: #ffffff08; }
 .day-date { display: block; color: var(--muted); font-size: .7rem; margin-top: 2px; }
 .day-meta { display: flex; align-items: center; justify-content: space-between; gap: 3px; margin: 9px 0 5px; font-size: .66rem; }
 .study-target { color: #d4d4d8; font-weight: 670; }
@@ -212,9 +215,12 @@ dialog::backdrop { background: #08080acb; }
 .course-extras .field { width: min(100%, 190px); }
 .course-row button, .session-row button { min-height: 37px; }
 .accent-field { display: flex; align-items: end; gap: 4px; }
-.accent-field input[type=color], .settings-colors input[type=color] { width: 48px; padding: 4px; cursor: pointer; }
+.accent-field input[type=color] { width: 48px; padding: 4px; cursor: pointer; }
 .accent-field button { padding-inline: 7px; }
-.settings-colors { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.settings-toggle { display: flex; align-items: center; gap: 8px; font-size: .84rem; }
+.settings-toggle input, .assignment-check { accent-color: var(--gold); }
+.class-session-dates { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.class-session-dates span { padding: 4px 7px; border: 1px solid var(--line); border-radius: 6px; font-size: .72rem; }
 .settings-section { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
 .settings-section h3 { font-size: .93rem; margin-bottom: 7px; }
 .form-error { font-size: .79rem; margin-top: 7px; }
@@ -249,13 +255,25 @@ dialog::backdrop { background: #08080acb; }
 .day-schedule strong, .day-schedule small { display: block; overflow-wrap: anywhere; }
 .day-schedule strong { font-size: .72rem; }
 .day-schedule small { color: var(--muted); font-size: .65rem; margin-top: 2px; }
-.event-heading { display: inline-block; max-width: 100%; min-width: 0; padding-inline-start: 6px; border-inline-start: 2px solid var(--accent); }
+.calendar-event { --event-inset: 25px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; }
+.event-heading { display: block; min-width: 0; padding-inline-start: 6px; border-inline-start: 2px solid var(--accent); }
 .event-heading strong { display: block; overflow-wrap: anywhere; }
 .event-details { min-width: 0; width: 100%; }
-.event-details > summary { cursor: pointer; overflow-wrap: anywhere; }
-.event-details > summary > .event-heading { vertical-align: middle; }
+.event-details > summary, .event-static { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 3px; align-items: start; }
+.event-details > summary { cursor: pointer; list-style: none; }
+.event-details > summary::-webkit-details-marker { display: none; }
+.event-details > summary::before, .event-static::before { content: ""; }
+.event-details > summary::before {
+  width: 6px; height: 6px; margin: .35em 0 0 3px; border: solid var(--muted); border-width: 0 1.5px 1.5px 0;
+  transform: rotate(-45deg);
+}
+.event-details[open] > summary::before { transform: rotate(45deg); }
 .event-description { padding: 6px 0 2px; font-size: .73rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.calendar-event .event-description { margin-inline-start: var(--event-inset); }
 .event-description a { display: inline-block; margin-top: 4px; }
+.assignment-check { width: 15px; height: 15px; margin: 1px 0 0; }
+.calendar-event[data-completed] .event-heading strong, tr[data-completed] .database-title { color: var(--muted); text-decoration: line-through; }
+.inspector-section .calendar-event { display: grid; }
 .inline-calendar { margin-top: 19px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .calendar-toolbar, .calendar-title-group, .calendar-month-controls, .calendar-actions {
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
@@ -303,12 +321,11 @@ dialog::backdrop { background: #08080acb; }
 .calendar-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; align-items: center; max-width: 100%; }
 .calendar-dots span { width: 4px; height: 4px; border-radius: 50%; }
 .calendar-event-dot { background: var(--accent, var(--muted)); }
-.calendar-milestone-dot { background: var(--maroon); }
+.calendar-dots .calendar-milestone-dot { background: var(--muted); border-radius: 1px; }
 .day-inspector { border-inline-start: 1px solid var(--line); padding-inline-start: 16px; }
 .inspector-heading { display: flex; align-items: start; justify-content: space-between; gap: 7px; }
 .inspector-heading h3 { font-size: 1rem; letter-spacing: -.025em; }
 .inspector-heading p { display: inline-block; color: #d4d4d8; font-size: .71rem; margin-top: 5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; }
-.inspector-heading button { background: transparent; border-color: transparent; color: var(--muted); padding: 3px 7px; }
 .inspector-study { color: var(--gold); font-size: .79rem; font-weight: 650; margin-top: 8px; }
 .inspector-milestones { padding: 0; margin: 6px 0 0; list-style: none; color: #f4bacd; font-size: .72rem; }
 .inspector-section { margin-top: 11px; border-top: 1px solid var(--line); padding-top: 9px; }
@@ -321,6 +338,25 @@ dialog::backdrop { background: #08080acb; }
 .inspector-status { flex: 0 0 auto; color: var(--muted); font-size: .65rem; padding: 2px 6px; border: 1px solid var(--control-line); border-radius: 999px; }
 .inspector-status.completed { color: var(--gold); border-color: #ffc62755; }
 .jump-board-week { margin-top: 10px; }
+.calendar-views { display: inline-flex; gap: 4px; margin-top: 13px; }
+.calendar-views button { padding: 6px 10px; }
+.calendar-views button[aria-pressed=true] { background: var(--raised); border-color: #71717a; color: #fff; }
+.database-view { margin-top: 12px; }
+.database-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.database-table { width: 100%; min-width: 610px; border-collapse: collapse; table-layout: fixed; font-size: .78rem; }
+.database-table th, .database-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+.database-table th { color: var(--muted); background: var(--raised); font-weight: 650; }
+.database-table th:first-child { width: 32%; }
+.database-table th:nth-child(2) { width: 18%; }
+.database-table th:nth-child(3) { width: 24%; }
+.database-table th:nth-child(4) { width: 12%; }
+.database-table th:last-child { width: 14%; }
+.database-table th button { border: 0; background: transparent; padding: 0; text-align: start; font-size: inherit; }
+.database-table tbody tr:last-child td { border-bottom: 0; }
+.database-title { color: #f4f4f5; font-weight: 650; }
+.database-class { display: inline-flex; align-items: baseline; gap: 5px; }
+.database-class::before { content: ""; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--accent); }
+.database-table time small { display: block; color: var(--muted); }
 @media (pointer: coarse) {
   .task { min-height: 44px; }
   .habit-list .task { min-height: 34px; }
@@ -334,10 +370,13 @@ dialog::backdrop { background: #08080acb; }
 }
 @media (max-width: 900px) {
   .board-head { grid-template-columns: minmax(0, 1fr) auto; }
+  .board-progress { grid-column: 1 / -1; }
   .week-controls { grid-column: 2; grid-row: 1; }
   .board-filters { grid-column: 1 / -1; justify-content: flex-start; }
 }
 @media (max-width: 700px) {
+  .database-table :is(th, td):first-child { position: sticky; inset-inline-start: 0; box-shadow: 1px 0 var(--line); }
+  .database-table td:first-child { background: var(--surface); }
   main { width: calc(100% - 24px); padding-top: 13px; }
   .context-top { align-items: flex-start; flex-direction: column; gap: 11px; padding: 12px; }
   .context-actions { width: 100%; justify-content: flex-start; align-items: end; gap: 6px; }
@@ -370,11 +409,15 @@ dialog::backdrop { background: #08080acb; }
 </head>
 <body>
 <main>
-  <header class="context-header" aria-labelledby="term-title">
+  <header class="context-header" id="context-header" aria-labelledby="term-title">
     <div class="context-top">
       <div class="context-title"><h1 id="term-title"></h1><p id="term-detail"></p></div>
       <div class="context-actions">
-        <article class="stat">
+        <article class="stat" id="deadline-stat">
+          <p class="stat-label">Upcoming events</p>
+          <div class="stat-line"><strong id="deadline-count">0</strong><small>Next 7 days</small></div>
+        </article>
+        <article class="stat" id="study-stat" hidden>
           <p class="stat-label" id="study-label">Today’s study target</p>
           <div class="stat-line"><strong id="study-total"></strong><small id="study-weekly"></small></div>
         </article>
@@ -392,16 +435,16 @@ dialog::backdrop { background: #08080acb; }
           <summary aria-label="Actions" title="Actions">⋯</summary>
           <div class="action-menu-panel">
             <button type="button" id="open-settings">Settings</button>
-            <button type="button" id="edit">Edit roadmap</button>
+            <button type="button" id="edit">Add classes</button>
             <button type="button" id="manage-habits">Manage Habits</button>
             <button type="button" id="backup">Backups</button>
           </div>
         </details>
       </div>
     </div>
-    <div class="weekly-progress">
+    <div class="weekly-progress" id="weekly-progress">
       <div class="weekly-progress-label">
-        <p class="stat-label">Weekly completion</p>
+        <p class="stat-label">Weekly checklist completion</p>
         <p><strong id="weekly-percent">0%</strong><span aria-hidden="true"> · </span><span id="weekly-count"></span></p>
       </div>
       <div id="weekly-meter" class="meter" role="progressbar" aria-label="Weekly completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>
@@ -411,6 +454,7 @@ dialog::backdrop { background: #08080acb; }
     <div class="board-head">
       <div><h2 id="board-title" class="sr-only">Daily checklist</h2><p id="board-range" class="week-range" aria-live="polite"></p></div>
       <div id="board-filters" class="board-filters" role="group" aria-label="Filter classes and sessions" hidden></div>
+      <div id="board-progress" class="board-progress" hidden></div>
       <div id="board-navigation" class="week-controls" role="group" aria-label="Week navigation">
         <button type="button" id="previous-week" aria-label="Previous week">‹</button>
         <button type="button" id="current-week">This Week</button>
@@ -451,6 +495,10 @@ dialog::backdrop { background: #08080acb; }
       </div>
     </div>
     <p id="calendar-message" class="dialog-note" role="status"></p>
+    <div class="calendar-views" id="calendar-views" role="group" aria-label="Schedule view">
+      <button type="button" data-calendar-view="calendar" aria-controls="inline-calendar-body" aria-pressed="true">Calendar</button>
+      <button type="button" data-calendar-view="database" aria-controls="database-view" aria-pressed="false">Database</button>
+    </div>
     <div class="inline-calendar-body" id="inline-calendar-body">
       <div class="calendar-month-grid">
         <div class="calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
@@ -459,7 +507,7 @@ dialog::backdrop { background: #08080acb; }
       <aside class="day-inspector" id="day-inspector" aria-labelledby="inspector-date" hidden>
         <div class="inspector-heading">
           <div><h3 id="inspector-date"></h3><p id="inspector-term"></p></div>
-          <button type="button" id="close-inspector" aria-label="Close day details">✕</button>
+          <button type="button" id="close-inspector" class="close-control" aria-label="Close day details">×</button>
         </div>
         <p id="inspector-study" class="inspector-study"></p>
         <ul id="inspector-milestones" class="inspector-milestones" hidden></ul>
@@ -468,6 +516,22 @@ dialog::backdrop { background: #08080acb; }
         <section class="inspector-section"><h4>Courses</h4><div id="inspector-courses"></div></section>
         <button type="button" class="jump-board-week" id="jump-board-week">Jump to this week</button>
       </aside>
+    </div>
+    <div class="database-view" id="database-view" hidden>
+      <p id="database-summary" class="dialog-note" role="status"></p>
+      <div class="database-scroll" id="database-scroll" tabindex="0" role="region" aria-label="Assignments and events">
+        <table class="database-table">
+          <caption class="sr-only">Assignments and events for the selected month</caption>
+          <thead><tr>
+            <th scope="col"><button type="button" data-sort="title">Assignment or event</button></th>
+            <th scope="col"><button type="button" data-sort="course">Class</button></th>
+            <th scope="col"><button type="button" data-sort="due">Due date</button></th>
+            <th scope="col"><button type="button" data-sort="done">Done</button></th>
+            <th scope="col">Link</th>
+          </tr></thead>
+          <tbody id="database-rows"></tbody>
+        </table>
+      </div>
     </div>
   </section>
   <details class="history">
@@ -481,7 +545,9 @@ dialog::backdrop { background: #08080acb; }
 </main>
 <dialog id="calendar-link-dialog" class="compact-dialog" aria-labelledby="calendar-link-title">
   <form id="calendar-link-form" class="dialog-shell">
-    <div class="dialog-head"><div><h2 id="calendar-link-title">Paste .ics Link</h2><p>Refreshes automatically while the dashboard is open.</p></div></div>
+    <div class="dialog-head"><div><h2 id="calendar-link-title">Paste .ics Link</h2><p>Refreshes automatically while the dashboard is open.</p></div>
+      <button type="button" id="cancel-calendar-link" class="close-control" aria-label="Close calendar link">×</button>
+    </div>
     <label class="field">Calendar feed URL
       <input type="url" id="calendar-link-url" placeholder="https://calendar.google.com/calendar/ical/…" required autofocus autocomplete="off" spellcheck="false">
     </label>
@@ -491,40 +557,39 @@ dialog::backdrop { background: #08080acb; }
     <p id="calendar-proxy-note" class="dialog-note">Leave blank to fetch the feed directly. If your calendar blocks browser requests, use a trusted HTTPS proxy that accepts a <code>url</code> query parameter. The proxy receives the feed URL and its events.</p>
     <p id="calendar-link-error" class="form-error" role="alert" hidden></p>
     <div class="dialog-actions">
-      <button type="button" id="cancel-calendar-link">Cancel</button>
       <button type="submit" class="primary">Save and sync</button>
     </div>
   </form>
 </dialog>
 <dialog id="calendar-clear-dialog" class="compact-dialog" aria-labelledby="calendar-clear-title">
   <form method="dialog" class="dialog-shell">
-    <div class="dialog-head"><div><h2 id="calendar-clear-title">Clear Calendar</h2><p>Remove imported events and disconnect the saved calendar link.</p></div></div>
+    <div class="dialog-head"><div><h2 id="calendar-clear-title">Clear Calendar</h2><p>Remove imported events and disconnect the saved calendar link.</p></div>
+      <button type="submit" value="cancel" class="close-control" aria-label="Close clear calendar confirmation" autofocus>×</button>
+    </div>
     <div class="dialog-actions">
-      <button value="cancel" autofocus>Cancel</button>
       <button value="clear" class="danger">Clear Calendar</button>
     </div>
   </form>
 </dialog>
 <dialog id="settings-dialog" class="compact-dialog" aria-labelledby="settings-title">
   <div class="dialog-shell">
-    <div class="dialog-head"><div><h2 id="settings-title">Settings</h2></div><button type="button" id="close-settings">Close</button></div>
+    <div class="dialog-head"><div><h2 id="settings-title">Settings</h2></div><button type="button" id="close-settings" class="close-control" aria-label="Close settings">×</button></div>
     <section class="settings-section" aria-labelledby="settings-roadmap-title">
       <h3 id="settings-roadmap-title">Roadmap</h3>
-      <button type="button" id="manage-roadmap">Manage roadmap</button>
+      <button type="button" id="manage-roadmap">Manage classes and terms</button>
       <p class="dialog-note">Edit terms, sessions, courses, Canvas IDs, and individual accents.</p>
     </section>
-    <section class="settings-section" aria-labelledby="session-colors-title">
-      <h3 id="session-colors-title">Default session colors</h3>
-      <div class="settings-colors" id="session-colors"></div>
-      <div class="dialog-actions"><button type="button" id="reset-session-colors">Restore default colors</button></div>
+    <section class="settings-section" aria-labelledby="study-settings-title">
+      <h3 id="study-settings-title">Study tracking</h3>
+      <label class="settings-toggle"><input type="checkbox" id="study-tracking">Show weekly study hours per class</label>
     </section>
   </div>
 </dialog>
 <dialog id="editor" aria-labelledby="editor-title">
   <form id="editor-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
-      <div><h2 id="editor-title">Edit roadmap</h2><p>Manage terms, session dates, courses, and their accents.</p></div>
-      <button type="button" id="close-editor" aria-label="Close roadmap editor">Close</button>
+      <div><h2 id="editor-title">Add classes</h2></div>
+      <button type="button" id="close-editor" class="close-control" aria-label="Close class editor">×</button>
     </div>
     <div class="editor-toolbar">
       <select id="edit-term" aria-label="Term to edit"></select>
@@ -532,14 +597,18 @@ dialog::backdrop { background: #08080acb; }
       <button type="button" id="remove-term" class="danger">Remove term</button>
       <button type="button" id="switch-editor" class="push">Edit JSON</button>
     </div>
+    <p id="classes-empty" class="dialog-note" hidden>Create a term under Settings → Manage classes and terms to add its classes.</p>
     <div id="form-pane">
-      <div class="form-grid" id="term-fields"></div>
-      <p id="term-note" class="dialog-note"></p>
+      <div id="class-session-dates" class="class-session-dates"></div>
+      <div id="term-configuration">
+        <div class="form-grid" id="term-fields"></div>
+        <p id="term-note" class="dialog-note"></p>
       <section class="roadmap-section" aria-labelledby="roadmap-sessions-title">
         <div class="courses-head"><h3 id="roadmap-sessions-title">Sessions</h3><button type="button" id="add-session">+ Session</button></div>
         <p class="dialog-note">Give each session its own dates and study length. Sessions may overlap.</p>
         <div id="session-fields"></div>
       </section>
+      </div>
       <div class="courses-head">
         <h3>Courses</h3>
         <button type="button" id="add-course">+ Course</button>
@@ -557,11 +626,10 @@ dialog::backdrop { background: #08080acb; }
     <div id="json-pane" hidden>
       <label class="field">Course schedule JSON<textarea class="json-input" id="json-input" spellcheck="false"></textarea></label>
     </div>
-    <p class="dialog-note">Study estimates divide 45 hours per credit by the session’s study length. Start and end dates are inclusive.</p>
+    <p class="dialog-note" id="study-editor-note" hidden>Automatic weekly targets divide 45 hours per credit by the session length. Leave a class target blank to use its automatic value.</p>
     <p id="form-error" class="form-error" role="alert" hidden></p>
     <div class="dialog-actions">
-      <button type="button" id="cancel-editor">Cancel</button>
-      <button type="submit" class="primary">Save roadmap</button>
+      <button type="submit" class="primary" id="save-classes">Save classes</button>
     </div>
   </form>
 </dialog>
@@ -569,7 +637,7 @@ dialog::backdrop { background: #08080acb; }
   <div class="dialog-shell">
     <div class="dialog-head">
       <div><h2 id="backup-title">Backups</h2><p>Export your roadmap, habits, calendar, and checkmarks as JSON, or restore a previous export.</p></div>
-      <button type="button" id="close-backup">Close</button>
+      <button type="button" id="close-backup" class="close-control" aria-label="Close backups">×</button>
     </div>
     <input type="file" id="backup-file" accept=".json,application/json" hidden>
     <div class="backup-actions">
@@ -587,7 +655,7 @@ dialog::backdrop { background: #08080acb; }
   <form id="habits-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
       <div><h2 id="habits-title">Manage Habits</h2><p>Choose the days each habit repeats.</p></div>
-      <button type="button" id="close-habits">Close</button>
+      <button type="button" id="close-habits" class="close-control" aria-label="Close habits">×</button>
     </div>
     <div id="habit-list"></div>
     <button type="button" id="add-habit">+ Add habit</button>
@@ -599,7 +667,7 @@ dialog::backdrop { background: #08080acb; }
   <div class="dialog-shell">
     <div class="dialog-head">
       <div><h2 id="timer-title">Study timer</h2><p id="timer-course"></p></div>
-      <button type="button" id="close-timer">Close</button>
+      <button type="button" id="close-timer" class="close-control" aria-label="Close timer">×</button>
     </div>
     <div id="timer-setup" class="timer-setup">
       <div id="duration-options" class="duration-options" role="group" aria-label="Timer duration">
@@ -1030,7 +1098,7 @@ function matchingCalendarWeek(monday, events) {
       dates.forEach((date, index) => {
         if (allDay ? from <= date && date < to
           : (from < bounds[index + 1] && (duration ? to > bounds[index] : from >= bounds[index]))) {
-          rows[index].push({ source: event, summary: event.summary, from, to, allDay, lower: bounds[index], upper: bounds[index + 1] });
+          rows[index].push({ source: event, summary: event.summary, day, from, to, allDay, lower: bounds[index], upper: bounds[index + 1] });
         }
       });
     }
@@ -1119,25 +1187,52 @@ function calendarDots(events) {
   return colors.map((color) => '<span class="calendar-event-dot"' + accentStyle(color) + '></span>').join("");
 }
 
-function renderDaySchedule(events, day, open) {
+function eventKey(event) {
+  return JSON.stringify(event.source.rule ? [event.source.id, event.day] : [event.source.id]);
+}
+
+function assignmentCheckbox(key, summary, completed, disabled = false) {
+  return '<input type="checkbox" class="assignment-check" data-event-check="' + escapeHTML(key) +
+    '" aria-label="' + escapeHTML("Complete " + summary) + '"' + (completed ? " checked" : "") +
+    (disabled ? " disabled" : "") + ">";
+}
+
+function eventLink(url, compact = false) {
+  if (!url) return "";
+  const canvas = Boolean(canvasEventInfo(url).assignment);
+  const label = compact ? (canvas ? "Canvas" : "Open") : (canvas ? "Open assignment in Canvas" : "Open event link");
+  return '<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener noreferrer">' + label + "</a>";
+}
+
+function eventContent(heading, description, url, key, open) {
+  if (!description && !url) return '<div class="event-static">' + heading + "</div>";
+  return '<details class="event-details" data-event-detail="' + escapeHTML(key) + '"' + (open ? " open" : "") +
+    '><summary>' + heading + '</summary><div class="event-description">' +
+    (description ? "<p>" + escapeHTML(description) + "</p>" : "") + eventLink(url) + "</div></details>";
+}
+
+function renderDaySchedule(events, day, open, readOnly, expandedEvents) {
   if (!events.length) return "";
   return '<details class="day-schedule" data-calendar-day="' + day + '"' + (open ? " open" : "") +
     '><summary>Schedule &amp; Deadlines <span>' + events.length + '</span><span class="calendar-dots" aria-hidden="true">' +
     calendarDots(events) + '</span></summary><ul>' +
-    calendarItems(events) + "</ul></details>";
+    calendarItems(events, readOnly, expandedEvents) + "</ul></details>";
 }
 
-function calendarItems(events) {
+function calendarItems(events, readOnly = null, expandedEvents = new Set()) {
+  const completedEvents = new Set(state.completedEvents);
   return events.map((event) => {
     const { description, url } = event.source;
+    const key = eventKey(event);
+    const completed = completedEvents.has(key);
     const heading = '<span class="event-heading"><strong>' + escapeHTML(event.summary) + "</strong><small>" +
       escapeHTML(calendarTime(event)) + (event.course ? " · " + escapeHTML(event.course.code) : "") + "</small></span>";
-    const details = description || url ? '<details class="event-details"><summary>' + heading + '</summary><div class="event-description">' +
-      (description ? "<p>" + escapeHTML(description) + "</p>" : "") +
-      (url ? '<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener noreferrer">' +
-        (canvasEventInfo(url).assignment ? "Open assignment in Canvas" : "Open event link") + "</a>" : "") +
-      "</div></details>" : heading;
-    return '<li class="calendar-event"' + accentStyle(event.color) + ">" + details + "</li>";
+    const status = readOnly === null
+      ? '<span class="inspector-status" data-event-status="' + escapeHTML(key) + '">' + (completed ? "Done" : "Open") + "</span>"
+      : assignmentCheckbox(key, event.summary, completed, readOnly);
+    return '<li class="calendar-event"' + accentStyle(event.color) + (completed ? " data-completed" : "") + ">" +
+      eventContent(heading, description, url, key, expandedEvents.has(key)) +
+      status + "</li>";
   }).join("");
 }
 
@@ -1187,7 +1282,7 @@ const DEFAULT_HABITS = [
 ];
 const TIMER_MAX_MINUTES = 1440;
 const SESSION_WEEKS = { A: 7.5, B: 7.5, C: 15 };
-const SESSION_COLORS = { A: "#d76b90", B: "#ffc627", C: "#6bb7a5" };
+const CLASS_COLORS = ["#75a7f5", "#6bb7a5", "#d887a9", "#e4ad71", "#a89af1", "#a6bf70", "#6bbecf", "#e38979"];
 const UNASSIGNED_COLOR = "#8c8c98";
 const byId = (id) => document.getElementById(id);
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -1254,7 +1349,15 @@ function minutesLabel(value) {
   return hours + "h" + (remainder ? " " + remainder + "m" : "");
 }
 
-function weeklyHours(course) { return course.credits * 45 / (course.sessionInfo?.weeks ?? SESSION_WEEKS[course.session]); }
+function sessionWeeks(session) {
+  const days = dayFromISO(session.endDate) - dayFromISO(session.startDate) + 1;
+  return session.weeks || days / 7;
+}
+
+function automaticWeeklyHours(course) {
+  return course.credits * 45 / (course.sessionInfo ? sessionWeeks(course.sessionInfo) : SESSION_WEEKS[course.session]);
+}
+function weeklyHours(course) { return course.weeklyHours ?? automaticWeeklyHours(course); }
 function studyHours(courses) { return courses.reduce((total, course) => total + weeklyHours(course), 0); }
 function studyLabel(hours) { return hours ? "~" + minutesLabel(hours * 60 / 7) : "0m"; }
 function percent(done, total) {
@@ -1280,7 +1383,7 @@ function normalizeHabits(input) {
 }
 
 function newState() {
-  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, sessionColors: {}, habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
+  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, studyTracking: false, completedEvents: [], habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
 }
 
 function decodeState(input, strict = false) {
@@ -1312,12 +1415,15 @@ function decodeState(input, strict = false) {
   if (input.habits !== undefined) {
     try { result.habits = normalizeHabits(input.habits); } catch (error) { repair(error.message); }
   }
-  if (input.sessionColors !== undefined) {
-    try {
-      if (!isRecord(input.sessionColors)) throw new Error("Session colors must be an object.");
-      result.sessionColors = Object.fromEntries(Object.keys(SESSION_COLORS)
-        .map((id) => [id, normalizeAccent(input.sessionColors[id])]).filter(([, color]) => color));
-    } catch (error) { repair(error.message); }
+  if (input.studyTracking !== undefined && typeof input.studyTracking !== "boolean") repair("The study tracking setting is invalid.");
+  result.studyTracking = input.studyTracking === true;
+  if (input.completedEvents !== undefined) {
+    if (!Array.isArray(input.completedEvents) || input.completedEvents.some((key) => typeof key !== "string" || !key)) {
+      repair("The assignment completion list is invalid.");
+    }
+    if (Array.isArray(input.completedEvents)) {
+      result.completedEvents = [...new Set(input.completedEvents.filter((key) => typeof key === "string" && key))];
+    }
   }
   if (input.events !== undefined) {
     try { result.events = normalizeEvents(input.events); } catch (error) { repair(error.message); }
@@ -1476,8 +1582,8 @@ function courseIdentity(course) { return course.trackId ?? course.code; }
 
 function weekTerm(monday, today) {
   const terms = state.schedule.filter((term) => dayFromISO(term.startDate) <= monday + 6 && dayFromISO(term.endDate) >= monday);
-  return terms.find((term) => term.id === viewedTermId) ??
-    (monday === mondayOf(today) ? planForDate(today).term : null) ?? terms[0] ?? null;
+  return (monday === mondayOf(today) ? planForDate(today).term : null) ??
+    terms.find((term) => term.id === viewedTermId) ?? terms[0] ?? null;
 }
 
 function visibleCourses(term) {
@@ -1520,17 +1626,18 @@ function prepareCurrentWeek() {
   return recordWeek(live, currentChecks(live));
 }
 
-function sessionAccent(session) {
-  if (session.color) return session.color;
-  return Object.hasOwn(SESSION_COLORS, session.id) ? state.sessionColors[session.id] ?? SESSION_COLORS[session.id] : UNASSIGNED_COLOR;
+function defaultClassAccent(code) {
+  let hash = 0;
+  for (const character of code) hash = (hash * 31 + character.codePointAt(0)) >>> 0;
+  return code ? CLASS_COLORS[hash % CLASS_COLORS.length] : UNASSIGNED_COLOR;
 }
 
-function courseAccent(course) { return course.color ?? sessionAccent(course.sessionInfo); }
+function courseAccent(course) { return course.color ?? defaultClassAccent(course.code); }
 
 function accentStyle(color) { return ' style="--accent:' + color + '"'; }
 
-function badge(session, compact = false, color = sessionAccent(session)) {
-  const label = session.name + " (" + numberLabel.format(session.weeks) + "w)";
+function badge(session, compact, color) {
+  const label = session.name + " (" + numberLabel.format(sessionWeeks(session)) + "w)";
   const text = compact ? /^Session ([A-Z])$/.exec(session.name)?.[1] ?? session.name : label;
   return '<span class="badge"' + accentStyle(color) + ' title="' + escapeHTML(label) + '" aria-label="' +
     escapeHTML(label) + '">' + escapeHTML(text) + "</span>";
@@ -1569,12 +1676,13 @@ function renderTask(task, checked, dayName, readOnly) {
     return '<label class="task ' + task.type + '" title="' + escapeHTML(task.title) + '">' + input + '<span class="task-copy"><span class="task-title">' +
       escapeHTML(task.title) + "</span></span></label>";
   }
-  const weekly = weeklyHours(task);
-  const study = minutesLabel(weekly * 60 / 7);
   const accent = courseAccent(task);
+  const weekly = weeklyHours(task);
+  const target = state.studyTracking ? '<span class="course-time">~' + minutesLabel(weekly * 60 / 7) +
+    "/day · " + numberLabel.format(weekly) + " hrs/wk</span>" : "";
   return '<label class="task course"' + accentStyle(accent) + '>' + input + '<span class="task-copy"><span class="course-title"><span class="task-title">' +
-    escapeHTML(task.code) + "</span>" + badge(task.sessionInfo, true) + '</span><span class="task-detail">' +
-    escapeHTML(task.name) + '</span><span class="course-time">~' + study + "/day · " + numberLabel.format(weekly) + " hrs/wk</span></span></label>";
+    escapeHTML(task.code) + "</span>" + badge(task.sessionInfo, true, accent) + '</span><span class="task-detail">' +
+    escapeHTML(task.name) + "</span>" + target + "</span></label>";
 }
 
 function renderDayTasks(entry, checks, readOnly, today) {
@@ -1604,6 +1712,7 @@ function renderDays(board) {
   const checks = visibleChecks(board);
   const element = byId("board");
   const expandedDays = new Set([...element.querySelectorAll(".day-schedule[open]")].map((details) => Number(details.dataset.calendarDay)));
+  const expandedEvents = new Set([...element.querySelectorAll("[data-event-detail][open]")].map((details) => details.dataset.eventDetail));
   const previousDay = element.classList.contains("day-view") ? Number(element.firstElementChild?.dataset.day) : null;
   const dayView = viewedDay !== null;
   const days = dayView ? [board.days[viewedDay - board.monday]] : board.days;
@@ -1615,15 +1724,15 @@ function renderDays(board) {
     const index = entry.date - board.monday;
     const today = entry.date === clockDay;
     const dayClass = today ? " today" : "";
-    const close = dayView ? '<button type="button" class="close-day" aria-label="Close Day View" title="Close Day View">×</button>' : "";
+    const close = dayView ? '<button type="button" class="close-control close-day" aria-label="Close Day View" title="Close Day View">×</button>' : "";
     const open = dayView ? "" : '<button type="button" class="open-day" aria-label="' +
       escapeHTML("Open Day View for " + dateLabel(entry.date, fullDate)) + '"></button>';
     const heading = '<article class="day' + dayClass + '" data-day="' + entry.date + '" aria-labelledby="day-' + index + '"' + (today ? ' aria-current="date"' : "") + '>' +
       '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + "</h3>" + close +
       '</div><time class="day-date" datetime="' + isoDate(entry.date) + '">' + dateLabel(entry.date) + "</time>";
     const scheduleOpen = expandedDays.has(entry.date) || (dayView && previousDay !== entry.date);
-    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, scheduleOpen) : "";
-    const study = entry.study ? studyLabel(entry.study) + " study" : "No study";
+    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, scheduleOpen, board.readOnly, expandedEvents) : "";
+    const study = state.studyTracking && entry.study ? studyLabel(entry.study) + " study" : "Checklist";
     return heading + '<div class="day-meta"><span class="study-target">' + study + '</span><span class="day-count"></span></div>' +
       '<div class="meter" role="progressbar" aria-label="' + entry.name + ' completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>' + open + "</div>" +
       schedule + renderDayTasks(entry, checks, board.readOnly, today) + "</article>";
@@ -1687,7 +1796,15 @@ function renderPreviewOptions() {
 function renderFilters(term, courses) {
   const element = byId("board-filters");
   element.hidden = !term?.courses.length;
-  if (element.hidden) return;
+  const boardProgress = byId("board-progress");
+  const progress = byId("weekly-progress");
+  boardProgress.hidden = !element.hidden;
+  const progressContainer = element.hidden ? boardProgress : byId("context-header");
+  if (progress.parentElement !== progressContainer) progressContainer.append(progress);
+  if (element.hidden) {
+    element.replaceChildren();
+    return;
+  }
   const ids = new Set(courses.map(courseIdentity));
   const sessions = termSessions(term);
   const pill = (value, label, active, color, session = null) => '<button type="button" class="filter-pill"' + accentStyle(color) + ' data-filter="' +
@@ -1695,11 +1812,11 @@ function renderFilters(term, courses) {
     '<span class="filter-label">' + escapeHTML(label) + '</span>' +
     (active && session ? badge(session, true, color) : '<span class="filter-indicator" aria-hidden="true">' + (active ? "✓" : "✕") + "</span>") + "</button>";
   const sessionPills = sessions.filter((session) => term.courses.some((course) => course.session === session.id))
-    .map((session) => pill("session:" + session.id, session.name, courses.some((course) => course.session === session.id), sessionAccent(session)));
+    .map((session) => pill("session:" + session.id, session.name, courses.some((course) => course.session === session.id), UNASSIGNED_COLOR));
   const classes = term.courses.map((course) => {
     const id = courseIdentity(course);
     const session = sessions.find((entry) => entry.id === course.session);
-    return pill("course:" + id, course.code, ids.has(id), course.color ?? sessionAccent(session), session);
+    return pill("course:" + id, course.code, ids.has(id), courseAccent(course), session);
   });
   element.innerHTML = '<div class="filter-group" role="group" aria-label="Sessions"><span class="filter-group-label">Sessions</span>' +
     sessionPills.join("") +
@@ -1734,7 +1851,7 @@ function render() {
   const dayView = viewedDay !== null;
   const monday = dayView ? mondayOf(viewedDay) : (viewedMonday ?? liveMonday);
   const readOnly = monday !== liveMonday;
-  const term = weekTerm(monday, clockDay);
+  const term = dayView ? planForDate(viewedDay).term : weekTerm(monday, clockDay);
   if ((term?.id ?? "") !== viewedTermId) hiddenCourses.clear();
   viewedTermId = term?.id ?? "";
   for (const id of hiddenCourses) {
@@ -1761,6 +1878,7 @@ function render() {
   byId("current-week").disabled = !readOnly;
   byId("current-day").hidden = !dayView;
   renderFilters(term, courses);
+  byId("study-stat").hidden = !state.studyTracking || !currentBoard.days.some((day) => day.tasks.some((task) => task.type === "course"));
   const weekStudy = currentBoard.days.reduce((hours, day) => hours + day.study / 7, 0);
   const study = !dayView && readOnly ? weekStudy : currentBoard.days[anchor - monday].study;
   setText("study-label", dayView ? "Daily study target" : readOnly ? "Avg. daily study" : "Today’s study target");
@@ -1915,6 +2033,7 @@ window.addEventListener("storage", (event) => {
 let draftSchedule = [];
 let editingId = "";
 let editingJSON = false;
+let managingTerms = false;
 const editor = byId("editor");
 
 function selectedTerm() { return draftSchedule.find((term) => term.id === editingId); }
@@ -1940,7 +2059,14 @@ function renderEditor() {
   const term = selectedTerm();
   byId("form-pane").hidden = editingJSON || !term;
   byId("json-pane").hidden = !editingJSON;
-  for (const id of ["edit-term", "add-term", "remove-term"]) byId(id).hidden = editingJSON;
+  byId("edit-term").hidden = editingJSON || !term;
+  for (const id of ["add-term", "remove-term"]) byId(id).hidden = editingJSON || !managingTerms;
+  byId("switch-editor").hidden = !managingTerms;
+  byId("term-configuration").hidden = !managingTerms;
+  byId("class-session-dates").hidden = managingTerms;
+  byId("classes-empty").hidden = Boolean(term || editingJSON || managingTerms);
+  byId("study-editor-note").hidden = !state.studyTracking || editingJSON || !term;
+  byId("save-classes").disabled = !term && !managingTerms;
   byId("edit-term").disabled = !term;
   byId("remove-term").disabled = !term;
   byId("switch-editor").textContent = editingJSON ? "Use form" : "Edit JSON";
@@ -1957,13 +2083,16 @@ function renderEditor() {
   ].join("");
   byId("term-note").textContent = term.planned ? "Planning dates and session assignments are editable." : "";
   const sessions = termSessions(term);
+  byId("class-session-dates").innerHTML = sessions.map((session) =>
+    "<span>" + escapeHTML(session.name) + " · " +
+    escapeHTML(dateRange(dayFromISO(session.startDate), dayFromISO(session.endDate))) + "</span>").join("");
   byId("session-fields").innerHTML = sessions.map((session, index) =>
     '<div class="session-row" data-session-index="' + index + '">' +
     field("Session name", "name", session.name) +
     field("Starts", "startDate", session.startDate, "date") +
     field("Ends", "endDate", session.endDate, "date") +
-    '<label class="field">Study weeks<input type="number" min="0.1" max="520" step="0.1" data-field="weeks" value="' +
-    escapeHTML(session.weeks) + '"></label>' + accentField(session, sessionAccent(session)) +
+    (state.studyTracking ? '<label class="field">Study weeks<input type="number" min="0.1" max="520" step="0.1" data-field="weeks" value="' +
+    escapeHTML(session.weeks ?? "") + '" placeholder="' + escapeHTML(numberLabel.format(sessionWeeks(session))) + '"></label>' : "") +
     '<button type="button" class="danger" data-remove-session aria-label="Remove session ' + escapeHTML(session.name) + '">Remove</button></div>'
   ).join("");
   byId("add-course").disabled = !sessions.length;
@@ -1976,8 +2105,10 @@ function renderEditor() {
       field("Course code", "code", course.code) + field("Course name", "name", course.name) +
       field("Credits", "credits", course.credits, "number") +
       '<label class="field">Session<select data-field="session" aria-label="Session">' + options + "</select></label>" +
-      accentField(course, sessionInfo ? sessionAccent(sessionInfo) : UNASSIGNED_COLOR) +
+      accentField(course, defaultClassAccent(course.code)) +
       '<div class="course-extras">' + field("Canvas course ID (optional)", "canvasId", course.canvasId) +
+      (state.studyTracking ? '<label class="field">Weekly study hours<input type="number" min="0" step="any" data-field="weeklyHours" value="' +
+        escapeHTML(course.weeklyHours ?? "") + '" placeholder="' + escapeHTML(automaticTargetPlaceholder(course, sessionInfo)) + '"></label>' : "") +
       '<button type="button" class="danger" data-remove aria-label="Remove course ' + (index + 1) + '">Remove</button></div></div>';
   }).join("");
   byId("suggestions").value = "";
@@ -2011,18 +2142,18 @@ function normalizeSchedule(input) {
     const sessions = source.map((session) => {
       const id = String(session?.id ?? "").trim();
       const label = String(session?.name ?? "").trim();
-      const weeks = Number(session?.weeks);
+      const weeks = session?.weeks == null || session.weeks === "" ? undefined : Number(session.weeks);
       const from = dayFromISO(session?.startDate);
       const to = dayFromISO(session?.endDate);
       if (!/^[a-z0-9][a-z0-9-]*$/i.test(id) || sessionIds.has(id) || !label || label.length > 60) {
         throw new Error(name + " needs a unique ID and a name of up to 60 characters for each session.");
       }
-      if (!(start <= from && from <= to && to <= end) || !Number.isFinite(weeks) || weeks < 0.1 || weeks > 520) {
-        throw new Error(label + " needs dates within " + name + " and a study length from 0.1 to 520 weeks.");
+      if (!(start <= from && from <= to && to <= end) ||
+          (weeks !== undefined && (!Number.isFinite(weeks) || weeks < 0.1 || weeks > 520))) {
+        throw new Error(label + " needs dates within " + name + ". Any study length override must be from 0.1 to 520 weeks.");
       }
       sessionIds.add(id);
-      const color = normalizeAccent(session.color);
-      return { id, name: label, startDate: session.startDate, endDate: session.endDate, weeks, ...(color ? { color } : {}) };
+      return { id, name: label, startDate: session.startDate, endDate: session.endDate, ...(weeks === undefined ? {} : { weeks }) };
     });
     if (!Array.isArray(term.courses)) throw new Error(name + " needs a courses array.");
     const codes = new Set();
@@ -2046,7 +2177,13 @@ function normalizeSchedule(input) {
       const color = normalizeAccent(course.color);
       const canvasId = String(course.canvasId ?? "").trim();
       if (canvasId && !/^\d+$/.test(canvasId)) throw new Error("Enter a numeric Canvas course ID for " + code + ".");
-      return { code, name: courseName, credits, session, trackId, ...(color ? { color } : {}), ...(canvasId ? { canvasId } : {}) };
+      const target = course.weeklyHours;
+      const override = target == null || (typeof target === "string" && !target.trim()) ? undefined : Number(target);
+      if (override !== undefined && (!["string", "number"].includes(typeof target) || !Number.isFinite(override) || override < 0)) {
+        throw new Error("Enter a nonnegative weekly study target for " + code + ", or leave it blank.");
+      }
+      return { code, name: courseName, credits, session, trackId, ...(color ? { color } : {}), ...(canvasId ? { canvasId } : {}),
+        ...(override === undefined ? {} : { weeklyHours: override }) };
     });
     const dates = legacy ? { sessionAMidpoint, ...(sessionAEndDate ? { sessionAEndDate } : {}) } : { sessions };
     return { id, term: name, startDate, endDate, ...dates, planned: Boolean(term.planned), courses };
@@ -2066,63 +2203,51 @@ function normalizeAccent(value) {
 }
 
 function fullTermSession(term) {
-  const weeks = Math.max(0.1, Math.round((dayFromISO(term.endDate) - dayFromISO(term.startDate) + 1) * 10 / 7) / 10);
-  return { id: "full-term", name: "Full term", startDate: term.startDate, endDate: term.endDate, weeks };
+  return { id: "full-term", name: "Full term", startDate: term.startDate, endDate: term.endDate };
 }
 
-function openRoadmapEditor() {
+function automaticTargetPlaceholder(course, sessionInfo) {
+  const hours = automaticWeeklyHours({ ...course, sessionInfo });
+  return Number.isFinite(hours) ? numberLabel.format(hours) + " automatic" : "Automatic";
+}
+
+function openRoadmapEditor(manage = false) {
   syncState();
+  managingTerms = manage;
   draftSchedule = JSON.parse(JSON.stringify(state.schedule));
-  const next = draftSchedule.find((term) => dayFromISO(term.startDate) > localDay());
-  editingId = currentBoard.term?.id ?? next?.id ?? draftSchedule[0]?.id ?? "";
+  const today = localDay();
+  const next = draftSchedule.find((term) => dayFromISO(term.startDate) > today);
+  editingId = planForDate(today).term?.id ?? next?.id ?? draftSchedule[0]?.id ?? "";
   if (!selectedTerm()) editingId = draftSchedule[0]?.id ?? "";
   editingJSON = false;
+  setText("editor-title", manage ? "Manage classes and terms" : "Add classes");
+  setText("save-classes", manage ? "Save changes" : "Save classes");
   showError();
   renderEditor();
   editor.showModal();
 }
-byId("edit").addEventListener("click", openRoadmapEditor);
+byId("edit").addEventListener("click", () => openRoadmapEditor());
 
 const settingsDialog = byId("settings-dialog");
-function renderSessionColors() {
-  byId("session-colors").innerHTML = Object.entries(SESSION_COLORS).map(([id, color]) =>
-    '<label class="field">Session ' + id + '<input type="color" data-session-color="' + id +
-    '" value="' + (state.sessionColors[id] ?? color) + '"></label>').join("");
-}
-
 byId("open-settings").addEventListener("click", () => {
   syncState();
-  renderSessionColors();
+  byId("study-tracking").checked = state.studyTracking;
   settingsDialog.showModal();
 });
 byId("close-settings").addEventListener("click", () => settingsDialog.close());
 byId("manage-roadmap").addEventListener("click", () => {
   settingsDialog.close();
-  openRoadmapEditor();
+  openRoadmapEditor(true);
 });
-byId("session-colors").addEventListener("change", (event) => {
-  const id = event.target.dataset.sessionColor;
-  if (!Object.hasOwn(SESSION_COLORS, id)) return;
-  const color = normalizeAccent(event.target.value);
+byId("study-tracking").addEventListener("change", (event) => {
+  const enabled = event.target.checked;
   commit(() => {
-    if (color === SESSION_COLORS[id]) delete state.sessionColors[id];
-    else state.sessionColors[id] = color;
+    state.studyTracking = enabled;
     return true;
   }, render);
 });
-byId("reset-session-colors").addEventListener("click", () => {
-  commit(() => {
-    state.sessionColors = {};
-    return true;
-  }, () => {
-    renderSessionColors();
-    render();
-  });
-});
 
-for (const id of ["cancel-editor", "close-editor"]) {
-  byId(id).addEventListener("click", () => editor.close());
-}
+byId("close-editor").addEventListener("click", () => editor.close());
 
 byId("edit-term").addEventListener("change", (event) => {
   editingId = event.target.value;
@@ -2156,14 +2281,21 @@ function updateDraftField(event) {
     }
     sessionRow.querySelector("[data-remove-session]").setAttribute("aria-label", "Remove session " + input.value);
   }
-  if (key === "session" && !target.color) {
-    const session = termSessions(term).find((entry) => entry.id === input.value);
-    row.querySelector('[data-field="color"]').value = sessionAccent(session);
+  if (key === "code" && !target.color) {
+    row.querySelector('[data-field="color"]').value = defaultClassAccent(input.value.trim().toUpperCase().replace(/\s+/g, " "));
   }
-  if (key === "color" && sessionRow) {
+  if (["session", "credits", "weeks", "startDate", "endDate"].includes(key)) {
+    const sessions = termSessions(term);
+    if (key === "startDate" || key === "endDate") {
+      sessions.forEach((session, index) => {
+        const duration = byId("session-fields").children[index].querySelector('[data-field="weeks"]');
+        if (duration) duration.placeholder = numberLabel.format(sessionWeeks(session));
+      });
+    }
     for (const courseRow of byId("course-fields").children) {
       const course = term.courses[Number(courseRow.dataset.index)];
-      if (course.session === target.id && !course.color) courseRow.querySelector('[data-field="color"]').value = input.value;
+      const override = courseRow.querySelector('[data-field="weeklyHours"]');
+      if (override) override.placeholder = automaticTargetPlaceholder(course, sessions.find((entry) => entry.id === course.session));
     }
   }
 }
@@ -2174,15 +2306,10 @@ byId("form-pane").addEventListener("click", (event) => {
   if (!reset) return;
   const term = selectedTerm();
   const courseRow = reset.closest("[data-index]");
-  const sessionRow = reset.closest("[data-session-index]");
-  const target = courseRow ? term.courses[Number(courseRow.dataset.index)]
-    : (term.sessions ??= termSessions(term))[Number(sessionRow.dataset.sessionIndex)];
-  delete target.color;
-  const row = courseRow ?? sessionRow;
-  const parent = row.parentElement;
-  const index = [...parent.children].indexOf(row);
+  const index = Number(courseRow.dataset.index);
+  delete term.courses[index].color;
   renderEditor();
-  parent.children[index].querySelector('[data-field="color"]').focus();
+  byId("course-fields").children[index].querySelector('[data-field="color"]').focus();
 });
 
 function newIdentity(prefix) {
@@ -2499,6 +2626,143 @@ function calendarHeading(start, next) {
   return dateLabel(start, monthLabel) + " · " + termLabel;
 }
 
+let calendarView = "calendar";
+let databaseSort = { column: "due", direction: 1 };
+
+function eventsInRange(start, end, events) {
+  const unique = new Map();
+  for (let monday = mondayOf(start); monday < end; monday += 7) {
+    matchingCalendarWeek(monday, events).forEach((items, index) => {
+      const day = monday + index;
+      if (day < start || day >= end) return;
+      for (const event of items) unique.set(eventKey(event), event);
+    });
+  }
+  return [...unique.values()];
+}
+
+function dueTime(event) {
+  return event.allDay ? eventInstant({ day: event.from, seconds: null, zone: null }) : event.from;
+}
+
+function renderDatabaseSummary(total, done) {
+  setText("database-summary", total ? done + " of " + total + " complete" : "No events this month.");
+}
+
+function renderUpcomingEvents(events, today) {
+  const completed = new Set(state.completedEvents);
+  const now = Date.now();
+  const upcoming = eventsInRange(today, today + 7, events)
+    .filter((event) => (event.allDay ? event.from >= today : event.from >= now) && !completed.has(eventKey(event)));
+  setText("deadline-count", String(upcoming.length));
+}
+
+function renderDatabase(events, resolve) {
+  const rows = byId("database-rows");
+  const focused = rows.contains(document.activeElement) ? document.activeElement.dataset.eventCheck : null;
+  const expanded = new Set([...rows.querySelectorAll("[data-event-detail][open]")].map((item) => item.dataset.eventDetail));
+  const completed = new Set(state.completedEvents);
+  const entries = eventsInRange(calendarMonth, monthStart(calendarMonth, 1), events).map(resolve);
+  const { column, direction } = databaseSort;
+  const compare = {
+    course: (a, b) => (a.course?.code ?? "Unassigned").localeCompare(b.course?.code ?? "Unassigned"),
+    title: (a, b) => a.summary.localeCompare(b.summary),
+    due: (a, b) => dueTime(a) - dueTime(b),
+    done: (a, b) => Number(completed.has(eventKey(a))) - Number(completed.has(eventKey(b)))
+  };
+  entries.sort((a, b) => direction * compare[column](a, b) || compare.due(a, b) || compare.title(a, b));
+  renderDatabaseSummary(entries.length, entries.filter((event) => completed.has(eventKey(event))).length);
+  byId("database-scroll").hidden = entries.length === 0;
+  for (const button of byId("database-view").querySelectorAll("[data-sort]")) {
+    const active = button.dataset.sort === column;
+    const header = button.parentElement;
+    if (active) header.setAttribute("aria-sort", direction === 1 ? "ascending" : "descending");
+    else header.removeAttribute("aria-sort");
+    const label = header.getAttribute("aria-sort");
+    let indicator = button.querySelector("[aria-hidden]");
+    if (!indicator) {
+      indicator = document.createElement("span");
+      indicator.setAttribute("aria-hidden", "true");
+      button.append(indicator);
+    }
+    indicator.textContent = label === "ascending" ? " ↑" : label === "descending" ? " ↓" : "";
+  }
+  rows.innerHTML = entries.map((event) => {
+    const key = eventKey(event);
+    const done = completed.has(key);
+    const day = event.allDay ? event.from : localDay(new Date(event.from));
+    const date = event.allDay ? isoDate(day) : new Date(event.from).toISOString();
+    const title = '<span class="database-title">' + escapeHTML(event.summary) + "</span>";
+    return "<tr" + (done ? " data-completed" : "") + "><td>" +
+      eventContent(title, event.source.description, "", key, expanded.has(key)) +
+      '</td><td><span class="database-class"' + accentStyle(event.color) + ">" + escapeHTML(event.course?.code ?? "Unassigned") +
+      '</span></td><td><time datetime="' + date + '">' + escapeHTML(dateLabel(day, shortYearDate)) + "<small>" +
+      escapeHTML(event.allDay ? "All day" : LOCAL_TIME.format(event.from)) + "</small></time></td><td>" +
+      assignmentCheckbox(key, event.summary, done) + "</td><td>" + (eventLink(event.source.url, true) || "—") + "</td></tr>";
+  }).join("");
+  if (focused) [...rows.querySelectorAll("[data-event-check]")].find((input) => input.dataset.eventCheck === focused)?.focus({ preventScroll: true });
+}
+
+byId("calendar-views").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-calendar-view]");
+  if (!button || button.dataset.calendarView === calendarView) return;
+  calendarView = button.dataset.calendarView;
+  for (const control of byId("calendar-views").querySelectorAll("button")) {
+    control.setAttribute("aria-pressed", String(control === button));
+  }
+  renderInlineCalendar();
+});
+
+byId("database-view").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-sort]");
+  if (!button) return;
+  const column = button.dataset.sort;
+  databaseSort = { column, direction: column === databaseSort.column ? -databaseSort.direction : 1 };
+  const events = calendarEvents();
+  renderDatabase(events, calendarCourseResolver(events));
+});
+
+function setAssignmentCompletion(event) {
+  const input = event.target;
+  const key = input.dataset.eventCheck;
+  if (!key || input.disabled) return;
+  if (input.closest("#board") && currentBoard.monday !== mondayOf(localDay())) {
+    render();
+    return;
+  }
+  const checked = input.checked;
+  commit(() => {
+    const completed = new Set(state.completedEvents);
+    if (checked) completed.add(key);
+    else completed.delete(key);
+    state.completedEvents = [...completed];
+    return true;
+  }, () => {
+    const completed = new Set(state.completedEvents);
+    for (const control of document.querySelectorAll("[data-event-check]")) {
+      const done = completed.has(control.dataset.eventCheck);
+      control.checked = done;
+      control.closest(".calendar-event, tr").toggleAttribute("data-completed", done);
+    }
+    for (const status of document.querySelectorAll("[data-event-status]")) {
+      const done = completed.has(status.dataset.eventStatus);
+      status.textContent = done ? "Done" : "Open";
+      status.closest(".calendar-event").toggleAttribute("data-completed", done);
+    }
+    const events = calendarEvents();
+    renderUpcomingEvents(events, localDay());
+    if (calendarView !== "database") return;
+    if (databaseSort.column === "done") renderDatabase(events, calendarCourseResolver(events));
+    else {
+      const rows = byId("database-rows");
+      renderDatabaseSummary(rows.children.length, rows.querySelectorAll("[data-completed]").length);
+    }
+  });
+}
+
+byId("board").addEventListener("change", setAssignmentCompletion);
+byId("database-view").addEventListener("change", setAssignmentCompletion);
+
 function renderInlineCalendar(focusDay = false) {
   const calendar = calendarEvents();
   const resolve = calendarCourseResolver(calendar);
@@ -2507,10 +2771,18 @@ function renderInlineCalendar(focusDay = false) {
   const today = localDay();
   const start = calendarMonth;
   const next = monthStart(start, 1);
+  setText("calendar-month", calendarHeading(start, next));
+  renderUpcomingEvents(calendar, today);
+  const database = calendarView === "database";
+  byId("inline-calendar-body").hidden = database;
+  byId("database-view").hidden = !database;
+  if (database) {
+    renderDatabase(calendar, resolve);
+    return;
+  }
   const milestones = calendarMilestones(mondayOf(start), mondayOf(next - 1) + 6);
   const grid = byId("calendar-grid");
   const keepFocus = focusDay || grid.contains(document.activeElement);
-  setText("calendar-month", calendarHeading(start, next));
   const cells = [];
   for (let monday = mondayOf(start); monday < next; monday += 7) {
     const rows = calendar.length ? calendarRows(monday, calendar, resolve) : Array.from({ length: 7 }, () => []);
@@ -2537,8 +2809,8 @@ function inspectorTasks(tasks, checks, upcoming) {
   return tasks.map((task) => {
     const status = checks[task.id] === true ? "Completed" : upcoming ? "Upcoming" : "Incomplete";
     const description = task.type === "course"
-      ? '<strong>' + escapeHTML(task.code) + " " + badge(task.sessionInfo, true) + '</strong><small>' +
-        escapeHTML(task.name) + '</small><small>' + studyLabel(weeklyHours(task)) + "/day</small>"
+      ? '<strong>' + escapeHTML(task.code) + " " + badge(task.sessionInfo, true, courseAccent(task)) + '</strong><small>' +
+        escapeHTML(task.name) + "</small>" + (state.studyTracking ? "<small>" + studyLabel(weeklyHours(task)) + "/day</small>" : "")
       : '<span>' + escapeHTML(task.title) + '</span>';
     return '<li><div class="inspector-task-copy">' + description + '</div><span class="inspector-status ' +
       status.toLowerCase() + '">' + status + "</span></li>";
@@ -2563,6 +2835,7 @@ function renderDayInspector(calendar = calendarEvents(), resolve) {
   setText("inspector-date", dateLabel(day, fullDate));
   setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.sessions, board.courses) : "Semester break");
   setText("inspector-study", studyLabel(entry.study) + " study");
+  byId("inspector-study").hidden = !state.studyTracking;
   byId("inspector-milestones").innerHTML = milestones.map((label) => "<li>" + escapeHTML(label) + "</li>").join("");
   byId("inspector-milestones").hidden = !milestones.length;
   byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events) + "</ul>" : '<p>No events scheduled</p>';
@@ -2971,7 +3244,7 @@ function tickTimer() {
 }
 
 function updateDurationPills() {
-  const target = requestedCourse?.target;
+  const target = state.studyTracking ? requestedCourse?.target : null;
   const full = byId("timer-target");
   full.hidden = !target || target > TIMER_MAX_MINUTES;
   full.textContent = target ? "Full target · " + target + "m" : "Full target";
@@ -3009,7 +3282,7 @@ function renderTimer() {
 }
 
 function openTimer(course) {
-  requestedCourse = course ? { ...course, target: Math.max(1, Math.round(weeklyHours(course) * 60 / 7)) } : null;
+  requestedCourse = course ? { ...course, target: Math.round(weeklyHours(course) * 60 / 7) } : null;
   byId("timer-minutes").value = "25";
   byId("timer-auto-check").checked = true;
   updateDurationPills();
