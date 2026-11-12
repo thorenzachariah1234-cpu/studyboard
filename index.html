@@ -138,9 +138,9 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
 .day-view .day-name h3 { font-size: 1.1rem; }
 .close-control {
   display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
-  flex: 0 0 32px; border-color: transparent; background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
+  flex: 0 0 32px; border-color: var(--maroon); background: transparent; color: var(--muted); font-size: 1.25rem; line-height: 1;
 }
-.close-control:hover { color: inherit; background: #ffffff08; }
+.close-control:hover { border-color: var(--maroon); color: inherit; background: #ffffff08; }
 .day-date { display: block; color: var(--muted); font-size: .7rem; margin-top: 2px; }
 .day-meta { display: flex; align-items: center; justify-content: space-between; gap: 3px; margin: 9px 0 5px; font-size: .66rem; }
 .study-target { color: #d4d4d8; font-weight: 670; }
@@ -158,8 +158,6 @@ select { padding: 8px 29px 8px 10px; min-height: 37px; }
   transition: background .18s ease, border-color .18s ease;
 }
 .task:hover, .course-with-timer:hover { border-color: #71717a; }
-.read-only .task, .read-only .task input { cursor: default; }
-.read-only .task:not(:has(input:checked)):hover { border-color: var(--line); }
 .task:has(input:checked), .course-with-timer:has(input:checked) { background: #1e1d18; border-color: #ffc62735; }
 .habit-list .task { align-items: center; min-height: 25px; padding: 3px 2px; border-color: transparent; background: transparent; }
 .habit-list .task:hover, .habit-list .task:has(input:checked) { background: #ffffff08; border-color: transparent; }
@@ -217,9 +215,6 @@ dialog::backdrop { background: #08080acb; }
 .session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .6fr) auto auto; }
 .course-extras { display: flex; grid-column: 1 / -1; justify-content: space-between; align-items: end; gap: 8px; }
 .course-extras .field { width: min(100%, 190px); }
-.suggestion-field { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
-.suggestion-field .field { flex: 1 1 240px; }
-.suggestion-field button { min-height: 37px; }
 .course-row button, .session-row button { min-height: 37px; }
 .accent-field { display: flex; align-items: end; gap: 4px; }
 .accent-field input[type=color] { width: 48px; padding: 4px; cursor: pointer; }
@@ -339,6 +334,8 @@ dialog::backdrop { background: #08080acb; }
 .inspector-section ul { list-style: none; padding: 0; margin: 0; }
 .inspector-section li { display: flex; align-items: flex-start; justify-content: space-between; gap: 5px 8px; padding: 4px 0; font-size: .76rem; }
 .inspector-section li strong, .inspector-task-copy { min-width: 0; overflow-wrap: anywhere; }
+.inspector-task-copy { flex: 1; }
+.inspector-section .assignment-check { flex-shrink: 0; }
 .inspector-section li small { display: block; color: var(--muted); font-size: .69rem; margin-top: 2px; }
 .inspector-status { flex: 0 0 auto; color: var(--muted); font-size: .65rem; padding: 2px 6px; border: 1px solid var(--control-line); border-radius: 999px; }
 .inspector-status.completed { color: var(--gold); border-color: #ffc62755; }
@@ -456,7 +453,7 @@ dialog::backdrop { background: #08080acb; }
           <summary aria-label="Actions" title="Actions">⋯</summary>
           <div class="action-menu-panel">
             <button type="button" id="open-settings">Settings</button>
-            <button type="button" id="edit">Add Classes</button>
+            <button type="button" id="edit">Classes</button>
             <button type="button" id="manage-habits">Manage Habits</button>
             <button type="button" id="backup">Backups</button>
           </div>
@@ -569,7 +566,7 @@ dialog::backdrop { background: #08080acb; }
 </main>
 <dialog id="calendar-link-dialog" class="compact-dialog" aria-labelledby="calendar-link-title">
   <form id="calendar-link-form" class="dialog-shell">
-    <div class="dialog-head"><div><h2 id="calendar-link-title">Paste .ics Link</h2><p>Refreshes automatically while the dashboard is open.</p></div>
+    <div class="dialog-head"><div><h2 id="calendar-link-title">Paste .ics Link</h2><p>Save the feed, then use Refresh calendar to sync it.</p></div>
       <button type="button" id="cancel-calendar-link" class="close-control" aria-label="Close calendar link">×</button>
     </div>
     <label class="field">Calendar feed URL
@@ -581,7 +578,7 @@ dialog::backdrop { background: #08080acb; }
     <p id="calendar-proxy-note" class="dialog-note">Leave blank to fetch the feed directly. If your calendar blocks browser requests, use a trusted HTTPS proxy that accepts a <code>url</code> query parameter. The proxy receives the feed URL and its events.</p>
     <p id="calendar-link-error" class="form-error" role="alert" hidden></p>
     <div class="dialog-actions">
-      <button type="submit" class="primary">Save and sync</button>
+      <button type="submit" class="primary">Save feed</button>
     </div>
   </form>
 </dialog>
@@ -607,7 +604,7 @@ dialog::backdrop { background: #08080acb; }
 <dialog id="editor" aria-labelledby="editor-title">
   <form id="editor-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
-      <div><h2 id="editor-title">Add Classes</h2></div>
+      <div><h2 id="editor-title">Classes</h2></div>
       <button type="button" id="close-editor" class="close-control" aria-label="Close class editor">×</button>
     </div>
     <div class="editor-toolbar">
@@ -620,7 +617,6 @@ dialog::backdrop { background: #08080acb; }
     <div id="form-pane">
       <div id="term-configuration">
         <div class="form-grid" id="term-fields"></div>
-        <p id="term-note" class="dialog-note"></p>
       <section class="roadmap-section" aria-labelledby="roadmap-sessions-title">
         <div class="courses-head"><h3 id="roadmap-sessions-title">Sessions</h3><button type="button" id="add-session">+ Session</button></div>
         <p class="dialog-note">Give each session its own dates and study length. Sessions may overlap.</p>
@@ -633,15 +629,6 @@ dialog::backdrop { background: #08080acb; }
       </div>
       <div id="course-fields"></div>
       <p class="dialog-note">For Canvas events that omit a course name, enter the number after <code>/courses/</code> in the course URL.</p>
-      <div class="suggestion-field">
-        <label class="field">Course suggestions
-          <select id="suggestions">
-            <option value="DAT 300">DAT 300 · Mathematical Tools for Data Science</option>
-            <option value="CSE 476">CSE 476 · Introduction to Natural Language Processing</option>
-          </select>
-        </label>
-        <button type="button" id="add-suggestion">Add selected course</button>
-      </div>
     </div>
     <div id="json-pane" hidden>
       <label class="field">Course schedule JSON<textarea class="json-input" id="json-input" spellcheck="false"></textarea></label>
@@ -674,7 +661,7 @@ dialog::backdrop { background: #08080acb; }
 <dialog id="habits-dialog" class="compact-dialog" aria-labelledby="habits-title">
   <form id="habits-form" class="dialog-shell" novalidate>
     <div class="dialog-head">
-      <div><h2 id="habits-title">Manage Habits</h2><p>Choose the days each habit repeats.</p></div>
+      <div><h2 id="habits-title">Manage Habits</h2><p id="habits-scope">Choose the days each habit repeats.</p></div>
       <button type="button" id="close-habits" class="close-control" aria-label="Close habits">×</button>
     </div>
     <div id="habit-list"></div>
@@ -831,11 +818,6 @@ const COURSE_SCHEDULE = [
     ]
   }
 ];
-
-const COURSE_OPTIONS = {
-  "DAT 300": "Mathematical Tools for Data Science",
-  "CSE 476": "Introduction to Natural Language Processing"
-};
 
 const ICS_WEEKDAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const ZONE_FORMATTERS = new Map();
@@ -1226,10 +1208,9 @@ function eventKey(event) {
   return JSON.stringify(event.source.rule ? [event.source.id, event.day] : [event.source.id]);
 }
 
-function assignmentCheckbox(key, summary, completed, disabled = false) {
+function assignmentCheckbox(key, summary, completed) {
   return '<input type="checkbox" class="assignment-check" data-event-check="' + escapeHTML(key) +
-    '" aria-label="' + escapeHTML("Complete " + summary) + '"' + (completed ? " checked" : "") +
-    (disabled ? " disabled" : "") + ">";
+    '" aria-label="' + escapeHTML("Complete " + summary) + '"' + (completed ? " checked" : "") + ">";
 }
 
 function eventLink(url, compact = false) {
@@ -1246,15 +1227,15 @@ function eventContent(heading, description, url, key, open) {
     (description ? "<p>" + escapeHTML(description) + "</p>" : "") + eventLink(url) + "</div></details>";
 }
 
-function renderDaySchedule(events, day, open, readOnly, expandedEvents) {
+function renderDaySchedule(events, day, open, expandedEvents) {
   if (!events.length) return "";
   return '<details class="day-schedule" data-calendar-day="' + day + '"' + (open ? " open" : "") +
     '><summary>Schedule &amp; Deadlines <span>' + events.length + '</span><span class="calendar-dots" aria-hidden="true">' +
     calendarDots(events) + '</span></summary><ul>' +
-    calendarItems(events, readOnly, expandedEvents) + "</ul></details>";
+    calendarItems(events, expandedEvents) + "</ul></details>";
 }
 
-function calendarItems(events, readOnly = null, expandedEvents = new Set()) {
+function calendarItems(events, expandedEvents = new Set()) {
   const completedEvents = new Set(state.completedEvents);
   return events.map((event) => {
     const { description, url } = event.source;
@@ -1262,12 +1243,9 @@ function calendarItems(events, readOnly = null, expandedEvents = new Set()) {
     const completed = completedEvents.has(key);
     const heading = '<span class="event-heading"><strong title="' + escapeHTML(event.summary) + '">' + escapeHTML(event.summary) + "</strong><small>" +
       escapeHTML(calendarTime(event)) + (event.course ? " · " + escapeHTML(event.course.code) : "") + "</small></span>";
-    const status = readOnly === null
-      ? '<span class="inspector-status" data-event-status="' + escapeHTML(key) + '">' + (completed ? "Done" : "Open") + "</span>"
-      : assignmentCheckbox(key, event.summary, completed, readOnly);
     return '<li class="calendar-event"' + accentStyle(event.color) + (completed ? " data-completed" : "") + ">" +
       eventContent(heading, description, url, key, expandedEvents.has(key)) +
-      status + "</li>";
+      assignmentCheckbox(key, event.summary, completed) + "</li>";
   }).join("");
 }
 
@@ -1306,7 +1284,6 @@ function initialCalendarWeek(events, day) {
 const STORAGE_KEY = "studyboard.asu.v1";
 const RECOVERY_KEY = STORAGE_KEY + ".recovery";
 const CALENDAR_FEED_KEY = STORAGE_KEY + ".calendar-feed";
-const CALENDAR_REFRESH_MS = 5 * 60 * 1000;
 const DATA_VERSION = 4;
 const DAY_MS = 86400000;
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -1485,6 +1462,7 @@ function decodeState(input, strict = false) {
     if (entry.habits !== undefined) {
       try { record.habits = normalizeHabits(entry.habits); } catch (error) { repair(error.message); }
     }
+    if (entry.customHabits === true && record.habits) record.customHabits = true;
     result.weeks[key] = record;
   }
   if (input.focus !== undefined && typeof input.focus !== "boolean") repair("The saved view setting is invalid.");
@@ -1601,11 +1579,13 @@ function makeDay(monday, index, term, courses, habits) {
   return { name, date, tasks, study: studyHours(courses) };
 }
 
-function buildBoard(day) {
+function buildBoard(day, habitOverride) {
   const monday = mondayOf(day);
   const plan = planForDate(day);
   const key = isoWeekKey(monday);
-  const habits = monday < mondayOf(localDay()) ? state.weeks[key]?.habits ?? DEFAULT_HABITS : state.habits;
+  const week = state.weeks[key];
+  const savedHabits = week?.customHabits || monday < mondayOf(localDay()) ? week?.habits ?? DEFAULT_HABITS : state.habits;
+  const habits = habitOverride ?? savedHabits;
   const days = DAY_NAMES.map((_, index) => {
     const plan = planForDate(monday + index);
     return makeDay(monday, index, plan.term, plan.courses, habits);
@@ -1639,10 +1619,6 @@ function currentChecks(board) {
   return state.weeks[board.key]?.checks ?? {};
 }
 
-function visibleChecks(board) {
-  return board.monday > mondayOf(clockDay) ? {} : currentChecks(board);
-}
-
 function tally(board, checks, coursesOnly = false) {
   const tasks = board.days.flatMap((day) => coursesOnly ? day.tasks.filter((task) => task.type === "course") : day.tasks);
   return { done: tasks.filter((task) => checks[task.id] === true).length, total: tasks.length };
@@ -1654,10 +1630,10 @@ function checklistDays(board) {
   }));
 }
 
-function recordWeek(board, checks) {
+function recordWeek(board, checks, customHabits = state.weeks[board.key]?.customHabits === true) {
   const previous = state.weeks[board.key];
   const { done, total } = tally({ days: checklistDays(board) }, checks);
-  state.weeks[board.key] = { monday: board.monday, checks, done, total, habits: board.habits };
+  state.weeks[board.key] = { monday: board.monday, checks, done, total, habits: board.habits, ...(customHabits ? { customHabits } : {}) };
   return !previous?.habits || previous.done !== done || previous.total !== total;
 }
 
@@ -1693,17 +1669,17 @@ function sessionLabel(sessions, courses) {
   return visible.length === 1 ? visible[0].name : "Sessions " + visible.map((session) => session.id).join(" + ");
 }
 
-function renderTerm(board, day) {
-  const { term, sessions, courses, readOnly } = board;
+function renderTerm(board, day, otherWeek) {
+  const { term, sessions, courses } = board;
   byId("term-detail").hidden = !term;
   setText("term-title", term ? term.term : dateLabel(clockDay, fullDate));
-  const status = readOnly ? (day < clockDay ? "Past Term" : "Upcoming Term") : "Current Term";
+  const status = otherWeek ? (day < clockDay ? "Past Term" : "Upcoming Term") : "Current Term";
   setText("term-detail", term ? status + " · " + sessionLabel(sessions, courses) + " · " + dateLabel(day, contextDate) : "");
 }
 
-function renderTask(task, checked, dayName, readOnly) {
+function renderTask(task, checked, dayName) {
   const input = '<input type="checkbox" data-task="' + escapeHTML(task.id) + '"' + (checked ? " checked" : "") +
-    (readOnly ? " disabled" : "") + ' aria-label="' + escapeHTML(dayName + ": " + (task.code ?? task.title)) + '">';
+    ' aria-label="' + escapeHTML(dayName + ": " + (task.code ?? task.title)) + '">';
   if (task.type !== "course") {
     return '<label class="task ' + task.type + '" title="' + escapeHTML(task.title) + '">' + input + '<span class="task-copy"><span class="task-title">' +
       escapeHTML(task.title) + "</span></span></label>";
@@ -1717,17 +1693,17 @@ function renderTask(task, checked, dayName, readOnly) {
     escapeHTML(task.name) + "</span>" + target + "</span></label>";
 }
 
-function renderDayTasks(entry, checks, readOnly, today, schedule) {
+function renderDayTasks(entry, checks, today, schedule) {
   const habits = [];
   const courses = [];
   for (const task of entry.tasks) {
     if (task.type === "course" && !state.studyTracking) continue;
-    const label = renderTask(task, checks[task.id] === true, entry.name, readOnly);
+    const label = renderTask(task, checks[task.id] === true, entry.name);
     if (task.type !== "course") {
       habits.push(label);
       continue;
     }
-    if (!today || readOnly) {
+    if (!today) {
       courses.push(label);
       continue;
     }
@@ -1742,7 +1718,7 @@ function renderDayTasks(entry, checks, readOnly, today, schedule) {
 }
 
 function renderDays(board) {
-  const checks = visibleChecks(board);
+  const checks = currentChecks(board);
   const element = byId("board");
   const expandedDays = new Set([...element.querySelectorAll(".day-schedule[open]")].map((details) => Number(details.dataset.calendarDay)));
   const expandedEvents = new Set([...element.querySelectorAll("[data-event-detail][open]")].map((details) => details.dataset.eventDetail));
@@ -1751,7 +1727,6 @@ function renderDays(board) {
   const days = dayView ? [board.days[viewedDay - board.monday]] : board.days;
   const events = calendarEvents();
   const calendar = events.length ? calendarRows(board.monday, events) : null;
-  element.classList.toggle("read-only", board.readOnly);
   element.classList.toggle("day-view", dayView);
   element.innerHTML = days.map((entry) => {
     const index = entry.date - board.monday;
@@ -1764,11 +1739,11 @@ function renderDays(board) {
       '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + "</h3>" + close +
       '</div><time class="day-date" datetime="' + isoDate(entry.date) + '">' + dateLabel(entry.date) + "</time>";
     const scheduleOpen = expandedDays.has(entry.date) || (dayView && previousDay !== entry.date);
-    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, scheduleOpen, board.readOnly, expandedEvents) : "";
+    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, scheduleOpen, expandedEvents) : "";
     const study = state.studyTracking && entry.study ? studyLabel(entry.study) + " study" : "Checklist";
     return heading + '<div class="day-meta"><span class="study-target">' + study + '</span><span class="day-count"></span></div>' +
       '<div class="meter" role="progressbar" aria-label="' + entry.name + ' completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>' + open + "</div>" +
-      renderDayTasks(entry, checks, board.readOnly, today, schedule) + "</article>";
+      renderDayTasks(entry, checks, today, schedule) + "</article>";
   }).join("");
 }
 
@@ -1778,7 +1753,7 @@ function updateMeter(meter, value) {
 }
 
 function updateProgress(board) {
-  const checks = visibleChecks(board);
+  const checks = currentChecks(board);
   const days = checklistDays(board);
   const { done, total } = tally({ days }, checks);
   const completion = percent(done, total);
@@ -1799,7 +1774,7 @@ function changeChecklistTask(board, taskId, checked) {
   if (checked) checks[taskId] = true;
   else delete checks[taskId];
   recordWeek(board, checks);
-  if (!checked || before[taskId] || board.monday !== mondayOf(localDay())) return null;
+  if (!checked || before[taskId]) return null;
   const days = checklistDays(board);
   const day = days.find((entry) => entry.tasks.some((task) => task.id === taskId));
   if (!day || !day.tasks.every((task) => checks[task.id])) return null;
@@ -1936,7 +1911,7 @@ function renderFilteredProgress(term, courses) {
   const lastMonday = mondayOf(dayFromISO(term.endDate));
   for (let monday = mondayOf(dayFromISO(term.startDate)); courses.length && monday <= lastMonday; monday += 7) {
     const week = filteredBoard(buildBoard(monday), term, courses);
-    const counts = tally(week, visibleChecks(week), true);
+    const counts = tally(week, currentChecks(week), true);
     done += counts.done;
     total += counts.total;
   }
@@ -1952,25 +1927,25 @@ function render() {
   if (viewedMonday === liveMonday) viewedMonday = null;
   const dayView = viewedDay !== null;
   const monday = dayView ? mondayOf(viewedDay) : (viewedMonday ?? liveMonday);
-  const readOnly = monday !== liveMonday;
-  const term = dayView || !readOnly ? planForDate(viewedDay ?? clockDay).term : weekTerm(monday);
+  const otherWeek = monday !== liveMonday;
+  const term = dayView || !otherWeek ? planForDate(viewedDay ?? clockDay).term : weekTerm(monday);
   if ((term?.id ?? "") !== viewedTermId) hiddenCourses.clear();
   viewedTermId = term?.id ?? "";
   for (const id of hiddenCourses) {
     if (!term?.courses.some((course) => courseIdentity(course) === id)) hiddenCourses.delete(id);
   }
   const courses = visibleCourses(term);
-  const weekAnchor = readOnly
+  const weekAnchor = otherWeek
     ? Math.max(monday, term ? dayFromISO(term.startDate) : monday)
     : clockDay;
   const anchor = viewedDay ?? weekAnchor;
   const board = buildBoard(anchor);
   const filtering = state.studyTracking && term && hiddenCourses.size;
-  currentBoard = { ...(filtering ? filteredBoard(board, term, courses, true) : board), readOnly, filterTerm: term };
+  currentBoard = { ...(filtering ? filteredBoard(board, term, courses, true) : board), filterTerm: term };
   renderPreviewOptions();
-  const mode = !readOnly ? "" : monday < liveMonday ? " · Past week" : " · Upcoming week";
+  const mode = !otherWeek ? "" : monday < liveMonday ? " · Past week" : " · Upcoming week";
   const date = dayView ? dateLabel(viewedDay, fullDate) : rangeLabel(monday);
-  setText("board-range", date + " · " + currentBoard.key + mode + (dayView && readOnly ? " · View only" : ""));
+  setText("board-range", date + " · " + currentBoard.key + mode);
   setText("board-title", dayView ? "Day View" : "Daily checklist");
   byId("board-navigation").setAttribute("aria-label", dayView ? "Day navigation" : "Week navigation");
   byId("previous-week").setAttribute("aria-label", dayView ? "Previous day" : "Previous week");
@@ -1978,16 +1953,16 @@ function render() {
   setText("previous-week", dayView ? "<" : "‹");
   setText("next-week", dayView ? ">" : "›");
   byId("current-week").hidden = dayView;
-  byId("current-week").disabled = !readOnly;
+  byId("current-week").disabled = !otherWeek;
   byId("current-day").hidden = !dayView;
   renderFilters(term, courses);
   byId("study-stat").hidden = !state.studyTracking || !currentBoard.days.some((day) => day.tasks.some((task) => task.type === "course"));
   const weekStudy = currentBoard.days.reduce((hours, day) => hours + day.study / 7, 0);
-  const study = !dayView && readOnly ? weekStudy : currentBoard.days[anchor - monday].study;
-  setText("study-label", dayView ? "Daily study target" : readOnly ? "Avg. daily study" : "Today’s study target");
+  const study = !dayView && otherWeek ? weekStudy : currentBoard.days[anchor - monday].study;
+  setText("study-label", dayView ? "Daily study target" : otherWeek ? "Avg. daily study" : "Today’s study target");
   setText("study-total", studyLabel(study));
   byId("study-weekly").textContent = numberLabel.format(weekStudy) + " hrs/wk";
-  renderTerm(currentBoard, anchor);
+  renderTerm(currentBoard, anchor, otherWeek);
   renderDays(currentBoard);
   updateProgress(currentBoard);
   renderFilteredProgress(term, courses);
@@ -2090,23 +2065,28 @@ byId("board-filters").addEventListener("click", (event) => {
   [...byId("board-filters").querySelectorAll("[data-filter]")].find((pill) => pill.dataset.filter === filter)?.focus();
 });
 
-byId("board").addEventListener("change", (event) => {
+function setChecklistCompletion(event) {
   const input = event.target;
-  if (currentBoard.readOnly || !input.matches("input[data-task]")) return;
-  if (localDay() !== clockDay) {
-    refreshDate();
-    return;
-  }
+  if (!input.matches("input[data-task]")) return;
+  const fromInspector = Boolean(input.closest("#day-inspector"));
+  const targetDay = fromInspector ? selectedCalendarDay : currentBoard.monday;
+  if (targetDay === null) return;
   const { checked, dataset: { task } } = input;
-  const key = currentBoard.key;
   let celebration;
+  let updated = false;
   commit(() => {
-    const live = buildBoard(localDay());
-    if (live.key !== key) return recordWeek(live, currentChecks(live));
-    celebration = changeChecklistTask(live, task, checked);
+    const board = buildBoard(targetDay);
+    if (!checklistDays(board).some((day) => day.tasks.some((item) => item.id === task))) return false;
+    celebration = changeChecklistTask(board, task, checked);
+    updated = true;
     return true;
   }, () => {
-    if (clockDay !== localDay() || currentBoard.readOnly || currentBoard.key !== key) {
+    if (clockDay !== localDay()) {
+      refreshDate();
+      celebrateChecklist(celebration);
+      return;
+    }
+    if (!updated) {
       render();
       return;
     }
@@ -2114,11 +2094,19 @@ byId("board").addEventListener("change", (event) => {
     for (const checkbox of byId("board").querySelectorAll("[data-task]")) checkbox.checked = checks[checkbox.dataset.task] === true;
     updateProgress(currentBoard);
     renderFilteredProgress(currentBoard.filterTerm, visibleCourses(currentBoard.filterTerm));
+    renderHistory(mondayOf(clockDay));
     renderStreak(mondayOf(clockDay));
-    if (selectedCalendarDay !== null) renderDayInspector();
+    if (selectedCalendarDay !== null) {
+      renderDayInspector();
+      if (fromInspector) [...byId("day-inspector").querySelectorAll("[data-task]")]
+        .find((checkbox) => checkbox.dataset.task === task)?.focus({ preventScroll: true });
+    }
     celebrateChecklist(celebration);
   });
-});
+}
+
+byId("board").addEventListener("change", setChecklistCompletion);
+byId("day-inspector").addEventListener("change", setChecklistCompletion);
 
 window.addEventListener("focus", wakeClock);
 document.addEventListener("visibilitychange", () => {
@@ -2175,10 +2163,8 @@ function renderEditor() {
   byId("term-fields").innerHTML = [
     field("Term name", "term", term.term),
     field("Start date", "startDate", term.startDate, "date"),
-    field("End date", "endDate", term.endDate, "date"),
-    '<label class="field">Planning template<input type="checkbox" data-field="planned"' + (term.planned ? " checked" : "") + "></label>"
+    field("End date", "endDate", term.endDate, "date")
   ].join("");
-  byId("term-note").textContent = term.planned ? "Planning dates and session assignments are editable." : "";
   const sessions = termSessions(term);
   byId("session-fields").innerHTML = sessions.map((session, index) =>
     '<div class="session-row" data-session-index="' + index + '">' +
@@ -2190,8 +2176,6 @@ function renderEditor() {
     '<button type="button" class="danger" data-remove-session aria-label="Remove session ' + escapeHTML(session.name) + '">Remove</button></div>'
   ).join("");
   byId("add-course").disabled = !sessions.length;
-  byId("suggestions").disabled = !sessions.length;
-  byId("add-suggestion").disabled = !sessions.length;
   byId("course-fields").innerHTML = term.courses.map((course, index) => {
     const sessionInfo = sessions.find((session) => session.id === course.session);
     const options = sessions.map((session) => '<option value="' + escapeHTML(session.id) + '"' +
@@ -2416,21 +2400,6 @@ byId("add-course").addEventListener("click", () => {
   byId("course-fields").lastElementChild.querySelector("input").focus();
 });
 
-byId("add-suggestion").addEventListener("click", () => {
-  const code = byId("suggestions").value;
-  if (!code) return;
-  if (selectedTerm().courses.some((course) => course.code.trim().toUpperCase() === code)) {
-    showError(code + " is already in this term.");
-    return;
-  }
-  showError();
-  const term = selectedTerm();
-  const sessions = termSessions(term);
-  term.courses.push(newCourse(code, COURSE_OPTIONS[code], (sessions.find((session) => session.id === "B") ?? sessions[0]).id));
-  renderEditor();
-  byId("course-fields").lastElementChild.querySelector("select").focus();
-});
-
 byId("course-fields").addEventListener("click", (event) => {
   const button = event.target.closest("[data-remove]");
   if (!button) return;
@@ -2603,7 +2572,6 @@ let selectedCalendarDay = null;
 let calendarFocusDay = localDay();
 let calendarFeed = readCalendarFeed();
 let calendarRequest = null;
-let lastCalendarRefresh = null;
 let requestedCourse = null;
 let timerFinishing = false;
 let audioContext;
@@ -2623,9 +2591,13 @@ function habitError(message = "") {
   byId("habit-error").hidden = !message;
 }
 
+let habitEditorWeek = null;
 byId("manage-habits").addEventListener("click", () => {
   syncState();
-  byId("habit-list").innerHTML = state.habits.map(habitRow).join("");
+  const monday = currentBoard.monday;
+  habitEditorWeek = monday !== mondayOf(localDay()) || state.weeks[isoWeekKey(monday)]?.customHabits ? monday : null;
+  setText("habits-scope", habitEditorWeek === null ? "Choose the days each habit repeats." : "Changes apply to " + rangeLabel(monday) + ".");
+  byId("habit-list").innerHTML = (habitEditorWeek === null ? state.habits : buildBoard(monday).habits).map(habitRow).join("");
   habitError();
   habitsDialog.showModal();
 });
@@ -2651,8 +2623,13 @@ byId("habits-form").addEventListener("submit", (event) => {
       days: [...row.querySelectorAll("input:checked")].map((input) => Number(input.value))
     })));
     commit(() => {
-      state.habits = habits;
-      prepareCurrentWeek();
+      if (habitEditorWeek === null) {
+        state.habits = habits;
+        prepareCurrentWeek();
+      } else {
+        const board = buildBoard(habitEditorWeek, habits);
+        recordWeek(board, currentChecks(board), true);
+      }
       return true;
     }, () => {
       habitsDialog.close();
@@ -2842,10 +2819,6 @@ function setAssignmentCompletion(event) {
   const input = event.target;
   const key = input.dataset.eventCheck;
   if (!key || input.disabled) return;
-  if (input.closest("#board") && currentBoard.monday !== mondayOf(localDay())) {
-    render();
-    return;
-  }
   const checked = input.checked;
   commit(() => {
     const completed = new Set(state.completedEvents);
@@ -2860,11 +2833,6 @@ function setAssignmentCompletion(event) {
       control.checked = done;
       control.closest(".calendar-event, tr").toggleAttribute("data-completed", done);
     }
-    for (const status of document.querySelectorAll("[data-event-status]")) {
-      const done = completed.has(status.dataset.eventStatus);
-      status.textContent = done ? "Done" : "Open";
-      status.closest(".calendar-event").toggleAttribute("data-completed", done);
-    }
     const events = calendarEvents();
     renderUpcomingEvents(events, localDay());
     if (calendarView === "database") renderDatabase(events, calendarCourseResolver(events));
@@ -2872,6 +2840,7 @@ function setAssignmentCompletion(event) {
 }
 
 byId("board").addEventListener("change", setAssignmentCompletion);
+byId("day-inspector").addEventListener("change", setAssignmentCompletion);
 byId("database-view").addEventListener("change", setAssignmentCompletion);
 
 function renderInlineCalendar(focusDay = false) {
@@ -2916,14 +2885,17 @@ function renderInlineCalendar(focusDay = false) {
   renderDayInspector(calendar, resolve);
 }
 
-function inspectorTasks(tasks, checks, upcoming) {
+function inspectorTasks(tasks, checks, upcoming, dayName) {
   return tasks.map((task) => {
     const status = checks[task.id] === true ? "Completed" : upcoming ? "Upcoming" : "Incomplete";
     const description = task.type === "course"
       ? '<strong>' + escapeHTML(task.code) + " " + badge(task.sessionInfo, true, courseAccent(task)) + '</strong><small>' +
         escapeHTML(task.name) + "</small>" + (state.studyTracking ? "<small>" + studyLabel(weeklyHours(task)) + "/day</small>" : "")
       : '<span>' + escapeHTML(task.title) + '</span>';
-    return '<li><div class="inspector-task-copy">' + description + '</div><span class="inspector-status ' +
+    const title = task.code ?? task.title;
+    const checkbox = '<input type="checkbox" class="assignment-check" data-task="' + escapeHTML(task.id) +
+      '" aria-label="' + escapeHTML("Complete " + title + " for " + dayName) + '"' + (checks[task.id] ? " checked" : "") + ">";
+    return "<li>" + checkbox + '<div class="inspector-task-copy">' + description + '</div><span class="inspector-status ' +
       status.toLowerCase() + '">' + status + "</span></li>";
   }).join("");
 }
@@ -2954,16 +2926,28 @@ function renderDayInspector(calendar = calendarEvents(), resolve) {
   byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events) + "</ul>" : '<p>No events scheduled</p>';
   const habits = entry.tasks.filter((task) => task.type !== "course");
   const courses = entry.tasks.filter((task) => task.type === "course");
-  byId("inspector-habits").innerHTML = habits.length ? "<ul>" + inspectorTasks(habits, checks, upcoming) + "</ul>" : "<p>No habits scheduled</p>";
-  byId("inspector-courses").innerHTML = courses.length ? "<ul>" + inspectorTasks(courses, checks, upcoming) + "</ul>" : "<p>No courses scheduled</p>";
+  byId("inspector-habits").innerHTML = habits.length ? "<ul>" + inspectorTasks(habits, checks, upcoming, entry.name) + "</ul>" : "<p>No habits scheduled</p>";
+  byId("inspector-courses").innerHTML = courses.length ? "<ul>" + inspectorTasks(courses, checks, upcoming, entry.name) + "</ul>" : "<p>No courses scheduled</p>";
 }
 
 function calendarStatus(message) {
-  setText("calendar-message", message);
+  const syncedAt = calendarFeed?.lastSyncedAt;
+  if (!syncedAt) {
+    setText("calendar-message", message);
+    return;
+  }
+  const date = dateLabel(localDay(new Date(syncedAt)), shortYearDate);
+  setText("calendar-message", message + " · Last synced " + date + " at " + LOCAL_TIME.format(syncedAt));
 }
 
 function calendarEntryCount(count) {
   return count + (count === 1 ? " entry" : " entries");
+}
+
+function savedCalendarStatus() {
+  if (!calendarFeed) return "";
+  if (calendarFeed.lastSyncedAt) return "Calendar synced · " + calendarEntryCount(calendarFeed.events.length);
+  return "Feed saved · Use Refresh calendar to sync";
 }
 
 function httpsCalendarURL(value, label) {
@@ -2992,7 +2976,9 @@ function readCalendarFeed() {
     const settings = calendarFeedSettings(raw.link, raw.proxy);
     let events = [];
     try { events = normalizeEvents(raw.events); } catch {}
-    return { ...settings, events };
+    const lastSyncedAt = Number.isFinite(raw.lastSyncedAt) && raw.lastSyncedAt > 0 && raw.lastSyncedAt <= 8640000000000000
+      ? raw.lastSyncedAt : null;
+    return { ...settings, events, lastSyncedAt };
   } catch {
     return null;
   }
@@ -3022,11 +3008,11 @@ function sameCalendarFeed(left, right) {
 function stopCalendarRefresh() {
   calendarRequest?.abort();
   calendarRequest = null;
-  lastCalendarRefresh = null;
 }
 
-async function refreshCalendarFeed(reveal = false) {
+async function refreshCalendarFeed() {
   if (!calendarFeed || calendarRequest) return;
+  const reveal = !calendarFeed.lastSyncedAt && !calendarFeed.events.length;
   const { link, proxy } = calendarFeed;
   const url = new URL(proxy || link);
   if (proxy) {
@@ -3035,7 +3021,6 @@ async function refreshCalendarFeed(reveal = false) {
   }
   const request = new AbortController();
   calendarRequest = request;
-  lastCalendarRefresh = Date.now();
   const timeout = setTimeout(() => request.abort(), 15000);
   calendarStatus("Syncing calendar…");
   try {
@@ -3052,6 +3037,7 @@ async function refreshCalendarFeed(reveal = false) {
     if (!events.length && skipped) throw new Error("The feed contains no supported events.");
     const changed = JSON.stringify(calendarFeed.events) !== JSON.stringify(events);
     calendarFeed.events = events;
+    calendarFeed.lastSyncedAt = Date.now();
     const saved = saveCalendarFeed();
     if (reveal && events.length) {
       calendarFocusDay = suggestedCalendarDate(events, localDay());
@@ -3059,9 +3045,9 @@ async function refreshCalendarFeed(reveal = false) {
       selectedCalendarDay = null;
     }
     if (changed || reveal) render();
-    calendarStatus("Calendar synced · " + calendarEntryCount(events.length) + "." +
-      (skipped ? " Skipped " + calendarEntryCount(skipped) + " with unsupported or invalid data." : "") +
-      (saved ? "" : " Available for this visit. Browser storage is unavailable."));
+    calendarStatus(savedCalendarStatus() +
+      (skipped ? " · Skipped " + calendarEntryCount(skipped) + " with unsupported or invalid data" : "") +
+      (saved ? "" : " · Browser storage unavailable"));
   } catch (error) {
     if (calendarRequest !== request) return;
     let message = error.message;
@@ -3078,20 +3064,12 @@ async function refreshCalendarFeed(reveal = false) {
   }
 }
 
-function refreshCalendarWhenVisible() {
-  if (!document.hidden && (lastCalendarRefresh === null || Date.now() - lastCalendarRefresh >= CALENDAR_REFRESH_MS)) {
-    refreshCalendarFeed();
-  }
-}
-
 window.addEventListener("storage", (event) => {
   if (event.key !== CALENDAR_FEED_KEY && event.key !== null) return;
   const next = readCalendarFeed();
-  if (!sameCalendarFeed(next, calendarFeed)) {
-    stopCalendarRefresh();
-    calendarStatus("");
-  }
+  if (!sameCalendarFeed(next, calendarFeed)) stopCalendarRefresh();
   calendarFeed = next;
+  if (!calendarRequest) calendarStatus(savedCalendarStatus());
   render();
 });
 
@@ -3219,12 +3197,13 @@ byId("calendar-link-form").addEventListener("submit", (event) => {
     return;
   }
   stopCalendarRefresh();
-  const events = settings.link === calendarFeed?.link ? calendarFeed.events : [];
-  calendarFeed = { ...settings, events };
-  saveCalendarFeed();
+  const previous = settings.link === calendarFeed?.link ? calendarFeed : null;
+  calendarFeed = { ...settings, events: previous?.events ?? [], lastSyncedAt: previous?.lastSyncedAt ?? null };
+  const saved = saveCalendarFeed();
   calendarLinkDialog.close();
   render();
-  refreshCalendarFeed(true);
+  calendarStatus((previous?.lastSyncedAt ? savedCalendarStatus() : "Feed saved · Use Refresh calendar to sync") +
+    (saved ? "" : " · Browser storage unavailable"));
 });
 
 byId("clear-calendar").addEventListener("click", () => {
@@ -3504,9 +3483,7 @@ syncState();
 renderStorageStatus();
 render();
 commit(prepareCurrentWeek);
-refreshCalendarWhenVisible();
-document.addEventListener("visibilitychange", refreshCalendarWhenVisible);
-setInterval(refreshCalendarWhenVisible, CALENDAR_REFRESH_MS);
+calendarStatus(savedCalendarStatus());
 scheduleMidnight();
 tickTimer();
 setInterval(() => {
