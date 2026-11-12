@@ -163,6 +163,13 @@ select { min-height: 37px; }
 .event-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px; background: var(--accent); }
 .event-pill span { overflow: hidden; text-overflow: ellipsis; }
 .event-pill[data-completed] span { color: var(--muted); text-decoration: line-through; }
+.event-overdue-label {
+  display: none; flex: 0 0 auto; color: #ffb4bf; background: #411e28; border-radius: 4px;
+  padding: 2px 4px; font-size: .65rem; font-weight: 700; line-height: 1.2;
+}
+[data-overdue] .event-overdue-label { display: inline-flex; }
+.event-pill[data-overdue], .day-event-list .calendar-event[data-overdue] { border-color: #b64f63; }
+.event-heading .event-overdue-label, .day-event-details-event .event-overdue-label, .database-table .event-overdue-label { margin-top: 4px; }
 .day-count { font-size: .75rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .day-count strong { color: #f4f4f5; }
 .day[data-complete] .day-count strong { color: var(--gold); }
@@ -271,8 +278,8 @@ dialog::backdrop { background: #08080acb; }
 .day-dialog-controls { justify-content: center; }
 .day-dialog .week-controls { flex-shrink: 0; }
 .day-dialog .close-control { --close-size: 36px; }
-.day-dialog :focus { outline: none; }
-.day-dialog :is(button:not(.primary), a, select, input:not([type="checkbox"]), textarea):focus-visible { background-color: #24242b; }
+:is(.day-dialog, .day-event-details) :focus { outline: none; }
+:is(.day-dialog, .day-event-details) :is(button:not(.primary), a, select, input:not([type="checkbox"]), textarea):focus-visible { background-color: #24242b; }
 .day-dialog input[type="checkbox"]:focus-visible { filter: brightness(1.3); }
 .day-dialog:has(.day-dialog-body.has-event-details) { width: min(1130px, calc(100% - 24px)); }
 .day-dialog-body.has-event-details {
@@ -439,7 +446,12 @@ dialog::backdrop { background: #08080acb; }
 .calendar-views button { padding: 6px 10px; }
 .calendar-views button[aria-pressed=true] { background: var(--raised); border-color: #71717a; color: #fff; }
 .database-view { margin-top: 12px; }
-.database-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.database-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 7px; }
+.database-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.database-filters select { min-height: 29px; font-size: .73rem; }
+.database-layout.has-event-details { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 12px; align-items: start; }
+.database-layout .day-event-details { top: 12px; max-height: 75dvh; }
+.database-event-trigger { color: inherit; }
 .database-controls button { padding: 5px 8px; font-size: .73rem; }
 .database-controls button[aria-pressed=true] { border-color: var(--muted); }
 .database-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
@@ -454,6 +466,8 @@ dialog::backdrop { background: #08080acb; }
 .database-table th button { gap: 4px; border: 0; background: transparent; padding: 0; text-align: start; font-size: inherit; }
 .sort-icon { scale: .72; }
 .database-table tbody tr:last-child td { border-bottom: 0; }
+.database-table tbody tr { cursor: pointer; }
+.database-table tbody tr:hover { background: #ffffff08; }
 .database-title { color: #f4f4f5; font-weight: 650; }
 .database-class { display: inline-flex; align-items: baseline; gap: 5px; }
 .database-class::before { content: ""; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--accent); }
@@ -496,6 +510,8 @@ dialog::backdrop { background: #08080acb; }
   .day-dialog-body.has-event-details { display: block; }
   .day-dialog-body.has-event-details .day-dialog-main { display: none; }
   .day-event-details { position: static; max-height: none; }
+  .database-layout.has-event-details { grid-template-columns: minmax(0, 1fr); }
+  .database-layout .day-event-details { grid-row: 1; }
   .day-event-list .calendar-event { padding: 7px; }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .course-row, .session-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); padding: 8px; }
@@ -627,20 +643,34 @@ dialog::backdrop { background: #08080acb; }
     <div class="database-view" id="database-view" hidden>
       <div class="database-controls">
         <p id="database-summary" class="dialog-note" role="status"></p>
-        <button type="button" id="database-archive" aria-pressed="false">Show archived</button>
+        <div class="database-filters">
+          <label class="select-control"><span class="sr-only">Database date range</span>
+            <select id="database-range"><option value="all">All dates</option><option value="month">Selected month</option></select>
+            <span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span>
+          </label>
+          <button type="button" id="database-archive" aria-pressed="false">Show archived</button>
+        </div>
       </div>
-      <div class="database-scroll" id="database-scroll" tabindex="0" role="region" aria-label="Assignments and events">
-        <table class="database-table">
-          <caption class="sr-only">Assignments and events for the selected month</caption>
-          <thead><tr>
-            <th scope="col"><button type="button" data-sort="title">Assignment or event</button></th>
-            <th scope="col"><button type="button" data-sort="course">Class</button></th>
-            <th scope="col"><button type="button" data-sort="due">Due date</button></th>
-            <th scope="col"><button type="button" data-sort="done">Done</button></th>
-            <th scope="col">Link</th>
-          </tr></thead>
-          <tbody id="database-rows"></tbody>
-        </table>
+      <div id="database-layout" class="database-layout">
+        <div class="database-scroll" id="database-scroll" tabindex="0" role="region" aria-label="Assignments and events">
+          <table class="database-table">
+            <caption class="sr-only">Assignments and events</caption>
+            <thead><tr>
+              <th scope="col"><button type="button" data-sort="title">Assignment or event</button></th>
+              <th scope="col"><button type="button" data-sort="course">Class</button></th>
+              <th scope="col"><button type="button" data-sort="due">Due date</button></th>
+              <th scope="col"><button type="button" data-sort="done">Done</button></th>
+              <th scope="col">Link</th>
+            </tr></thead>
+            <tbody id="database-rows"></tbody>
+          </table>
+        </div>
+        <aside class="day-event-details" id="database-event-details" aria-labelledby="database-event-details-title" hidden>
+          <div class="inspector-heading">
+            <button type="button" class="close-control" id="close-database-event" aria-label="Close database event details"><span class="close-icon" aria-hidden="true">×</span></button>
+          </div>
+          <div data-sidebar-content></div>
+        </aside>
       </div>
     </div>
   </section>
@@ -814,6 +844,7 @@ dialog::backdrop { background: #08080acb; }
               </span>
             </label>
             <label class="field">Due date<input id="day-item-due" type="date"></label>
+            <label class="field">Due time<input id="day-item-time" type="time" step="60" value="23:59"></label>
             <label class="field">Class
               <span class="select-control"><select id="day-item-course"></select><span class="select-arrow" aria-hidden="true"><span class="chevron chevron-down"></span></span></span>
             </label>
@@ -838,12 +869,7 @@ dialog::backdrop { background: #08080acb; }
           <button type="button" class="maroon-control day-event-back" id="back-day-events">Back to events</button>
           <button type="button" class="close-control" id="close-day-event-details" aria-label="Close event details"><span class="close-icon" aria-hidden="true">×</span></button>
         </div>
-        <div class="day-event-details-event" id="day-event-details-event">
-          <h3 id="day-event-details-title"></h3>
-          <p id="day-event-details-meta" class="dialog-note"></p>
-        </div>
-        <p id="day-event-details-description" class="day-event-details-description" hidden></p>
-        <div id="day-event-details-actions" class="day-event-details-actions"></div>
+        <div data-sidebar-content></div>
       </aside>
     </div>
   </div>
@@ -1311,6 +1337,45 @@ function calendarTime(event) {
   return start + " – " + end;
 }
 
+function eventDay(event) {
+  return event.allDay ? event.from : localDay(new Date(event.from));
+}
+
+function customDueLabel(event, format = shortDate) {
+  const date = dateLabel(event.day, format);
+  return "Due " + date + (event.allDay ? "" : " at " + LOCAL_TIME.format(event.from));
+}
+
+const OVERDUE_BADGE = '<span class="event-overdue-label">Overdue</span>';
+
+function deadlineAttributes(event, completed) {
+  if (!event.source.custom) return "";
+  const deadline = event.allDay ? eventInstant({ day: event.from + 1, seconds: null, zone: null }) : event.from;
+  return ' data-due-at="' + deadline + '"' + (!completed && Date.now() >= deadline ? " data-overdue" : "");
+}
+
+function updateOverdueEvents() {
+  const now = Date.now();
+  for (const item of document.querySelectorAll("[data-due-at]")) {
+    item.toggleAttribute("data-overdue", now >= Number(item.dataset.dueAt) && !item.hasAttribute("data-completed"));
+  }
+}
+
+function renderEventSidebar(panel, event, day) {
+  const { custom, description, url } = event.source;
+  const meta = custom ? custom.eventType + " · " + customDueLabel(event, shortYearDate) :
+    dateLabel(day, shortYearDate) + " · " + calendarTime(event);
+  const completed = eventCompleted(event);
+  const content = panel.querySelector("[data-sidebar-content]");
+  const markup = '<div class="day-event-details-event"' + accentStyle(event.color) + deadlineAttributes(event, completed) +
+    (completed ? " data-completed" : "") + '><h3 id="' + panel.id + '-title">' + escapeHTML(event.summary) +
+    '</h3><p class="dialog-note">' + escapeHTML(meta + (event.course ? " · " + event.course.code : "")) + "</p>" +
+    (custom ? OVERDUE_BADGE : "") + "</div>" +
+    (description?.trim() ? '<p class="day-event-details-description">' + escapeHTML(description.trim()) + "</p>" : "") +
+    (url ? '<div class="day-event-details-actions">' + eventLink(url) + "</div>" : "");
+  if (content.innerHTML !== markup) content.innerHTML = markup;
+}
+
 function courseTokens(value) {
   return (value?.toUpperCase().match(/[A-Z]+|\d+/g) ?? []).join(" ");
 }
@@ -1440,13 +1505,14 @@ function calendarItems(events, date, { editable = false, sidebar = false } = {})
     const { description, url, custom } = event.source;
     const key = eventKey(event);
     const completed = eventCompleted(event, completedEvents);
-    const time = custom ? custom.eventType + " · Due " + dateLabel(event.day) : calendarTime(event);
+    const time = custom ? custom.eventType + " · " + customDueLabel(event) : calendarTime(event);
     const heading = '<span class="event-heading"><strong title="' + escapeHTML(event.summary) + '">' + escapeHTML(event.summary) + "</strong><small>" +
-      escapeHTML(time) + (event.course ? " · " + escapeHTML(event.course.code) : "") + "</small></span>";
+      escapeHTML(time) + (event.course ? " · " + escapeHTML(event.course.code) : "") + "</small>" +
+      (custom ? OVERDUE_BADGE : "") + "</span>";
     const checkbox = assignmentCheckbox(event, completed, date);
     const controls = custom && editable ? '<div class="day-item-actions">' + checkbox +
       dayItemActions(dayItemTaskId(custom), event.summary) + "</div>" : checkbox;
-    return '<li class="calendar-event"' + accentStyle(event.color) + (completed ? " data-completed" : "") + ">" +
+    return '<li class="calendar-event"' + accentStyle(event.color) + deadlineAttributes(event, completed) + (completed ? " data-completed" : "") + ">" +
       (sidebar ? dayEventContent(heading, event) : eventContent(heading, description, url, key, false)) +
       controls + "</li>";
   }).join("");
@@ -1489,6 +1555,7 @@ const RECOVERY_KEY = STORAGE_KEY + ".recovery";
 const CALENDAR_FEED_KEY = STORAGE_KEY + ".calendar-feed";
 const DATA_VERSION = 4;
 const DAY_EVENT_TYPES = ["Event", "Assignment", "Deadline", "Reminder"];
+const DEFAULT_EVENT_DUE_TIME = "23:59";
 const DAY_MS = 86400000;
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DEFAULT_HABITS = [
@@ -1611,12 +1678,19 @@ function normalizeDayItems(input) {
     }
     ids.add(id);
     if (type === "habit") return { id, day, title: title.trim(), type };
-    const { description = "", eventType = "Event", courseKey = "" } = item;
+    const { description = "", eventType = "Event", courseKey = "", dueTime } = item;
     if (typeof description !== "string" || description.length > 4000 || !DAY_EVENT_TYPES.includes(eventType) ||
-        typeof courseKey !== "string" || courseKey.length > 256) throw new Error("A saved custom event is invalid.");
+        typeof courseKey !== "string" || courseKey.length > 256 ||
+        (dueTime !== undefined && clockSeconds(dueTime) === null)) throw new Error("A saved custom event is invalid.");
     const color = normalizeAccent(item.color);
-    return { id, day, title: title.trim(), type: "event", description, eventType, courseKey, ...(color ? { color } : {}) };
+    return { id, day, title: title.trim(), type: "event", description, eventType, courseKey,
+      ...(color ? { color } : {}), ...(dueTime !== undefined ? { dueTime } : {}) };
   });
+}
+
+function clockSeconds(value) {
+  const match = typeof value === "string" && /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
+  return match ? Number(match[1]) * 3600 + Number(match[2]) * 60 : null;
 }
 
 function normalizeEventColorPresets(input) {
@@ -1973,6 +2047,7 @@ function renderTaskTimer(task) {
 }
 
 function renderDays(board, rows) {
+  const completed = new Set(state.completedEvents);
   byId("board").innerHTML = checklistDays(board).map((entry, index) => {
     const today = entry.date === clockDay;
     const events = rows[index];
@@ -1980,8 +2055,9 @@ function renderDays(board, rows) {
     const habits = entry.tasks.filter((task) => !["course", "event"].includes(task.type)).length;
     const badge = (count, category) => '<span class="summary-badge">' + count + " " + category + "</span>";
     const pills = events.map((event) => '<span class="event-pill" data-pill-key="' + escapeHTML(eventKey(event)) + '"' +
-      accentStyle(event.color) + ' title="' + escapeHTML(event.summary + (event.course ? " · " + event.course.code : "")) + '"><span>' +
-      escapeHTML(event.summary) + "</span></span>").join("");
+      accentStyle(event.color) + deadlineAttributes(event, eventCompleted(event, completed)) +
+      ' title="' + escapeHTML(event.summary + (event.course ? " · " + event.course.code : "")) + '"><span>' +
+      escapeHTML(event.summary) + "</span>" + (event.source.custom ? OVERDUE_BADGE : "") + "</span>").join("");
     return '<button type="button" class="day open-day' + (today ? " today" : "") + '" data-day="' + entry.date +
       '" aria-label="' + escapeHTML("Open Day View for " + dateLabel(entry.date, fullDate)) +
       '" aria-describedby="summary-' + index + " count-" + index + '"' + (today ? ' aria-current="date"' : "") + '>' +
@@ -2418,6 +2494,8 @@ function setChecklistCompletion(event) {
       const events = displayCalendarEvents();
       renderUpcomingEvents(events, localDay());
       if (calendarView === "database") renderDatabase(events, calendarCourseResolver(events));
+      if (selectedDayEvent !== null) renderDayEventDetails();
+      updateOverdueEvents();
     }
     celebrateChecklist(celebration);
   });
@@ -3016,6 +3094,9 @@ let calendarView = "calendar";
 let databaseSort = { column: "due", direction: 1 };
 let showArchived = false;
 let nextArchiveAt = Infinity;
+let nextUpcomingChangeAt = Infinity;
+let databaseEvents = new Map();
+let selectedDatabaseEvent = null;
 
 function eventsInRange(start, end, events) {
   const unique = new Map();
@@ -3027,6 +3108,34 @@ function eventsInRange(start, end, events) {
     });
   }
   return [...unique.values()];
+}
+
+function databaseOccurrences(events) {
+  const nextMonth = monthStart(calendarMonth, 1);
+  if (byId("database-range").value === "month") return eventsInRange(calendarMonth, nextMonth, events);
+
+  const weeks = new Set();
+  let repeats = false;
+  for (const event of events) {
+    if (!event.start || event.cancelled) continue;
+    const day = event.start.seconds === null ? event.start.day : localDay(new Date(eventInstant(event.start)));
+    weeks.add(mondayOf(day));
+    repeats ||= Boolean(event.rule);
+  }
+  if (repeats) {
+    // Bound open-ended recurrence in All dates. Selected month can browse any date.
+    const today = localDay();
+    for (let monday = mondayOf(today - 365); monday <= today + 365; monday += 7) weeks.add(monday);
+    for (let monday = mondayOf(calendarMonth); monday < nextMonth; monday += 7) weeks.add(monday);
+  }
+  const occurrences = new Map();
+  for (const monday of weeks) {
+    for (const event of matchingCalendarWeek(monday, events).flat()) {
+      const key = eventKey(event);
+      if (!occurrences.has(key)) occurrences.set(key, event);
+    }
+  }
+  return [...occurrences.values()];
 }
 
 function dueTime(event) {
@@ -3042,8 +3151,31 @@ function renderUpcomingEvents(events, today) {
   const completed = new Set(state.completedEvents);
   const now = Date.now();
   const upcoming = eventsInRange(today, today + 7, events)
-    .filter((event) => (event.allDay ? event.from >= today : event.from >= now) && !eventCompleted(event, completed));
+    .filter((event) => (event.allDay ? event.from >= today : event.from > now) && !eventCompleted(event, completed));
+  nextUpcomingChangeAt = upcoming.reduce((next, event) => event.allDay ? next : Math.min(next, event.from), Infinity);
   setText("deadline-count", String(upcoming.length));
+}
+
+function renderDatabaseEventDetails() {
+  const panel = byId("database-event-details");
+  const event = databaseEvents.get(selectedDatabaseEvent);
+  if (!event) selectedDatabaseEvent = null;
+  panel.hidden = !event;
+  byId("database-layout").classList.toggle("has-event-details", Boolean(event));
+  for (const trigger of byId("database-rows").querySelectorAll("[data-database-event]")) {
+    trigger.setAttribute("aria-expanded", String(trigger.dataset.databaseEvent === selectedDatabaseEvent));
+  }
+  if (event) renderEventSidebar(panel, event, eventDay(event));
+}
+
+function closeDatabaseEventDetails(restoreFocus = true) {
+  if (selectedDatabaseEvent === null) return;
+  const previous = selectedDatabaseEvent;
+  selectedDatabaseEvent = null;
+  renderDatabaseEventDetails();
+  if (!restoreFocus) return;
+  const trigger = [...byId("database-rows").querySelectorAll("[data-database-event]")].find((button) => button.dataset.databaseEvent === previous);
+  (trigger ?? byId("database-archive")).focus();
 }
 
 function renderDatabase(events, resolve) {
@@ -3051,13 +3183,13 @@ function renderDatabase(events, resolve) {
   const checkIdentity = (input) => input.dataset.eventCheck ?? (input.dataset.taskDay + "|" + input.dataset.task);
   const focused = rows.contains(document.activeElement) && document.activeElement.matches(".assignment-check") ?
     checkIdentity(document.activeElement) : null;
-  const expanded = new Set([...rows.querySelectorAll("[data-event-detail][open]")].map((item) => item.dataset.eventDetail));
+  const focusInSidebar = byId("database-event-details").contains(document.activeElement);
   const completed = new Set(state.completedEvents);
   const now = Date.now();
   const active = [];
   const archived = [];
   nextArchiveAt = Infinity;
-  for (const event of eventsInRange(calendarMonth, monthStart(calendarMonth, 1), events)) {
+  for (const event of databaseOccurrences(events)) {
     const archiveAt = databaseArchiveAt(event);
     if (eventCompleted(event, completed) || archiveAt <= now) archived.push(event);
     else {
@@ -3077,8 +3209,10 @@ function renderDatabase(events, resolve) {
   const archiveButton = byId("database-archive");
   archiveButton.setAttribute("aria-pressed", String(showArchived));
   const count = entries.length;
+  const scope = byId("database-range").value === "month" ? " this month" : "";
   setText("database-summary", count ? countLabel(count, showArchived ? "archived event" : "active event") :
-    (showArchived ? "No archived events this month." : "No active events this month."));
+    (showArchived ? "No archived events" : "No active events") + scope + "." +
+    (!showArchived && archived.length ? " " + countLabel(archived.length, "archived event") + " available." : ""));
   byId("database-scroll").hidden = entries.length === 0;
   for (const button of byId("database-view").querySelectorAll("[data-sort]")) {
     const active = button.dataset.sort === column;
@@ -3097,31 +3231,41 @@ function renderDatabase(events, resolve) {
   rows.innerHTML = entries.map((event) => {
     const key = eventKey(event);
     const done = eventCompleted(event, completed);
-    const day = event.allDay ? event.from : localDay(new Date(event.from));
+    const day = eventDay(event);
     const date = event.allDay ? isoDate(day) : new Date(event.from).toISOString();
     const title = '<span class="database-title" title="' + escapeHTML(event.summary) + '">' + escapeHTML(event.summary) + "</span>";
-    return "<tr" + (done ? " data-completed" : "") + "><td>" +
-      eventContent(title, event.source.description, "", key, expanded.has(key)) +
+    return "<tr" + deadlineAttributes(event, done) + (done ? " data-completed" : "") + '><td><button type="button" class="day-event-trigger database-event-trigger"' +
+      ' data-database-event="' + escapeHTML(key) + '" aria-controls="database-event-details">' + title + "</button>" +
       '</td><td><span class="database-class"' + accentStyle(event.color) + ">" + escapeHTML(event.course?.code ?? "Unassigned") +
       '</span></td><td><time datetime="' + date + '">' + escapeHTML(dateLabel(day, shortYearDate)) + "<small>" +
-      escapeHTML(event.allDay ? "All day" : LOCAL_TIME.format(event.from)) + "</small></time></td><td>" +
+      escapeHTML(event.allDay ? "All day" : LOCAL_TIME.format(event.from)) + "</small></time>" +
+      (event.source.custom ? OVERDUE_BADGE : "") + "</td><td>" +
       assignmentCheckbox(event, done) + "</td><td>" + (eventLink(event.source.url, true) || "—") + "</td></tr>";
   }).join("");
+  databaseEvents = new Map(entries.map((event) => [eventKey(event), event]));
+  renderDatabaseEventDetails();
   if (focused) {
     const controls = [...rows.querySelectorAll(".assignment-check")];
     (controls.find((input) => checkIdentity(input) === focused) ?? controls[0] ?? archiveButton).focus({ preventScroll: true });
-  }
+  } else if (focusInSidebar && selectedDatabaseEvent === null) archiveButton.focus({ preventScroll: true });
+}
+
+function refreshDatabase() {
+  const events = displayCalendarEvents();
+  renderDatabase(events, calendarCourseResolver(events));
 }
 
 byId("database-archive").addEventListener("click", () => {
   showArchived = !showArchived;
-  const events = displayCalendarEvents();
-  renderDatabase(events, calendarCourseResolver(events));
+  refreshDatabase();
 });
+byId("database-range").addEventListener("change", refreshDatabase);
+byId("close-database-event").addEventListener("click", () => closeDatabaseEventDetails());
 
 byId("calendar-views").addEventListener("click", (event) => {
   const button = event.target.closest("[data-calendar-view]");
   if (!button || button.dataset.calendarView === calendarView) return;
+  if (calendarView === "database") closeDatabaseEventDetails(false);
   calendarView = button.dataset.calendarView;
   for (const control of byId("calendar-views").querySelectorAll("button")) {
     control.setAttribute("aria-pressed", String(control === button));
@@ -3130,12 +3274,21 @@ byId("calendar-views").addEventListener("click", (event) => {
 });
 
 byId("database-view").addEventListener("click", (event) => {
+  const control = event.target.closest("button, input, a, select");
+  const trigger = control ? control.closest("[data-database-event]") :
+    event.target.closest("#database-rows tr")?.querySelector("[data-database-event]");
+  if (trigger) {
+    selectedDatabaseEvent = trigger.dataset.databaseEvent;
+    renderDatabaseEventDetails();
+    byId("database-event-details").scrollTop = 0;
+    byId("close-database-event").focus();
+    return;
+  }
   const button = event.target.closest("[data-sort]");
   if (!button) return;
   const column = button.dataset.sort;
   databaseSort = { column, direction: column === databaseSort.column ? -databaseSort.direction : 1 };
-  const events = displayCalendarEvents();
-  renderDatabase(events, calendarCourseResolver(events));
+  refreshDatabase();
 });
 
 function setAssignmentCompletion(event) {
@@ -3348,7 +3501,7 @@ function displayCalendarEvents() {
       const day = week.monday + item.day;
       events.push({
         id: "custom:" + day + ":" + item.id, summary: item.title, description: item.description,
-        start: { day, seconds: null, zone: null }, end: null, exclusions: [], custom: item
+        start: { day, seconds: clockSeconds(item.dueTime), zone: null }, end: null, exclusions: [], custom: item
       });
     }
   }
@@ -3477,8 +3630,9 @@ byId("calendar-today").addEventListener("click", () => showCalendarMonth(localDa
 byId("refresh-calendar").addEventListener("click", () => refreshCalendarFeed());
 byId("close-inspector").addEventListener("click", closeDayInspector);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !event.defaultPrevented && selectedCalendarDay !== null &&
-      !document.querySelector("dialog[open]") && !actionMenu.open && !calendarMenu.open) closeDayInspector();
+  if (event.key !== "Escape" || event.defaultPrevented || document.querySelector("dialog[open]") || actionMenu.open || calendarMenu.open) return;
+  if (calendarView === "database" && selectedDatabaseEvent !== null) closeDatabaseEventDetails();
+  else if (calendarView === "calendar" && selectedCalendarDay !== null) closeDayInspector();
 });
 byId("jump-board-week").addEventListener("click", () => {
   const targetDay = selectedCalendarDay;
@@ -3744,6 +3898,7 @@ const dayEventDetails = byId("day-event-details");
 const dayItemForm = byId("day-item-form");
 const dayItemName = byId("day-item-name");
 const dayItemDue = byId("day-item-due");
+const dayItemTime = byId("day-item-time");
 const dayItemCourse = byId("day-item-course");
 const dayItemColor = byId("day-item-color");
 const dayColorPreset = byId("day-color-preset");
@@ -3777,17 +3932,7 @@ function renderDayEventDetails() {
   }
   if (!open) return false;
 
-  const { custom, description, url } = event.source;
-  const time = custom ? custom.eventType + " · Due " + dateLabel(viewedDay, shortYearDate) :
-    dateLabel(viewedDay, shortYearDate) + " · " + calendarTime(event);
-  setText("day-event-details-title", event.summary);
-  setText("day-event-details-meta", time + (event.course ? " · " + event.course.code : ""));
-  byId("day-event-details-event").style.setProperty("--accent", event.color);
-  setText("day-event-details-description", description?.trim() ?? "");
-  byId("day-event-details-description").hidden = !description?.trim();
-  const actions = byId("day-event-details-actions");
-  const link = eventLink(url);
-  if (actions.innerHTML !== link) actions.innerHTML = link;
+  renderEventSidebar(dayEventDetails, event, viewedDay);
   return true;
 }
 
@@ -3905,9 +4050,12 @@ function openDayItemEditor(kind, task, opener) {
   dayItemForm.reset();
   dayItemName.setCustomValidity("");
   dayItemDue.required = isEvent;
+  dayItemTime.required = isEvent;
   dayItemDue.setCustomValidity("");
+  dayItemTime.setCustomValidity("");
   dayItemName.value = task?.title ?? "";
   dayItemDue.value = isoDate(day);
+  dayItemTime.value = custom?.dueTime ?? DEFAULT_EVENT_DUE_TIME;
   byId("day-item-type").value = custom?.eventType ?? DAY_EVENT_TYPES[0];
   byId("day-item-description").value = custom?.description ?? "";
   dayItemColor.value = custom?.color || UNASSIGNED_COLOR;
@@ -3973,6 +4121,7 @@ dayDialog.addEventListener("cancel", (event) => {
   else closeDayItemEditor(true);
 });
 dayItemName.addEventListener("input", () => dayItemName.setCustomValidity(""));
+dayItemTime.addEventListener("input", () => dayItemTime.setCustomValidity(""));
 dayItemCourse.addEventListener("change", () => updateDayColorControls());
 dayItemColor.addEventListener("input", () => {
   dayColorPreset.value = "";
@@ -4013,9 +4162,14 @@ dayItemForm.addEventListener("submit", (event) => {
     dayItemDue.reportValidity();
     return;
   }
+  if (isEvent && clockSeconds(dayItemTime.value) === null) {
+    dayItemTime.setCustomValidity("Enter a valid due time.");
+    dayItemTime.reportValidity();
+    return;
+  }
   const fields = isEvent ? {
     title, description: byId("day-item-description").value.trim(),
-    eventType: byId("day-item-type").value, courseKey: dayItemCourse.value,
+    eventType: byId("day-item-type").value, courseKey: dayItemCourse.value, dueTime: dayItemTime.value,
     ...(dayItemColor.value !== UNASSIGNED_COLOR ? { color: normalizeAccent(dayItemColor.value) } : {})
   } : { title };
   let saved;
@@ -4173,10 +4327,10 @@ tickTimer();
 setInterval(() => {
   if (localDay() !== clockDay) wakeClock();
   else if (state.timer) tickTimer();
-  if (calendarView === "database" && Date.now() >= nextArchiveAt) {
-    const events = displayCalendarEvents();
-    renderDatabase(events, calendarCourseResolver(events));
-  }
+  updateOverdueEvents();
+  const now = Date.now();
+  if (now >= nextUpcomingChangeAt) renderUpcomingEvents(displayCalendarEvents(), localDay());
+  if (calendarView === "database" && now >= nextArchiveAt) refreshDatabase();
 }, 1000);
 
 </script>
