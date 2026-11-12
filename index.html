@@ -415,6 +415,7 @@ dialog::backdrop { background: #08080acb; }
 .calendar-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; align-items: center; max-width: 100%; }
 .calendar-dots span { width: 4px; height: 4px; border-radius: 50%; }
 .calendar-event-dot { background: var(--accent, var(--muted)); }
+.calendar-dots .calendar-habit-dot { width: 6px; height: 6px; border: 1px solid var(--gold); }
 .calendar-dots .calendar-milestone-dot { background: var(--muted); border-radius: 1px; }
 .day-inspector { border-inline-start: 1px solid var(--line); padding-inline-start: 16px; }
 .inspector-heading { display: flex; align-items: start; justify-content: space-between; gap: 7px; }
@@ -3195,17 +3196,26 @@ function renderInlineCalendar(focusDay = false) {
   const cells = [];
   for (let monday = mondayOf(start); monday < next; monday += 7) {
     const rows = calendar.length ? calendarRows(monday, calendar, resolve) : Array.from({ length: 7 }, () => []);
+    const week = state.weeks[isoWeekKey(monday)];
+    const hiddenTasks = new Set(week?.hiddenTasks);
+    const habitCounts = Array(7).fill(0);
+    for (const item of week?.dayItems ?? []) {
+      if (item.type === "habit" && !hiddenTasks.has(dayItemTaskId(item))) habitCounts[item.day]++;
+    }
     rows.forEach((events, index) => {
       const day = monday + index;
       const selected = day === selectedCalendarDay;
       const markers = milestones.get(day) ?? [];
       const date = new Date(day * DAY_MS).getUTCDate();
-      const label = [dateLabel(day, fullDate), events.length ? countLabel(events.length, "event") : "", ...markers].filter(Boolean).join(", ");
+      const habits = habitCounts[index];
+      const label = [dateLabel(day, fullDate), events.length ? countLabel(events.length, "event") : "",
+        habits ? countLabel(habits, "added habit") : "", ...markers].filter(Boolean).join(", ");
       cells.push('<div class="calendar-cell"><button type="button" class="calendar-date-cell' + (day < start || day >= next ? " outside-month" : "") +
         '" data-calendar-date="' + day + '" aria-label="' + escapeHTML(label) + '" aria-pressed="' + selected +
         '" tabindex="' + (day === calendarFocusDay ? "0" : "-1") + '"' + (day === today ? ' aria-current="date"' : "") +
         '>' + date + '</button><span class="calendar-dots" aria-hidden="true">' +
         calendarDots(events) +
+        (habits ? '<span class="calendar-habit-dot" title="Added habits"></span>' : "") +
         (markers.length ? '<span class="calendar-milestone-dot"></span>' : "") + "</span></div>");
     });
   }
@@ -4015,6 +4025,11 @@ dayItemForm.addEventListener("submit", (event) => {
   }, () => {
     closeDayItemEditor();
     const target = saved ? due : day;
+    if (saved && calendarView === "calendar" && (!draft.id || target !== day)) {
+      calendarMonth = monthStart(target);
+      calendarFocusDay = target;
+      selectedCalendarDay = target;
+    }
     showBoardWeek(mondayOf(target), target);
     setText("day-edit-status", saved ? title + " saved." : "This item is no longer available.");
     byId(isEvent ? "add-day-event" : "add-day-habit").focus({ preventScroll: true });
