@@ -1,0 +1,2535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Weekly tracker · ASU Online</title>
+<style>
+:root {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  color: #f4f4f5;
+  background: #0a0a0c;
+  --surface: #121216;
+  --raised: #18181e;
+  --line: rgba(255, 255, 255, 0.08);
+  --control-line: rgba(255, 255, 255, 0.15);
+  --muted: #a9a9b3;
+  --active-bg: #262215;
+  --gold: #FFC627;
+  --maroon: #8C1D40;
+  --radius: 15px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-width: 300px; }
+button, select, input, textarea { font: inherit; }
+button, select { cursor: pointer; }
+button, select, input:not([type="checkbox"]), textarea {
+  color: inherit; background: var(--raised); border: 1px solid var(--control-line); border-radius: 8px;
+}
+button { padding: 9px 13px; font-size: .83rem; font-weight: 650; }
+button:hover, select:hover { border-color: #71717a; }
+button:disabled { opacity: .45; cursor: default; border-color: var(--line); }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+button.primary { background: var(--gold); color: #241701; border-color: var(--gold); }
+button.danger { color: #ffc1c4; }
+[hidden] { display: none !important; }
+a { color: #d4d4d8; }
+h1, h2, h3, p { margin: 0; }
+main { width: min(1500px, calc(100% - 64px)); margin-inline: auto; padding: 25px 0 32px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.context-header { margin-bottom: 17px; background: var(--surface); border: 1px solid var(--line); border-top-color: var(--maroon); border-radius: var(--radius); }
+.context-top { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 15px 17px 13px; }
+.context-title { min-width: 0; }
+.context-title h1 { font-size: 1.55rem; line-height: 1.15; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.context-title p { font-size: .78rem; color: var(--muted); line-height: 1.45; margin-top: 4px; }
+.context-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.context-actions > button { min-height: 37px; }
+.action-menu { position: relative; }
+.action-menu summary {
+  display: grid; place-items: center; min-width: 37px; min-height: 37px; border: 1px solid var(--control-line);
+  border-radius: 8px; background: var(--raised); font-size: 1.15rem; line-height: 1; cursor: pointer; list-style: none;
+}
+.action-menu summary::-webkit-details-marker { display: none; }
+.action-menu summary:hover, .action-menu[open] summary { border-color: #71717a; }
+.action-menu-panel {
+  position: absolute; z-index: 4; inset-block-start: calc(100% + 6px); inset-inline-end: 0;
+  display: grid; min-width: 160px; padding: 4px; border: 1px solid var(--control-line); border-radius: 9px;
+  background: var(--raised); box-shadow: 0 10px 28px #0008;
+}
+.action-menu-panel button { text-align: start; border-color: transparent; background: transparent; white-space: nowrap; }
+.action-menu-panel button:hover:not(:disabled) { background: #26262d; }
+.preview-field { display: flex; align-items: center; gap: 10px; font-size: .77rem; color: var(--muted); }
+select { padding: 8px 29px 8px 10px; min-height: 37px; }
+.preview-field select { max-width: 170px; min-width: 0; color: #f4f4f5; }
+.badge { display: inline-flex; align-items: center; font-size: .67rem; line-height: 1; font-weight: 760; border: 1px solid; border-radius: 6px; padding: 5px 7px; white-space: nowrap; }
+.badge.A { color: #ffc4d7; background: #321823; border-color: var(--maroon); }
+.badge.B { color: #ffe091; background: #292516; border-color: #635021; }
+.badge.C { color: #bceade; background: #1b2927; border-color: #41605a; }
+.stat { min-width: 0; padding: 5px 12px; border-inline-start: 1px solid var(--line); }
+.stat-label { color: #d0d0d6; font-size: .73rem; font-weight: 650; }
+.stat-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 3px; }
+.stat strong { display: block; font-size: 1.26rem; font-weight: 750; letter-spacing: -.045em; }
+.stat small { color: var(--muted); font-size: .71rem; }
+.stat .meter { margin-top: 6px; }
+.weekly-progress { padding: 11px 17px 14px; border-top: 1px solid var(--line); }
+.weekly-progress-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 7px; }
+.weekly-progress-label > p:last-child { font-size: .75rem; color: var(--muted); text-align: end; }
+.weekly-progress-label strong { color: #f4f4f5; font-variant-numeric: tabular-nums; }
+.meter { height: 3px; background: #292930; border-radius: 20px; overflow: hidden; }
+.weekly-progress .meter { height: 8px; }
+.meter > span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--gold); transition: width .25s ease; }
+.board-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 15px; margin-bottom: 11px; }
+.week-range { font-size: .77rem; line-height: 1.4; color: #d4d4d8; font-variant-numeric: tabular-nums; }
+.week-controls { display: inline-flex; grid-column: 3; align-items: stretch; justify-self: end; }
+.week-controls button { position: relative; min-height: 32px; padding: 5px 10px; border-radius: 0; font-size: .74rem; }
+.week-controls button + button { margin-inline-start: -1px; }
+.week-controls button:first-child { border-radius: 7px 0 0 7px; min-width: 33px; }
+.week-controls button:last-child { border-radius: 0 7px 7px 0; min-width: 33px; }
+.week-controls button:hover:not(:disabled), .week-controls button:focus-visible { z-index: 1; }
+.board-filters, .filter-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; min-width: 0; }
+.board-filters { justify-content: center; gap: 8px; }
+.filter-group + .filter-group { padding-inline-start: 8px; border-inline-start: 1px solid var(--control-line); }
+.filter-group-label { padding-inline-end: 2px; color: var(--muted); font-size: .68rem; font-weight: 650; }
+.filter-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; font-size: .71rem; padding: 4px 8px; min-height: 29px; overflow-wrap: anywhere; }
+.filter-pill .badge { padding: 3px 4px; font-size: .55rem; }
+.filter-pill[aria-pressed="true"] { color: var(--gold); border-color: #ffc627ba; background: var(--active-bg); }
+.filter-pill[aria-pressed="false"] { opacity: .45; border-style: dashed; border-color: #a1a1aa; }
+.filter-pill[aria-pressed="false"] .filter-label { text-decoration: line-through; }
+.filter-pill[aria-pressed="false"]:focus-visible { opacity: .85; }
+.filter-indicator { font-size: .67rem; }
+.empty-day { padding: 5px 4px; color: var(--muted); font-size: .72rem; }
+#focus-toggle[aria-pressed="true"] { color: var(--gold); }
+.board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 9px; }
+.board.focus-mode { grid-template-columns: minmax(0, 1fr); }
+.board.focus-mode .day:not(.today) { display: none; }
+.focus-mode .tasks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); align-items: start; }
+.day {
+  min-width: 0; border-radius: 13px; border: 1px solid var(--line); background: var(--surface);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.day.today { border-color: var(--gold); }
+.day.jump-flash { animation: jump-day 1800ms ease-out; }
+.day.jump-flash .day-head { animation: jump-day-header 1800ms ease-out; }
+@keyframes jump-day {
+  0%, 22% { border-color: var(--gold); box-shadow: 0 0 0 2px #ffc62766, 0 10px 28px #0009; }
+}
+@keyframes jump-day-header {
+  0%, 22% { background-color: #3b1827; border-color: #f4bacd; }
+}
+.day-head { padding: 10px 10px 9px; background: var(--raised); border-bottom: 1px solid var(--line); }
+.today .day-head { background: #1d1c19; border-color: #ffc62724; }
+.day-name { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.day-name h3 { font-size: .84rem; line-height: 1.4; letter-spacing: -.015em; }
+.today-pill { background: var(--gold); color: #2a1c02; font-size: .61rem; font-weight: 800; border-radius: 5px; padding: 3px 5px; }
+button.today-pill { border: 0; }
+button.today-pill:hover { background: #ffda72; }
+.day-date { display: block; color: var(--muted); font-size: .7rem; margin-top: 2px; }
+.day-meta { display: flex; align-items: center; justify-content: space-between; gap: 3px; margin: 9px 0 5px; font-size: .66rem; }
+.study-target { color: #d4d4d8; font-weight: 670; }
+.today .study-target { color: var(--gold); }
+.day-count { color: var(--muted); flex-shrink: 0; }
+.day-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 9px 7px 8px; }
+.day-section { min-width: 0; }
+.day-section + .day-section { border-top: 1px solid var(--line); padding-top: 8px; }
+.tasks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; }
+.habit-list .tasks { gap: 1px; }
+.task, .course-with-timer { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
+.task {
+  display: flex; gap: 7px; align-items: flex-start; position: relative; padding: 7px 6px; min-height: 40px;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
+}
+.task:hover, .course-with-timer:hover { border-color: #71717a; }
+.read-only .task, .read-only .task input { cursor: default; }
+.read-only .task:not(:has(input:checked)):hover { border-color: var(--line); }
+.task:has(input:checked), .course-with-timer:has(input:checked) { background: #1e1d18; border-color: #ffc62735; }
+.habit-list .task { align-items: center; min-height: 25px; padding: 3px 2px; border-color: transparent; background: transparent; }
+.habit-list .task:hover, .habit-list .task:has(input:checked) { background: #ffffff08; border-color: transparent; }
+.habit-list .task-title { font-weight: 550; font-size: .73rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task input { appearance: none; margin: 1px 0 0; border: 1px solid #82828d; border-radius: 4px; width: 15px; height: 15px; flex: 0 0 15px; position: relative; cursor: pointer; transition: background .18s ease, border-color .18s ease; }
+.task input::after { content: ""; display: block; width: 5px; height: 8px; position: absolute; left: 4px; top: 1px; border: solid #2a1c02; border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0); transition: transform .18s ease; }
+.task input:checked { background: var(--gold); border-color: var(--gold); }
+.task input:checked::after { transform: rotate(45deg) scale(1); }
+.course-with-timer { position: relative; }
+.course-with-timer > .task { border: 0; background: transparent; }
+.course-with-timer .course-title { min-height: 18px; padding-inline-end: 25px; }
+.course-with-timer .timer-start {
+  position: absolute; inset-block-start: 3px; inset-inline-end: 3px; display: grid; place-items: center; width: 25px; height: 25px;
+  padding: 0; font-size: .91rem; line-height: 1; color: #d4d4d8; background: transparent; border-color: transparent;
+}
+.course-with-timer .timer-start:hover { color: var(--gold); background: #ffffff0a; border-color: var(--control-line); }
+.task-copy { min-width: 0; flex: 1; }
+.task:has(input:checked) .task-copy { opacity: .55; }
+.habit-list .task:has(input:checked) .task-title { text-decoration: line-through; }
+.task-title { display: block; color: #f4f4f5; font-size: .77rem; line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; }
+.course-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 3px; }
+.task-detail { display: block; color: var(--muted); font-size: .68rem; line-height: 1.26; margin-top: 4px; overflow-wrap: anywhere; }
+.course-time { display: block; margin-top: 4px; font-size: .67rem; line-height: 1.24; color: #dddde2; font-weight: 650; }
+.task .badge { padding: 3px 4px; font-size: .56rem; }
+.history { margin-top: 21px; padding: 13px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.history summary { cursor: pointer; color: #d4d4d8; font-size: .83rem; font-weight: 680; }
+.history summary span { margin-left: 7px; font-size: .72rem; color: var(--muted); font-weight: 400; }
+.history-list { list-style: none; padding: 0; margin: 8px 0 0; }
+.history-list li { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 5px 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .79rem; color: #e4e4e7; }
+.footnote { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 12px; color: var(--muted); font-size: .7rem; line-height: 1.5; }
+.save-state { color: #d4d4d8; }
+.save-state.error, .form-error { color: #ffbbc2; }
+dialog { width: min(840px, calc(100% - 24px)); max-height: min(86dvh, 850px); padding: 0; color: inherit; background: var(--surface); border: 1px solid var(--control-line); border-radius: 15px; box-shadow: 0 22px 75px #0009; }
+dialog::backdrop { background: #08080acb; }
+.dialog-shell { padding: 17px 21px; }
+.dialog-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 12px; }
+.dialog-head h2 { font-size: 1.33rem; letter-spacing: -.03em; }
+.dialog-head p, .dialog-note { font-size: .76rem; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+.editor-toolbar { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 11px; }
+.editor-toolbar .push { margin-left: auto; }
+.form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 15px; }
+.field { display: grid; align-content: start; gap: 4px; min-width: 0; font-size: .73rem; color: #dedee4; }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; padding: 7px 8px; min-height: 37px; font-size: .82rem; }
+.field input[type=checkbox] { width: 16px; min-height: 16px; accent-color: var(--gold); }
+.courses-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 8px; }
+.courses-head h3 { font-size: .93rem; }
+.course-row { display: grid; grid-template-columns: 1fr 2fr .62fr .85fr auto; gap: 6px; align-items: end; margin-bottom: 7px; }
+.course-row button { min-height: 37px; }
+.form-error { font-size: .79rem; margin-top: 7px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.json-input { resize: vertical; min-height: 280px !important; font-family: ui-monospace, Consolas, monospace; }
+.compact-dialog { max-width: 460px; }
+.backup-actions, .timer-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.timer-display { font-size: clamp(2rem, 10vw, 3.25rem); letter-spacing: -.05em; font-weight: 760; font-variant-numeric: tabular-nums; color: var(--gold); }
+.timer-setup { margin-top: 10px; }
+.timer-setup .field { max-width: 115px; }
+.duration-options { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.duration-options button, .habit-day span { border-radius: 999px; }
+.duration-options button[aria-pressed="true"], .habit-day:has(input:checked) span { border-color: var(--gold); color: var(--gold); background: var(--active-bg); }
+.timer-auto { display: flex; align-items: start; gap: 8px; font-size: .82rem; margin: 12px 0; }
+.timer-auto input { margin: 2px 0 0; accent-color: var(--gold); }
+#timer-notification { margin-top: 10px; }
+#timer-chip { color: var(--gold); font-variant-numeric: tabular-nums; max-width: 100%; overflow-wrap: anywhere; }
+.habit-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 10px 0; }
+.habit-row-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; margin-bottom: 8px; }
+.habit-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; max-width: 335px; }
+.habit-day { position: relative; cursor: pointer; }
+.habit-day input { position: absolute; opacity: 0; margin: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+.habit-day span { display: grid; place-items: center; min-height: 34px; font-size: .71rem; border: 1px solid var(--control-line); color: var(--muted); }
+.habit-day input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+#habits-form .dialog-actions { position: sticky; bottom: 0; padding: 8px 0; background: var(--surface); z-index: 1; }
+.day-schedule { margin: 7px 7px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
+.day-schedule summary { cursor: pointer; padding: 7px; color: #e4e4e7; font-size: .68rem; font-weight: 700; overflow-wrap: anywhere; }
+.day-schedule summary span { margin-left: 3px; color: var(--muted); }
+.day-schedule ul { list-style: none; margin: 0; padding: 0 7px 4px; }
+.day-schedule li { padding: 5px 0; border-top: 1px solid var(--line); line-height: 1.35; }
+.day-schedule strong, .day-schedule small { display: block; overflow-wrap: anywhere; }
+.day-schedule strong { font-size: .72rem; }
+.day-schedule small { color: var(--muted); font-size: .65rem; margin-top: 2px; }
+.inline-calendar { margin-top: 19px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.calendar-toolbar, .calendar-title-group, .calendar-month-controls, .calendar-actions {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.calendar-toolbar { justify-content: space-between; gap: 10px 18px; }
+.calendar-title-group { gap: 12px; }
+.calendar-month-title { font-size: 1.25rem; letter-spacing: -.035em; }
+.calendar-month-controls { gap: 3px; }
+.calendar-month-controls button { min-height: 32px; padding: 4px 9px; border: 0; background: transparent; color: var(--muted); }
+.calendar-month-controls button:hover { color: #f4f4f5; background: #ffffff0a; }
+.calendar-month-controls button[aria-label] { min-width: 31px; font-size: 1.2rem; line-height: 1; }
+.calendar-actions { justify-content: flex-end; }
+#calendar-message:empty { display: none; }
+.inline-calendar-body {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0fr); gap: 0; margin-top: 14px;
+  transition: grid-template-columns .2s ease, gap .2s ease;
+}
+.inline-calendar-body.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; }
+.calendar-month-grid, .day-inspector { min-width: 0; }
+.calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calendar-weekdays { padding: 5px 0; text-align: center; color: var(--muted); font-size: .75rem; font-weight: 650; }
+.calendar-cell { min-height: 58px; display: grid; grid-template-rows: 42px 8px; justify-items: center; align-content: center; }
+.calendar-date-cell {
+  display: grid; place-items: center; width: min(42px, 100%); aspect-ratio: 1; align-self: center; border-radius: 50%;
+  padding: 0; border: 0; background: transparent; font-size: .87rem; font-variant-numeric: tabular-nums;
+}
+.calendar-date-cell:hover { background: #ffffff0c; }
+.calendar-date-cell.outside-month { color: #52525b; }
+.calendar-date-cell[aria-pressed="true"] { background: #3b1827; color: #fff0f5; box-shadow: inset 0 0 0 1px #f4bacd; }
+.calendar-date-cell[aria-current="date"] { background: var(--gold); color: #1a1200; font-weight: 800; }
+.calendar-date-cell:focus-visible { outline-offset: 1px; }
+.calendar-dots { display: flex; gap: 4px; align-items: center; }
+.calendar-dots span { width: 4px; height: 4px; border-radius: 50%; }
+.calendar-event-dot { background: var(--gold); }
+.calendar-milestone-dot { background: var(--maroon); }
+.day-inspector { border-inline-start: 1px solid var(--line); padding-inline-start: 16px; }
+.inspector-heading { display: flex; align-items: start; justify-content: space-between; gap: 7px; }
+.inspector-heading h3 { font-size: 1rem; letter-spacing: -.025em; }
+.inspector-heading p { display: inline-block; color: #d4d4d8; font-size: .71rem; margin-top: 5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; }
+.inspector-heading button { background: transparent; border-color: transparent; color: var(--muted); padding: 3px 7px; }
+.inspector-study { color: var(--gold); font-size: .79rem; font-weight: 650; margin-top: 8px; }
+.inspector-milestones { padding: 0; margin: 6px 0 0; list-style: none; color: #f4bacd; font-size: .72rem; }
+.inspector-section { margin-top: 11px; border-top: 1px solid var(--line); padding-top: 9px; }
+.inspector-section h4 { margin: 0 0 4px; font-size: .79rem; }
+.inspector-section p { color: var(--muted); font-size: .73rem; }
+.inspector-section ul { list-style: none; padding: 0; margin: 0; }
+.inspector-section li { display: flex; align-items: flex-start; justify-content: space-between; gap: 5px 8px; padding: 4px 0; font-size: .76rem; }
+.inspector-section li strong, .inspector-task-copy { min-width: 0; overflow-wrap: anywhere; }
+.inspector-section li small { display: block; color: var(--muted); font-size: .69rem; margin-top: 2px; }
+.inspector-status { flex: 0 0 auto; color: var(--muted); font-size: .65rem; padding: 2px 6px; border: 1px solid var(--control-line); border-radius: 999px; }
+.inspector-status.completed { color: var(--gold); border-color: #ffc62755; }
+.jump-board-week { margin-top: 10px; }
+@media (pointer: coarse) {
+  .task { min-height: 44px; }
+  .habit-list .task { min-height: 34px; }
+  .habit-day span { min-height: 40px; }
+  .course-with-timer .course-title { min-height: 30px; padding-inline-end: 32px; }
+  .course-with-timer .timer-start { width: 32px; height: 34px; }
+}
+@media (max-width: 1100px) {
+  main { width: calc(100% - 36px); }
+  .board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .board-head { grid-template-columns: minmax(0, 1fr) auto; }
+  .week-controls { grid-column: 2; grid-row: 1; }
+  .board-filters { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (max-width: 700px) {
+  main { width: calc(100% - 24px); padding-top: 13px; }
+  .context-top { align-items: flex-start; flex-direction: column; gap: 11px; padding: 12px; }
+  .context-actions { width: 100%; justify-content: flex-start; align-items: end; gap: 6px; }
+  .preview-field { display: grid; flex: 1 1 105px; gap: 3px; }
+  .preview-field select { max-width: 100%; width: 100%; padding-inline-end: 19px; }
+  .stat { padding: 8px 9px; }
+  .stat-label { font-size: .67rem; }
+  .stat-line { display: grid; gap: 2px; }
+  .stat strong { font-size: 1.08rem; }
+  .stat small { font-size: .64rem; }
+  .inline-calendar { padding: 12px; }
+  .calendar-actions { justify-content: flex-start; }
+  .calendar-actions .preview-field { flex: 1 1 100%; }
+  .inline-calendar-body, .inline-calendar-body.has-selection { grid-template-columns: minmax(0, 1fr); }
+  .day-inspector { border-inline-start: 0; padding-inline-start: 0; border-top: 1px solid var(--line); padding-top: 11px; }
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .course-row { grid-template-columns: 1fr 1.2fr; border: 1px solid var(--line); border-radius: 9px; padding: 7px; }
+  .course-row button { grid-column: 1 / -1; justify-self: start; }
+  .editor-toolbar .push { margin-left: 0; }
+}
+@media (max-width: 370px) {
+  .day-head { padding-inline: 7px; }
+  .day-body { padding-inline: 5px; }
+  .task { padding-inline: 4px; gap: 4px; }
+  .day-name h3 { font-size: .75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+  .day.jump-flash { animation: none; border-color: var(--gold); box-shadow: 0 0 0 2px #ffc62766, 0 10px 28px #0009; }
+  .day.jump-flash .day-head { animation: none; background-color: #3b1827; border-color: #f4bacd; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="context-header" aria-labelledby="term-title">
+    <div class="context-top">
+      <div class="context-title"><h1 id="term-title"></h1><p id="term-detail"></p></div>
+      <div class="context-actions">
+        <article class="stat">
+          <p class="stat-label" id="study-label">Today’s study target</p>
+          <div class="stat-line"><strong id="study-total"></strong><small id="study-weekly"></small></div>
+        </article>
+        <article class="stat" id="streak-stat">
+          <p class="stat-label">Weekly streak</p>
+          <div class="stat-line"><strong id="streak"></strong><small>100% weeks</small></div>
+        </article>
+        <article class="stat" id="session-stat" hidden>
+          <p class="stat-label">Filtered term completion</p>
+          <div class="stat-line"><strong id="session-percent">0%</strong><small id="session-count"></small></div>
+          <div id="session-meter" class="meter" role="progressbar" aria-label="Filtered term completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+        </article>
+        <button type="button" id="timer-chip" hidden></button>
+        <details class="action-menu" id="action-menu">
+          <summary aria-label="Actions" title="Actions">⋯</summary>
+          <div class="action-menu-panel">
+            <button type="button" id="edit">Edit roadmap</button>
+            <button type="button" id="manage-habits">Manage Habits</button>
+            <button type="button" id="backup">Backups</button>
+            <button type="button" id="focus-toggle" aria-pressed="false">Today Focus</button>
+            <button type="button" id="reset">Reset Week</button>
+          </div>
+        </details>
+      </div>
+    </div>
+    <div class="weekly-progress">
+      <div class="weekly-progress-label">
+        <p class="stat-label">Weekly completion</p>
+        <p><strong id="weekly-percent">0%</strong><span aria-hidden="true"> · </span><span id="weekly-count"></span></p>
+      </div>
+      <div id="weekly-meter" class="meter" role="progressbar" aria-label="Weekly completion" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+    </div>
+  </header>
+  <section class="board-section" id="weekly-board" aria-labelledby="board-title" tabindex="-1">
+    <div class="board-head">
+      <div><h2 id="board-title" class="sr-only">Daily checklist</h2><p id="board-range" class="week-range" aria-live="polite"></p></div>
+      <div id="board-filters" class="board-filters" role="group" aria-label="Filter classes and sessions" hidden></div>
+      <div class="week-controls" role="group" aria-label="Week navigation">
+        <button type="button" id="previous-week" aria-label="Previous week">‹</button>
+        <button type="button" id="current-week">This Week</button>
+        <button type="button" id="next-week" aria-label="Next week">›</button>
+      </div>
+    </div>
+    <div id="board" class="board"></div>
+  </section>
+  <section class="inline-calendar" aria-labelledby="calendar-month">
+    <div class="calendar-toolbar">
+      <div class="calendar-title-group">
+        <h2 id="calendar-month" class="calendar-month-title" aria-live="polite"></h2>
+        <div class="calendar-month-controls" role="group" aria-label="Month navigation">
+          <button type="button" id="calendar-prev" aria-label="Previous month">‹</button>
+          <button type="button" id="calendar-next" aria-label="Next month">›</button>
+          <button type="button" id="calendar-today">Today</button>
+        </div>
+      </div>
+      <div class="calendar-actions">
+        <label class="preview-field">Jump to term <select id="preview" aria-label="Jump to term"></select></label>
+        <input type="file" id="calendar-file" accept=".ics,text/calendar" hidden>
+        <button type="button" id="choose-calendar">Import .ics</button>
+        <button type="button" id="clear-calendar" disabled>Clear .ics</button>
+      </div>
+    </div>
+    <p id="calendar-message" class="dialog-note" role="status"></p>
+    <div class="inline-calendar-body" id="inline-calendar-body">
+      <div class="calendar-month-grid">
+        <div class="calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div id="calendar-grid" class="calendar-grid" role="group" aria-labelledby="calendar-month"></div>
+      </div>
+      <aside class="day-inspector" id="day-inspector" aria-labelledby="inspector-date" hidden>
+        <div class="inspector-heading">
+          <div><h3 id="inspector-date"></h3><p id="inspector-term"></p></div>
+          <button type="button" id="close-inspector" aria-label="Close day details">✕</button>
+        </div>
+        <p id="inspector-study" class="inspector-study"></p>
+        <ul id="inspector-milestones" class="inspector-milestones" hidden></ul>
+        <section class="inspector-section"><h4>Schedule &amp; Deadlines</h4><div id="inspector-events"></div></section>
+        <section class="inspector-section"><h4>Habits</h4><div id="inspector-habits"></div></section>
+        <section class="inspector-section"><h4>Courses</h4><div id="inspector-courses"></div></section>
+        <button type="button" class="jump-board-week" id="jump-board-week">Jump weekly board to this week ↑</button>
+      </aside>
+    </div>
+  </section>
+  <details class="history">
+    <summary>Past weeks <span id="history-count"></span></summary>
+    <ul id="history-list" class="history-list"></ul>
+  </details>
+  <footer class="footnote">
+    <p>New weeks start Monday at 12:00 AM (past weeks auto-save) · <span class="save-state" id="save-state" role="status">Saved on this device</span></p>
+    <p><a href="https://asuonline.asu.edu/newsroom/online-learning-tips/discover-weekly-number-hours-online-students-study" target="_blank" rel="noopener">ASU workload guidance</a> · <a href="https://registrar.asu.edu/academic-calendar" target="_blank" rel="noopener">ASU academic calendar</a></p>
+  </footer>
+</main>
+<dialog id="editor" aria-labelledby="editor-title">
+  <form id="editor-form" class="dialog-shell" novalidate>
+    <div class="dialog-head">
+      <div><h2 id="editor-title">Edit roadmap</h2><p>BS Computer Science · AI/ML focus · 2025–2026 catalog</p></div>
+      <button type="button" id="close-editor" aria-label="Close roadmap editor">Close</button>
+    </div>
+    <div class="editor-toolbar">
+      <select id="edit-term" aria-label="Term to edit"></select>
+      <button type="button" id="add-term">+ Term</button>
+      <button type="button" id="remove-term" class="danger">Remove term</button>
+      <button type="button" id="switch-editor" class="push">Edit JSON</button>
+    </div>
+    <div id="form-pane">
+      <div class="form-grid" id="term-fields"></div>
+      <p id="term-note" class="dialog-note"></p>
+      <div class="courses-head">
+        <h3>Courses</h3>
+        <button type="button" id="add-course">+ Course</button>
+      </div>
+      <div id="course-fields"></div>
+      <label class="field" id="suggestion-field">Add a course option
+        <select id="suggestions" aria-label="Add a course option">
+          <option value="">Choose an unscheduled option…</option>
+          <option value="DAT 300">DAT 300 · Mathematical Tools for Data Science</option>
+          <option value="CSE 476">CSE 476 · Introduction to Natural Language Processing</option>
+        </select>
+      </label>
+    </div>
+    <div id="json-pane" hidden>
+      <label class="field">Course schedule JSON<textarea class="json-input" id="json-input" spellcheck="false"></textarea></label>
+    </div>
+    <p class="dialog-note">Study estimates use 45 hours per credit over 7.5 weeks for A/B and 15 weeks for C. ASU summer sessions are shorter, so check your syllabus for a summer workload estimate.</p>
+    <p class="dialog-note">Term start and end dates are inclusive. Session B begins on the switch date. The optional Session A end lets you leave a gap before B.</p>
+    <p id="form-error" class="form-error" role="alert" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" id="cancel-editor">Cancel</button>
+      <button type="submit" class="primary">Save roadmap</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="reset-dialog" class="compact-dialog" aria-labelledby="reset-title">
+  <form method="dialog" class="dialog-shell">
+    <div class="dialog-head"><div><h2 id="reset-title">Reset Week</h2><p id="reset-description"></p></div></div>
+    <div class="dialog-actions">
+      <button value="cancel" autofocus>Cancel</button>
+      <button value="reset" class="danger">Clear checkboxes</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="backup-dialog" class="compact-dialog" aria-labelledby="backup-title">
+  <div class="dialog-shell">
+    <div class="dialog-head">
+      <div><h2 id="backup-title">Backups</h2><p>Export your roadmap, habits, calendar, and checkmarks as JSON, or restore a previous export.</p></div>
+      <button type="button" id="close-backup">Close</button>
+    </div>
+    <input type="file" id="backup-file" accept=".json,application/json" hidden>
+    <div class="backup-actions">
+      <button type="button" id="export-backup">Export JSON</button>
+      <button type="button" id="select-backup">Choose backup</button>
+      <button type="button" id="export-recovery" hidden>Download original saved data</button>
+    </div>
+    <p id="backup-message" class="dialog-note" role="status"></p>
+    <div class="dialog-actions" id="restore-actions" hidden>
+      <button type="button" class="primary" id="restore-backup">Restore backup</button>
+    </div>
+  </div>
+</dialog>
+<dialog id="habits-dialog" class="compact-dialog" aria-labelledby="habits-title">
+  <form id="habits-form" class="dialog-shell" novalidate>
+    <div class="dialog-head">
+      <div><h2 id="habits-title">Manage Habits</h2><p>Choose the days each habit repeats.</p></div>
+      <button type="button" id="close-habits">Close</button>
+    </div>
+    <div id="habit-list"></div>
+    <button type="button" id="add-habit">+ Add habit</button>
+    <p id="habit-error" class="form-error" role="alert" hidden></p>
+    <div class="dialog-actions"><button type="submit" class="primary">Save habits</button></div>
+  </form>
+</dialog>
+<dialog id="timer-dialog" class="compact-dialog" aria-labelledby="timer-title">
+  <div class="dialog-shell">
+    <div class="dialog-head">
+      <div><h2 id="timer-title">Study timer</h2><p id="timer-course"></p></div>
+      <button type="button" id="close-timer">Close</button>
+    </div>
+    <div id="timer-setup" class="timer-setup">
+      <div id="duration-options" class="duration-options" role="group" aria-label="Timer duration">
+        <button type="button" data-duration="25">25m</button>
+        <button type="button" data-duration="50">50m</button>
+        <button type="button" id="timer-target" data-duration="target">Full target</button>
+      </div>
+      <label class="field">Minutes<input id="timer-minutes" type="number" min="1" step="1" value="25"></label>
+    </div>
+    <label class="timer-auto"><input type="checkbox" id="timer-auto-check" checked>Auto-check today's class when timer finishes</label>
+    <p id="timer-display" class="timer-display" role="timer" aria-label="Time remaining" hidden></p>
+    <p id="timer-message" class="dialog-note" role="status"></p>
+    <div class="timer-actions">
+      <button type="button" class="primary" id="start-timer">Start timer</button>
+      <button type="button" id="pause-timer" hidden>Pause</button>
+      <button type="button" id="clear-timer" hidden>Clear timer</button>
+    </div>
+    <button type="button" id="timer-notification">Enable desktop notifications</button>
+  </div>
+</dialog>
+<noscript><p>Enable JavaScript to use Studyboard.</p></noscript>
+<script>
+
+// Dates are local calendar dates. sessionAMidpoint is the first day of B.
+// An optional sessionAEndDate allows a C-only gap before the switch.
+// Later course placements and dates are editable planning templates.
+const COURSE_SCHEDULE = [
+  {
+    id: "fall-2026", term: "Fall 2026", startDate: "2026-08-20",
+    sessionAEndDate: "2026-10-09", sessionAMidpoint: "2026-10-14",
+    endDate: "2026-12-04", planned: false,
+    courses: [
+      { code: "CSE 110", name: "Principles of Programming (includes lab)", credits: 3, session: "C" },
+      { code: "ASU 101-CAI", name: "The ASU Experience", credits: 1, session: "B" },
+      { code: "ENG 101", name: "First-Year Composition", credits: 3, session: "B" }
+    ]
+  },
+  {
+    id: "spring-2027", term: "Spring 2027", startDate: "2027-01-11",
+    sessionAEndDate: "2027-03-02", sessionAMidpoint: "2027-03-15",
+    endDate: "2027-05-04", planned: true,
+    courses: [
+      { code: "CSE 205", name: "Object-Oriented Programming & Data Structures", credits: 3, session: "A" },
+      { code: "ENG 102", name: "First-Year Composition", credits: 3, session: "A" },
+      { code: "EEE 120", name: "Digital Design Fundamentals", credits: 3, session: "B" },
+      { code: "FSE 100", name: "Introduction to Engineering", credits: 2, session: "B" },
+      { code: "MAT 265", name: "Calculus for Engineers I", credits: 3, session: "C" }
+    ]
+  },
+  {
+    id: "summer-2027", term: "Summer 2027", startDate: "2027-05-17",
+    sessionAEndDate: "2027-06-25", sessionAMidpoint: "2027-06-30",
+    endDate: "2027-08-10", planned: true, courses: []
+  },
+  {
+    id: "fall-2027", term: "Fall 2027", startDate: "2027-08-19",
+    sessionAEndDate: "2027-10-08", sessionAMidpoint: "2027-10-13",
+    endDate: "2027-12-03", planned: true,
+    courses: [
+      { code: "MAT 266", name: "Calculus for Engineers II", credits: 3, session: "A" },
+      { code: "CSE 240", name: "Introduction to Programming Languages", credits: 3, session: "A" },
+      { code: "MAT 243", name: "Discrete Mathematical Structures", credits: 3, session: "B" },
+      { code: "PHY 121", name: "University Physics I: Mechanics", credits: 3, session: "B" },
+      { code: "PHY 122", name: "University Physics Laboratory I", credits: 1, session: "B" },
+      { code: "CSE 301", name: "Computing Ethics", credits: 1, session: "C" }
+    ]
+  },
+  {
+    id: "spring-2028", term: "Spring 2028", startDate: "2028-01-10",
+    sessionAMidpoint: "2028-03-13", endDate: "2028-05-05", planned: true,
+    courses: [
+      { code: "MAT 267", name: "Calculus for Engineers III", credits: 3, session: "A" },
+      { code: "UNI 120", name: "Problem Solving for Success", credits: 1, session: "A" },
+      { code: "PHY 131", name: "University Physics II: Electricity and Magnetism", credits: 3, session: "B" },
+      { code: "PHY 132", name: "University Physics Laboratory II", credits: 1, session: "B" },
+      { code: "CSE 310", name: "Data Structures and Algorithms", credits: 3, session: "C" },
+      { code: "CSE 360", name: "Introduction to Software Engineering", credits: 3, session: "C" }
+    ]
+  },
+  {
+    id: "summer-2028", term: "Summer 2028", startDate: "2028-05-15",
+    sessionAMidpoint: "2028-06-28", endDate: "2028-08-08", planned: true, courses: []
+  },
+  {
+    id: "fall-2028", term: "Fall 2028", startDate: "2028-08-17",
+    sessionAMidpoint: "2028-10-11", endDate: "2028-12-01", planned: true,
+    courses: [
+      { code: "CSE 230", name: "Computer Organization and Assembly Language Programming", credits: 3, session: "A" },
+      { code: "MAT 343", name: "Applied Linear Algebra", credits: 3, session: "A" },
+      { code: "CSE 259", name: "Logic in Computer Science", credits: 3, session: "B" },
+      { code: "IEE 380", name: "Probability and Statistics for Engineering Problem Solving", credits: 3, session: "C" },
+      { code: "CSE 471", name: "Introduction to Artificial Intelligence", credits: 3, session: "C" }
+    ]
+  },
+  {
+    id: "spring-2029", term: "Spring 2029", startDate: "2029-01-08",
+    sessionAMidpoint: "2029-03-12", endDate: "2029-05-04", planned: true,
+    courses: [
+      { code: "DAT 301", name: "Exploring Data in R and Python", credits: 4, session: "A" },
+      { code: "PHI 307", name: "Philosophy of Law", credits: 3, session: "A" },
+      { code: "CHM 101", name: "Introductory Chemistry", credits: 4, session: "B" },
+      { code: "CSE 475", name: "Foundations of Machine Learning", credits: 3, session: "C" },
+      { code: "CSE 330", name: "Operating Systems", credits: 3, session: "C" }
+    ]
+  },
+  {
+    id: "summer-2029", term: "Summer 2029", startDate: "2029-05-14",
+    sessionAMidpoint: "2029-06-27", endDate: "2029-08-07", planned: true, courses: []
+  },
+  {
+    id: "fall-2029", term: "Fall 2029", startDate: "2029-08-23",
+    sessionAMidpoint: "2029-10-17", endDate: "2029-12-07", planned: true,
+    courses: [
+      { code: "DAT 401", name: "Statistical Modeling and Inference for Data Science", credits: 3, session: "A" },
+      { code: "PHI 334", name: "Philosophy of Mind", credits: 3, session: "A" },
+      { code: "CSE 340", name: "Principles of Programming Languages", credits: 3, session: "B" },
+      { code: "CSE 355", name: "Introduction to Theoretical Computer Science", credits: 3, session: "C" },
+      { code: "CSE 365", name: "Information Assurance", credits: 3, session: "C" }
+    ]
+  },
+  {
+    id: "spring-2030", term: "Spring 2030", startDate: "2030-01-14",
+    sessionAMidpoint: "2030-03-18", endDate: "2030-05-10", planned: true,
+    courses: [
+      { code: "HSE 101", name: "Introduction to Human Systems Engineering", credits: 3, session: "A" },
+      { code: "PHI 306", name: "Applied Ethics", credits: 3, session: "A" },
+      { code: "PHI 310", name: "Environmental Ethics", credits: 3, session: "B" },
+      { code: "CSE 485", name: "Computer Science Capstone Project I", credits: 3, session: "C" },
+      { code: "CSE 412", name: "Database Management", credits: 3, session: "C" }
+    ]
+  },
+  {
+    id: "fall-2030", term: "Fall 2030", startDate: "2030-08-22",
+    sessionAMidpoint: "2030-10-16", endDate: "2030-12-06", planned: true,
+    courses: [
+      { code: "PHI 328", name: "History of Ancient Philosophy", credits: 3, session: "A" },
+      { code: "PHI 105", name: "Intro to Ethics", credits: 3, session: "B" },
+      { code: "CSE 486", name: "Computer Science Capstone Project II", credits: 3, session: "C" },
+      { code: "CSE 450", name: "Design and Analysis of Algorithms", credits: 3, session: "C" },
+      { code: "CSE 445", name: "Distributed Software Development", credits: 3, session: "C" }
+    ]
+  }
+];
+
+const COURSE_OPTIONS = {
+  "DAT 300": "Mathematical Tools for Data Science",
+  "CSE 476": "Introduction to Natural Language Processing"
+};
+
+const ICS_WEEKDAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+const ZONE_FORMATTERS = new Map();
+const LOCAL_TIME = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" });
+
+function zoneFormatter(zone) {
+  if (!ZONE_FORMATTERS.has(zone)) {
+    ZONE_FORMATTERS.set(zone, new Intl.DateTimeFormat("en-CA", {
+      timeZone: zone, year: "numeric", month: "numeric", day: "numeric",
+      hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23"
+    }));
+  }
+  return ZONE_FORMATTERS.get(zone);
+}
+
+function zoneOffset(zone, epoch) {
+  const fields = Object.fromEntries(zoneFormatter(zone).formatToParts(epoch).map((part) => [part.type, Number(part.value)]));
+  return Date.UTC(fields.year, fields.month - 1, fields.day, fields.hour, fields.minute, fields.second) - epoch;
+}
+
+function eventInstant(civil, day = civil.day) {
+  const seconds = civil.seconds ?? 0;
+  const wall = day * DAY_MS + seconds * 1000;
+  if (civil.zone === "UTC") return wall;
+  if (!civil.zone) {
+    const date = new Date(day * DAY_MS);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, seconds).getTime();
+  }
+  // Check both offsets to resolve repeated or missing local times on DST transitions.
+  const before = zoneOffset(civil.zone, wall - 2 * DAY_MS);
+  const after = zoneOffset(civil.zone, wall + 2 * DAY_MS);
+  const matches = [...new Set([before, after])].map((offset) => wall - offset)
+    .filter((instant) => instant + zoneOffset(civil.zone, instant) === wall);
+  return matches.length ? Math.min(...matches) : wall - before;
+}
+
+function parseCalendarDate(property, fallbackZone = null) {
+  if (!property) return null;
+  const match = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?)?$/i.exec(property.value.trim());
+  if (!match) throw new Error("Invalid calendar date.");
+  const day = dayFromISO(match[1] + "-" + match[2] + "-" + match[3]);
+  if (!Number.isFinite(day)) throw new Error("Invalid calendar date.");
+  if (!match[4]) return { day, seconds: null, zone: null };
+  const [hours, minutes, seconds] = match.slice(4, 7).map(Number);
+  if (hours > 23 || minutes > 59 || seconds > 60) throw new Error("Invalid calendar time.");
+  const zone = match[7] ? "UTC" : property.params.TZID ?? fallbackZone;
+  if (zone && zone !== "UTC") zoneFormatter(zone);
+  return { day, seconds: hours * 3600 + minutes * 60 + Math.min(seconds, 59), zone };
+}
+
+function calendarProperty(line) {
+  const parts = /^((?:[^":]|"[^"]*")+):(.*)$/.exec(line);
+  if (!parts) return null;
+  const [name, ...params] = parts[1].match(/(?:[^;"]|"[^"]*")+/g) ?? [];
+  if (!name) return null;
+  return {
+    name: name.toUpperCase(),
+    params: Object.fromEntries(params.map((param) => {
+      const equals = param.indexOf("=");
+      return [param.slice(0, equals).toUpperCase(), param.slice(equals + 1).replace(/^"|"$/g, "")];
+    })),
+    value: parts[2]
+  };
+}
+
+function calendarText(value) {
+  return value.replace(/\\([nN,;\\])/g, (_, character) => /n/i.test(character) ? "\n" : character).trim();
+}
+
+function weeklyRule(property, start) {
+  if (!property) return null;
+  const parts = Object.fromEntries(property.value.toUpperCase().split(";").map((field) => field.split("=")));
+  if (parts.FREQ !== "WEEKLY" || Object.keys(parts).some((key) => !["FREQ", "INTERVAL", "COUNT", "UNTIL", "BYDAY", "WKST"].includes(key))) {
+    throw new Error("Unsupported calendar recurrence.");
+  }
+  return {
+    interval: parts.INTERVAL === undefined ? 1 : Number(parts.INTERVAL),
+    count: parts.COUNT === undefined ? null : Number(parts.COUNT),
+    until: parts.UNTIL ? parseCalendarDate({ value: parts.UNTIL, params: {} }, start.zone) : null,
+    days: parts.BYDAY ? parts.BYDAY.split(",").map((day) => ICS_WEEKDAYS.indexOf(day)) : [start.day - mondayOf(start.day)],
+    weekStart: ICS_WEEKDAYS.indexOf(parts.WKST ?? "MO")
+  };
+}
+
+function validCivil(date) {
+  return isRecord(date) && Number.isSafeInteger(date.day) && Math.abs(date.day) < 100000000 &&
+    (date.seconds === null || (Number.isInteger(date.seconds) && date.seconds >= 0 && date.seconds < 86400)) &&
+    (date.zone === null || (typeof date.zone === "string" && date.seconds !== null && Boolean(zoneFormatter(date.zone))));
+}
+
+function normalizeCalendarEvent(event) {
+  if (!isRecord(event)) throw new Error("An imported calendar event is invalid.");
+  const { id, uid, summary, start, end, recurrence, rule, exclusions, cancelled } = event;
+  const invalidDate = (value) => value !== null && !validCivil(value);
+  const invalidDay = (day) => !Number.isInteger(day) || day < 0 || day > 6;
+  if (typeof id !== "string" || !id || typeof uid !== "string" || typeof summary !== "string" || !summary ||
+      typeof cancelled !== "boolean" || (!cancelled && !start) || [start, end, recurrence].some(invalidDate) ||
+      !Array.isArray(exclusions) || exclusions.some((item) => !validCivil(item))) {
+    throw new Error("An imported calendar event is invalid.");
+  }
+  if (start && end && ((start.seconds === null) !== (end.seconds === null) ||
+      (start.seconds === null ? end.day <= start.day : eventInstant(end) <= eventInstant(start)))) {
+    throw new Error("An imported calendar event has an invalid end time.");
+  }
+  if (rule !== null && (!isRecord(rule) || !start || !Number.isSafeInteger(rule.interval) || rule.interval < 1 ||
+      (rule.count !== null && (!Number.isSafeInteger(rule.count) || rule.count < 1)) ||
+      (rule.count !== null && rule.until !== null) || invalidDate(rule.until) ||
+      (rule.until && (rule.until.seconds === null) !== (start.seconds === null)) || invalidDay(rule.weekStart) ||
+      !Array.isArray(rule.days) || !rule.days.length || rule.days.some(invalidDay))) {
+    throw new Error("An imported weekly recurrence is invalid.");
+  }
+  const normalizedRule = rule && {
+    interval: rule.interval, count: rule.count, until: rule.until, weekStart: rule.weekStart,
+    days: [...new Set(rule.days)].sort((left, right) => (left - rule.weekStart + 7) % 7 - (right - rule.weekStart + 7) % 7)
+  };
+  return { id, uid, summary, start, end, recurrence, rule: normalizedRule, exclusions, cancelled };
+}
+
+function normalizeEvents(input) {
+  if (!Array.isArray(input)) throw new Error("Imported calendar events must be a list.");
+  const events = new Map();
+  for (const entry of input) {
+    const event = normalizeCalendarEvent(entry);
+    events.set(event.id, event);
+  }
+  return [...events.values()];
+}
+
+function readCalendarEvent(properties) {
+  const get = (name) => properties.find((property) => property.name === name);
+  const uid = get("UID")?.value.trim() ?? "";
+  const summary = calendarText(get("SUMMARY")?.value ?? "") || "Untitled event";
+  const cancelled = get("STATUS")?.value.trim().toUpperCase() === "CANCELLED";
+  const start = parseCalendarDate(get("DTSTART"));
+  const recurrenceProperty = get("RECURRENCE-ID");
+  if (recurrenceProperty?.params.RANGE) throw new Error("Unsupported calendar recurrence override.");
+  const recurrence = parseCalendarDate(recurrenceProperty, start?.zone);
+  const end = parseCalendarDate(get("DTEND"), start?.zone);
+  const rule = start && !cancelled ? weeklyRule(get("RRULE"), start) : null;
+  const exclusions = properties.filter((property) => property.name === "EXDATE")
+    .flatMap((property) => property.value.split(",").map((value) => parseCalendarDate({ ...property, value }, start?.zone)));
+  const id = uid ? JSON.stringify([uid, recurrence && (recurrence.seconds === null ? recurrence.day : eventInstant(recurrence))])
+    : JSON.stringify([summary, start, end, rule]);
+  return normalizeCalendarEvent({ id, uid, summary, start, end, recurrence, rule, exclusions, cancelled });
+}
+
+function parseCalendar(text) {
+  const lines = text.replace(/^\uFEFF/, "").replace(/(?:\r\n|\n|\r)[ \t]/g, "").split(/\r\n|\n|\r/);
+  if (!lines.some((line) => line.trim().toUpperCase() === "BEGIN:VCALENDAR")) throw new Error("Choose a valid .ics calendar file.");
+  const stack = [];
+  const events = [];
+  let properties = [];
+  let skipped = 0;
+  for (const line of lines) {
+    const property = calendarProperty(line);
+    if (!property) continue;
+    if (property.name === "BEGIN") {
+      stack.push(property.value.trim().toUpperCase());
+      if (stack.at(-1) === "VEVENT") properties = [];
+    } else if (property.name === "END") {
+      const end = property.value.trim().toUpperCase();
+      if (end !== stack.pop()) throw new Error("The .ics file has an unclosed calendar component.");
+      if (end === "VEVENT") {
+        try { events.push(readCalendarEvent(properties)); } catch { skipped++; }
+      }
+    } else if (stack.at(-1) === "VEVENT") {
+      properties.push(property);
+    }
+  }
+  if (stack.length) throw new Error("The .ics file has an unclosed calendar component.");
+  return { events: normalizeEvents(events), skipped };
+}
+
+function occurrenceNumber(event, day) {
+  if (day === event.start.day) return 1;
+  const rule = event.rule;
+  if (!rule || day < event.start.day) return 0;
+  const offset = (day - mondayOf(day) - rule.weekStart + 7) % 7;
+  const firstOffset = (event.start.day - mondayOf(event.start.day) - rule.weekStart + 7) % 7;
+  const week = (day - offset - (event.start.day - firstOffset)) / 7;
+  const position = rule.days.indexOf(day - mondayOf(day));
+  if (week % rule.interval || position === -1) return 0;
+  const afterStart = rule.days.filter((weekday) => (weekday - rule.weekStart + 7) % 7 > firstOffset).length;
+  if (!week) return 1 + position - (rule.days.length - afterStart) + 1;
+  return 1 + afterStart + (week / rule.interval - 1) * rule.days.length + position + 1;
+}
+
+function dateMatches(candidate, day, start) {
+  if (candidate.seconds === null || start.seconds === null) return candidate.seconds === start.seconds && candidate.day === day;
+  return eventInstant(candidate) === eventInstant(start, day);
+}
+
+function matchingCalendarWeek(monday, events) {
+  const dates = Array.from({ length: 7 }, (_, index) => monday + index);
+  const bounds = [...dates, monday + 7].map((day) => eventInstant({ day, seconds: null, zone: null }));
+  const rows = dates.map(() => []);
+  const overrides = new Map();
+  const cancelledSeries = new Set();
+  for (const { uid, recurrence, cancelled } of events) {
+    if (uid && recurrence) {
+      if (!overrides.has(uid)) overrides.set(uid, []);
+      overrides.get(uid).push(recurrence);
+    }
+    if (uid && !recurrence && cancelled) cancelledSeries.add(uid);
+  }
+  for (const event of events) {
+    if (event.cancelled || cancelledSeries.has(event.uid)) continue;
+    const { start, end, rule } = event;
+    if (!rule && (start.day > monday + 8 || (end?.day ?? start.day) < monday - 2)) continue;
+    const allDay = start.seconds === null;
+    const duration = allDay ? (end?.day ?? start.day + 1) - start.day : end ? eventInstant(end) - eventInstant(start) : 0;
+    const lookback = allDay ? duration - 1 : Math.ceil(duration / DAY_MS) + 2;
+    const first = rule ? Math.max(start.day, monday - lookback) : start.day;
+    const last = rule ? monday + (allDay ? 6 : 8) : start.day;
+    const excluded = event.recurrence ? event.exclusions : event.exclusions.concat(overrides.get(event.uid) ?? []);
+    for (let day = first; day <= last; day++) {
+      const occurrence = occurrenceNumber(event, day);
+      if (!occurrence || (rule?.count && occurrence > rule.count)) continue;
+      const from = allDay ? day : eventInstant(start, day);
+      if (rule?.until && (rule.until.seconds === null ? day > rule.until.day : from > eventInstant(rule.until))) continue;
+      if (excluded.some((candidate) => dateMatches(candidate, day, start))) continue;
+      const to = from + duration;
+      dates.forEach((date, index) => {
+        if (allDay ? from <= date && date < to
+          : (from < bounds[index + 1] && (duration ? to > bounds[index] : from >= bounds[index]))) {
+          rows[index].push({ summary: event.summary, from, to, allDay, lower: bounds[index], upper: bounds[index + 1] });
+        }
+      });
+    }
+  }
+  return rows.map((row) => row.sort((left, right) => Number(right.allDay) - Number(left.allDay) ||
+    left.from - right.from || left.summary.localeCompare(right.summary)));
+}
+
+function calendarTime(event) {
+  if (event.allDay) return "All day";
+  const start = LOCAL_TIME.format(event.from);
+  const end = LOCAL_TIME.format(event.to);
+  if (event.from < event.lower) return event.to >= event.upper ? "Continues all day" : "Until " + end;
+  if (event.from === event.to) return start;
+  if (event.to >= event.upper) return "From " + start;
+  return start + " – " + end;
+}
+
+function renderDaySchedule(events, day, open) {
+  if (!events.length) return "";
+  return '<details class="day-schedule" data-calendar-day="' + day + '"' + (open ? " open" : "") +
+    '><summary>Schedule &amp; Deadlines <span>' + events.length + '</span></summary><ul>' +
+    calendarItems(events) + "</ul></details>";
+}
+
+function calendarItems(events) {
+  return events.map((event) => "<li><strong>" + escapeHTML(event.summary) + "</strong><small>" +
+    escapeHTML(calendarTime(event)) + "</small></li>").join("");
+}
+
+function calendarWeekCount(rows) {
+  return rows.reduce((total, day) => total + day.length, 0);
+}
+
+function initialCalendarWeek(events, day) {
+  const current = mondayOf(day);
+  if (calendarWeekCount(matchingCalendarWeek(current, events))) return current;
+  const candidates = new Set();
+  for (const event of events) {
+    if (event.cancelled) continue;
+    const { start, rule } = event;
+    const first = start.seconds === null ? start.day : localDay(new Date(eventInstant(start)));
+    candidates.add(mondayOf(first));
+    if (!rule || first > day) continue;
+    const offset = (start.day - mondayOf(start.day) - rule.weekStart + 7) % 7;
+    const cadence = 7 * rule.interval;
+    const base = start.day - offset;
+    const cycle = Math.floor((day - base) / cadence);
+    for (const weekday of rule.days) {
+      for (const period of [cycle, cycle + 1]) {
+        const scheduled = base + period * cadence + (weekday - rule.weekStart + 7) % 7;
+        if (scheduled < start.day || !Number.isSafeInteger(scheduled) || Math.abs(scheduled) >= 100000000) continue;
+        const visible = start.seconds === null ? scheduled : localDay(new Date(eventInstant(start, scheduled)));
+        if (Number.isFinite(visible)) candidates.add(mondayOf(visible));
+      }
+    }
+  }
+  const ordered = [...candidates].filter((week) => week !== current).sort((left, right) =>
+    Number(left < current) - Number(right < current) || Math.abs(left - current) - Math.abs(right - current));
+  return ordered.find((week) => calendarWeekCount(matchingCalendarWeek(week, events))) ?? current;
+}
+
+const STORAGE_KEY = "studyboard.asu.v1";
+const RECOVERY_KEY = STORAGE_KEY + ".recovery";
+const DATA_VERSION = 4;
+const DAY_MS = 86400000;
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DEFAULT_HABITS = [
+  { id: "hygiene", name: "Shower & Hygiene", days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: "meal", name: "Eat a meal", days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: "driving", name: "30 Min Practice Driving", days: [4, 5, 6] }
+];
+const TIMER_MAX_MINUTES = 1440;
+const SESSION_WEEKS = { A: 7.5, B: 7.5, C: 15 };
+const SESSION_VIEWS = { A: "Sessions A + C", B: "Sessions B + C", C: "Session C only" };
+const byId = (id) => document.getElementById(id);
+const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const shortYearDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const contextDate = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const fullDate = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" });
+const numberLabel = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+const BASE_SCHEDULE = normalizeSchedule(COURSE_SCHEDULE);
+
+function setText(id, value) {
+  const element = byId(id);
+  if (element.textContent !== value) element.textContent = value;
+}
+
+// Date-only arithmetic uses UTC ordinals derived from local calendar dates.
+// A local Monday still starts a new week when daylight saving changes its length.
+function localDay(now = new Date()) {
+  return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / DAY_MS;
+}
+
+function dayFromISO(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
+  const day = Date.parse(value + "T00:00:00Z") / DAY_MS;
+  return Number.isFinite(day) && isoDate(day) === value ? day : NaN;
+}
+
+function isoDate(day) { return new Date(day * DAY_MS).toISOString().slice(0, 10); }
+function dateLabel(day, format = shortDate) { return format.format(day * DAY_MS); }
+function mondayOf(day) { return day - ((new Date(day * DAY_MS).getUTCDay() + 6) % 7); }
+
+function isoWeekKey(day) {
+  const monday = mondayOf(day);
+  const year = new Date((monday + 3) * DAY_MS).getUTCFullYear();
+  const firstMonday = mondayOf(dayFromISO(year + "-01-04"));
+  return year + "-W" + String(1 + (monday - firstMonday) / 7).padStart(2, "0");
+}
+
+function mondayFromKey(key) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(key);
+  if (!match) return NaN;
+  const monday = mondayOf(dayFromISO(match[1] + "-01-04")) + (Number(match[2]) - 1) * 7;
+  return Number.isFinite(monday) && isoWeekKey(monday) === key ? monday : NaN;
+}
+
+function dateRange(start, end) {
+  const sameYear = isoDate(start).slice(0, 4) === isoDate(end).slice(0, 4);
+  return dateLabel(start, sameYear ? shortDate : shortYearDate) + " – " + dateLabel(end, shortYearDate);
+}
+
+function rangeLabel(monday) { return dateRange(monday, monday + 6); }
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[character]);
+}
+
+function minutesLabel(value) {
+  const minutes = Math.round(value);
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (!hours) return minutes + "m";
+  return hours + "h" + (remainder ? " " + remainder + "m" : "");
+}
+
+function weeklyHours(course) { return course.credits * 45 / SESSION_WEEKS[course.session]; }
+function studyHours(courses) { return courses.reduce((total, course) => total + weeklyHours(course), 0); }
+function studyLabel(hours) { return hours ? "~" + minutesLabel(hours * 60 / 7) : "0m"; }
+function percent(done, total) {
+  if (!total) return 0;
+  return done === total ? 100 : Math.min(99, Math.round(done / total * 100));
+}
+function countLabel(count, noun) { return count + " " + noun + (count === 1 ? "" : noun === "class" ? "es" : "s"); }
+
+function isRecord(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
+function normalizeHabits(input) {
+  if (!Array.isArray(input)) throw new Error("Habits must be a list.");
+  const ids = new Set();
+  return input.map((habit) => {
+    const { id, name, days } = habit ?? {};
+    if (typeof id !== "string" || !/^[a-z0-9-]+$/i.test(id) || ids.has(id)) throw new Error("Each habit needs a unique ID.");
+    if (typeof name !== "string" || !name.trim()) throw new Error("Enter a name for each habit.");
+    if (!Array.isArray(days) || days.some((day) => !Number.isInteger(day) || day < 0 || day > 6)) {
+      throw new Error("Habit days must be Monday through Sunday.");
+    }
+    ids.add(id);
+    return { id, name: name.trim(), days: [...new Set(days)].sort((left, right) => left - right) };
+  });
+}
+
+function newState() {
+  return { version: DATA_VERSION, schedule: BASE_SCHEDULE, habits: DEFAULT_HABITS, events: [], weeks: {}, focus: false, timer: null };
+}
+
+function decodeState(input, strict = false) {
+  if (!isRecord(input)) throw new Error("The saved data must be a JSON object.");
+  if (input.version !== undefined && ![1, 2, 3, DATA_VERSION].includes(input.version)) {
+    throw new Error("This data uses an unsupported version.");
+  }
+  const result = newState();
+  let repaired = false;
+  function repair(message) {
+    if (strict) throw new Error(message);
+    repaired = true;
+  }
+  try {
+    result.schedule = normalizeSchedule(input.schedule);
+    // Update the prior default dates in saved schedules and backups.
+    if (input.version !== DATA_VERSION) {
+      const spring = result.schedule.find((term) => term.id === "spring-2027");
+      if (spring?.sessionAMidpoint === "2027-03-08" && !spring.sessionAEndDate &&
+          spring.startDate === "2027-01-11" && spring.endDate === "2027-05-04") {
+        const defaults = BASE_SCHEDULE.find((term) => term.id === spring.id);
+        spring.sessionAEndDate = defaults.sessionAEndDate;
+        spring.sessionAMidpoint = defaults.sessionAMidpoint;
+      }
+    }
+  } catch (error) {
+    repair(error.message);
+  }
+  if (input.habits !== undefined) {
+    try { result.habits = normalizeHabits(input.habits); } catch (error) { repair(error.message); }
+  }
+  if (input.events !== undefined) {
+    try { result.events = normalizeEvents(input.events); } catch (error) { repair(error.message); }
+  }
+  if (!isRecord(input.weeks)) repair("The weekly history is missing or invalid.");
+  for (const [key, entry] of Object.entries(isRecord(input.weeks) ? input.weeks : {})) {
+    const monday = mondayFromKey(key);
+    if (!Number.isFinite(monday) || !isRecord(entry) || !isRecord(entry.checks)) {
+      repair("Invalid history entry for " + key + ".");
+      continue;
+    }
+    const checks = {};
+    for (const [id, checked] of Object.entries(entry.checks)) {
+      if (/^[0-6]\|.+/.test(id) && checked === true) checks[id] = true;
+      else repair("Invalid checkbox data for " + key + ".");
+    }
+    const validCounts = Number.isSafeInteger(entry.done) && entry.done >= 0 &&
+      ((Number.isSafeInteger(entry.total) && entry.done <= entry.total) || entry.total === null) &&
+      entry.done <= Object.keys(checks).length;
+    if (entry.monday !== monday || !validCounts) repair("Invalid completion summary for " + key + ".");
+    const record = {
+      monday, checks, done: validCounts ? entry.done : Object.keys(checks).length, total: validCounts ? entry.total : null
+    };
+    if (entry.habits !== undefined) {
+      try { record.habits = normalizeHabits(entry.habits); } catch (error) { repair(error.message); }
+    }
+    result.weeks[key] = record;
+  }
+  if (input.focus !== undefined && typeof input.focus !== "boolean") repair("The saved view setting is invalid.");
+  result.focus = input.focus === true;
+  if (input.timer != null) {
+    try { result.timer = normalizeTimer(input.timer); } catch (error) { repair(error.message); }
+  }
+  return { result, repaired };
+}
+
+let state = newState();
+let storageFailed = false;
+let lastStorageRaw;
+let recoveryRaw = null;
+let pendingRecovery = null;
+let repairedStorage = false;
+let viewedMonday = null;
+let viewedTermId = "";
+const hiddenCourses = new Set();
+let currentBoard;
+let clockDay;
+let midnightTimer;
+
+function renderStorageStatus() {
+  const status = byId("save-state");
+  status.textContent = storageFailed ? "Browser storage unavailable. Export a backup before closing." :
+    repairedStorage ? "Saved data repaired. Original available in Backups." : "Saved on this device";
+  status.classList.toggle("error", storageFailed || repairedStorage);
+}
+
+function saveState() {
+  try {
+    if (pendingRecovery !== null) {
+      localStorage.setItem(RECOVERY_KEY, pendingRecovery);
+      pendingRecovery = null;
+    }
+    const raw = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY, raw);
+    lastStorageRaw = raw;
+    storageFailed = false;
+  } catch {
+    storageFailed = true;
+  }
+  renderStorageStatus();
+}
+
+function syncState() {
+  if (storageFailed) return;
+  let raw;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === lastStorageRaw) return;
+    lastStorageRaw = raw;
+    recoveryRaw ??= localStorage.getItem(RECOVERY_KEY);
+  } catch {
+    storageFailed = true;
+    renderStorageStatus();
+    return;
+  }
+  if (raw === null) {
+    state = newState();
+    return;
+  }
+  try {
+    const decoded = decodeState(JSON.parse(raw));
+    state = decoded.result;
+    if (!decoded.repaired) return;
+  } catch {
+    state = newState();
+  }
+  pendingRecovery = recoveryRaw = raw;
+  repairedStorage = true;
+  renderStorageStatus();
+}
+
+function commit(change, after = () => {}) {
+  syncState();
+  if (change() || pendingRecovery !== null) saveState();
+  after();
+}
+
+function phaseDates(term, phase) {
+  const switchDay = dayFromISO(term.sessionAMidpoint);
+  const start = phase === "B" ? switchDay : dayFromISO(term.startDate);
+  const end = phase === "A"
+    ? (term.sessionAEndDate ? dayFromISO(term.sessionAEndDate) : switchDay - 1)
+    : dayFromISO(term.endDate);
+  return { start, end, firstMonday: mondayOf(start), lastMonday: mondayOf(end) };
+}
+
+function planForDate(day) {
+  const term = state.schedule.find((entry) => dayFromISO(entry.startDate) <= day && day <= dayFromISO(entry.endDate));
+  if (!term) return { term: null, phase: null };
+  if (day >= dayFromISO(term.sessionAMidpoint)) return { term, phase: "B" };
+  return { term, phase: day <= phaseDates(term, "A").end ? "A" : "C" };
+}
+
+function coursesFor(term, phase) {
+  return term ? term.courses.filter((course) => course.session === "C" || course.session === phase) : [];
+}
+
+function makeDay(monday, index, term, courses, habits) {
+  const name = DAY_NAMES[index];
+  const date = monday + index;
+  const tasks = habits.filter((habit) => habit.days.includes(index)).map((habit) => ({
+    id: index + "|" + habit.id,
+    type: habit.id === "driving" ? "drive" : ["hygiene", "meal"].includes(habit.id) ? habit.id : "habit",
+    title: habit.name
+  }));
+  for (const course of courses) {
+    const courseKey = term.id + "|" + (course.trackId ?? course.code);
+    tasks.push({ ...course, id: index + "|" + courseKey, courseKey, type: "course" });
+  }
+  return { name, date, tasks, study: studyHours(courses) };
+}
+
+function buildBoard(day) {
+  const monday = mondayOf(day);
+  const { term, phase } = planForDate(day);
+  const courses = coursesFor(term, phase);
+  const key = isoWeekKey(monday);
+  const habits = monday < mondayOf(localDay()) ? state.weeks[key]?.habits ?? DEFAULT_HABITS : state.habits;
+  const days = DAY_NAMES.map((_, index) => {
+    const plan = planForDate(monday + index);
+    return makeDay(monday, index, plan.term, coursesFor(plan.term, plan.phase), habits);
+  });
+  return { term, phase, courses, days, monday, key, habits };
+}
+
+function courseIdentity(course) { return course.trackId ?? course.code; }
+
+function weekTerm(monday, today) {
+  const terms = state.schedule.filter((term) => dayFromISO(term.startDate) <= monday + 6 && dayFromISO(term.endDate) >= monday);
+  return terms.find((term) => term.id === viewedTermId) ??
+    (monday === mondayOf(today) ? planForDate(today).term : null) ?? terms[0] ?? null;
+}
+
+function visibleCourses(term) {
+  return term?.courses.filter((course) => !hiddenCourses.has(courseIdentity(course))) ?? [];
+}
+
+function filteredBoard(board, term, courses, preserveOtherTerms = false) {
+  const prefix = term.id + "|";
+  const keys = new Set(courses.map((course) => term.id + "|" + courseIdentity(course)));
+  const days = board.days.map((day) => {
+    const tasks = day.tasks.filter((task) => task.type !== "course" || keys.has(task.courseKey) ||
+      (preserveOtherTerms && !task.courseKey.startsWith(prefix)));
+    return { ...day, tasks, study: studyHours(tasks.filter((task) => task.type === "course")) };
+  });
+  return { ...board, days };
+}
+
+function currentChecks(board) {
+  return state.weeks[board.key]?.checks ?? {};
+}
+
+function visibleChecks(board) {
+  return board.monday > mondayOf(clockDay) ? {} : currentChecks(board);
+}
+
+function tally(board, checks, coursesOnly = false) {
+  const tasks = board.days.flatMap((day) => coursesOnly ? day.tasks.filter((task) => task.type === "course") : day.tasks);
+  return { done: tasks.filter((task) => checks[task.id] === true).length, total: tasks.length };
+}
+
+function recordWeek(board, checks) {
+  const previous = state.weeks[board.key];
+  const { done, total } = tally(board, checks);
+  state.weeks[board.key] = { monday: board.monday, checks, done, total, habits: board.habits };
+  return !previous?.habits || previous.done !== done || previous.total !== total;
+}
+
+function prepareCurrentWeek() {
+  const live = buildBoard(localDay());
+  return recordWeek(live, currentChecks(live));
+}
+
+function badge(session, compact = false) {
+  const label = "Session " + session + " (" + SESSION_WEEKS[session] + "w)";
+  return '<span class="badge ' + session + '" title="' + label + '" aria-label="' + label + '">' + (compact ? session : label) + "</span>";
+}
+
+function sessionLabel(phase, courses) {
+  return phase === "C" || courses.some((course) => course.session === "C")
+    ? SESSION_VIEWS[phase] : "Session " + phase;
+}
+
+function renderTerm(board, day) {
+  const { term, phase, courses, readOnly } = board;
+  const date = dateLabel(day, contextDate);
+  if (term) {
+    const status = readOnly ? (day < clockDay ? "Past Term" : "Upcoming Term") : "Current Term";
+    const view = sessionLabel(phase, courses);
+    setText("term-title", term.term);
+    setText("term-detail", status + " · " + view + " · " + date);
+    return;
+  }
+  const next = state.schedule.find((entry) => dayFromISO(entry.startDate) > day);
+  setText("term-title", "Semester Break");
+  const details = next ? next.term + " starts in " + countLabel(dayFromISO(next.startDate) - day, "day") : "No upcoming term on the roadmap";
+  setText("term-detail", details + " · " + date);
+}
+
+function renderTask(task, checked, dayName, readOnly) {
+  const input = '<input type="checkbox" data-task="' + escapeHTML(task.id) + '"' + (checked ? " checked" : "") +
+    (readOnly ? " disabled" : "") + ' aria-label="' + escapeHTML(dayName + ": " + (task.code ?? task.title)) + '">';
+  if (task.type !== "course") {
+    return '<label class="task ' + task.type + '" title="' + escapeHTML(task.title) + '">' + input + '<span class="task-copy"><span class="task-title">' +
+      escapeHTML(task.title) + "</span></span></label>";
+  }
+  const weekly = weeklyHours(task);
+  const study = minutesLabel(weekly * 60 / 7);
+  return '<label class="task course">' + input + '<span class="task-copy"><span class="course-title"><span class="task-title">' +
+    escapeHTML(task.code) + "</span>" + badge(task.session, true) + '</span><span class="task-detail">' +
+    escapeHTML(task.name) + '</span><span class="course-time">~' + study + "/day · " + numberLabel.format(weekly) + " hrs/wk</span></span></label>";
+}
+
+function renderDayTasks(entry, checks, readOnly, today) {
+  const habits = [];
+  const courses = [];
+  for (const task of entry.tasks) {
+    const label = renderTask(task, checks[task.id] === true, entry.name, readOnly);
+    if (task.type !== "course") {
+      habits.push(label);
+      continue;
+    }
+    if (!today || readOnly) {
+      courses.push(label);
+      continue;
+    }
+    const name = "Study timer for " + escapeHTML(task.code);
+    courses.push('<div class="course-with-timer">' + label + '<button type="button" class="timer-start" data-timer="' +
+      escapeHTML(task.id) + '" aria-label="' + name + '" title="' + name + '">⏱︎</button></div>');
+  }
+  const section = (items, name, className) => items.length ? '<section class="day-section ' + className +
+    '" aria-label="' + name + '"><div class="tasks">' + items.join("") + "</div></section>" : "";
+  return '<div class="day-body">' + (section(habits, "Habits", "habit-list") + section(courses, "Courses", "course-list") ||
+    '<p class="empty-day">No matching tasks</p>') + "</div>";
+}
+
+function renderDays(board, day) {
+  const checks = visibleChecks(board);
+  const element = byId("board");
+  const expandedDays = new Set([...element.querySelectorAll(".day-schedule[open]")].map((details) => Number(details.dataset.calendarDay)));
+  const calendar = state.events.length ? matchingCalendarWeek(board.monday, state.events) : null;
+  element.classList.toggle("read-only", board.readOnly);
+  element.innerHTML = board.days.map((entry, index) => {
+    const today = entry.date === day;
+    const dayClass = today ? " today" : "";
+    const todayPill = board.readOnly ? '<span class="today-pill">Today</span>' :
+      '<button type="button" class="today-pill" data-toggle-focus aria-label="Focus on today">Today</button>';
+    const heading = '<article class="day' + dayClass + '" data-day="' + entry.date + '" aria-labelledby="day-' + index + '"' + (today ? ' aria-current="date"' : "") + '>' +
+      '<div class="day-head"><div class="day-name"><h3 id="day-' + index + '">' + entry.name + "</h3>" +
+      (today ? todayPill : "") +
+      '</div><time class="day-date" datetime="' + isoDate(entry.date) + '">' + dateLabel(entry.date) + "</time>";
+    const schedule = calendar ? renderDaySchedule(calendar[index], entry.date, expandedDays.has(entry.date)) : "";
+    const study = entry.study ? studyLabel(entry.study) + " study" : "No study";
+    return heading + '<div class="day-meta"><span class="study-target">' + study + '</span><span class="day-count"></span></div>' +
+      '<div class="meter" role="progressbar" aria-label="' + entry.name + ' completion" aria-valuemin="0" aria-valuemax="100"><span></span></div></div>' +
+      schedule + renderDayTasks(entry, checks, board.readOnly, today) + "</article>";
+  }).join("");
+}
+
+function updateMeter(meter, value) {
+  meter.setAttribute("aria-valuenow", value);
+  meter.firstElementChild.style.width = value + "%";
+}
+
+function updateProgress(board) {
+  const checks = visibleChecks(board);
+  const { done, total } = tally(board, checks);
+  const completion = percent(done, total);
+  byId("weekly-percent").textContent = completion + "%";
+  byId("weekly-count").textContent = done + " of " + total + " tasks";
+  updateMeter(byId("weekly-meter"), completion);
+  const cards = byId("board").children;
+  board.days.forEach((entry, index) => {
+    const completed = entry.tasks.filter((task) => checks[task.id] === true).length;
+    cards[index].querySelector(".day-count").textContent = completed + "/" + entry.tasks.length;
+    updateMeter(cards[index].querySelector(".meter"), percent(completed, entry.tasks.length));
+  });
+}
+
+function renderHistory(liveMonday) {
+  const weeks = Object.entries(state.weeks).filter(([, entry]) => entry.monday < liveMonday)
+    .sort((left, right) => right[1].monday - left[1].monday);
+  byId("history-count").textContent = countLabel(weeks.length, "week");
+  byId("history-list").innerHTML = weeks.length ? weeks.map(([key, entry]) =>
+    "<li><span>" + escapeHTML(key) + " · " + rangeLabel(entry.monday) + "</span><span>" +
+    (entry.total === null ? entry.done + " checked" : entry.done + "/" + entry.total + " · " + percent(entry.done, entry.total) + "%") +
+    "</span></li>").join("")
+    : "<li>Your first week will appear here after the next Monday reset.</li>";
+}
+
+function renderStreak(liveMonday) {
+  let streak = 0;
+  let monday = liveMonday;
+  const complete = (entry) => entry?.total > 0 && entry.done === entry.total;
+  if (!complete(state.weeks[isoWeekKey(monday)])) monday -= 7;
+  while (complete(state.weeks[isoWeekKey(monday)])) {
+    streak++;
+    monday -= 7;
+  }
+  byId("streak").textContent = countLabel(streak, "week");
+}
+
+function renderPreviewOptions() {
+  const options = state.schedule.map((term) =>
+    '<option value="' + escapeHTML(term.id) + '">' + escapeHTML(term.term) + "</option>");
+  const select = byId("preview");
+  const markup = '<option value="" disabled selected>Choose a term</option>' + options.join("");
+  if (select.options.length === options.length + 1 &&
+      state.schedule.every((term, index) => select.options[index + 1].value === term.id &&
+        select.options[index + 1].textContent === term.term)) return;
+  select.innerHTML = markup;
+}
+
+function renderFilters(term, courses) {
+  const element = byId("board-filters");
+  element.hidden = !term?.courses.length;
+  if (element.hidden) return;
+  const ids = new Set(courses.map(courseIdentity));
+  const pill = (value, label, active, session = "") => '<button type="button" class="filter-pill" data-filter="' +
+    escapeHTML(value) + '" aria-pressed="' + active + '" aria-label="' + escapeHTML(label) + '">' +
+    '<span class="filter-label">' + escapeHTML(label) + '</span>' +
+    (active && session ? badge(session, true) : '<span class="filter-indicator" aria-hidden="true">' + (active ? "✓" : "✕") + "</span>") + "</button>";
+  const sessions = ["A", "B", "C"].filter((session) => term.courses.some((course) => course.session === session))
+    .map((session) => pill("session:" + session, "Session " + session, courses.some((course) => course.session === session)));
+  const classes = term.courses.map((course) => {
+    const id = courseIdentity(course);
+    return pill("course:" + id, course.code, ids.has(id), course.session);
+  });
+  element.innerHTML = '<div class="filter-group" role="group" aria-label="Sessions"><span class="filter-group-label">Sessions</span>' +
+    sessions.join("") +
+    '</div><div class="filter-group" role="group" aria-label="Courses"><span class="filter-group-label">Courses</span>' +
+    classes.join("") + "</div>";
+}
+
+function renderFilteredProgress(term, courses) {
+  const filtering = Boolean(term && courses.length < term.courses.length);
+  byId("session-stat").hidden = !filtering;
+  byId("streak-stat").hidden = filtering;
+  if (!filtering) return;
+  let done = 0;
+  let total = 0;
+  const dates = phaseDates(term, "C");
+  for (let monday = dates.firstMonday; courses.length && monday <= dates.lastMonday; monday += 7) {
+    const week = filteredBoard(buildBoard(monday), term, courses);
+    const counts = tally(week, visibleChecks(week), true);
+    done += counts.done;
+    total += counts.total;
+  }
+  const completion = percent(done, total);
+  byId("session-percent").textContent = done && !completion ? "<1%" : completion + "%";
+  byId("session-count").textContent = done + " of " + total + " tasks";
+  updateMeter(byId("session-meter"), completion || (done ? Math.round(done / total * 1000) / 10 : 0));
+}
+
+function render() {
+  clockDay = localDay();
+  const liveMonday = mondayOf(clockDay);
+  if (viewedMonday === liveMonday) viewedMonday = null;
+  const monday = viewedMonday ?? liveMonday;
+  const readOnly = monday !== liveMonday;
+  const term = weekTerm(monday, clockDay);
+  if ((term?.id ?? "") !== viewedTermId) hiddenCourses.clear();
+  viewedTermId = term?.id ?? "";
+  for (const id of hiddenCourses) {
+    if (!term?.courses.some((course) => courseIdentity(course) === id)) hiddenCourses.delete(id);
+  }
+  const courses = visibleCourses(term);
+  const anchor = readOnly
+    ? Math.max(monday, term ? dayFromISO(term.startDate) : monday)
+    : clockDay;
+  const board = buildBoard(anchor);
+  currentBoard = { ...(term && hiddenCourses.size ? filteredBoard(board, term, courses, true) : board), readOnly, filterTerm: term };
+  renderPreviewOptions();
+  const mode = !readOnly ? "" : monday < liveMonday ? " · Past week" : " · Upcoming week";
+  byId("board-range").textContent = rangeLabel(monday) + " · " + currentBoard.key + mode;
+  byId("current-week").disabled = !readOnly;
+  byId("focus-toggle").disabled = readOnly;
+  byId("reset").disabled = readOnly;
+  renderFilters(term, courses);
+  const weekStudy = currentBoard.days.reduce((hours, day) => hours + day.study / 7, 0);
+  byId("study-label").textContent = readOnly ? "Avg. daily study" : "Today’s study target";
+  byId("study-total").textContent = studyLabel(readOnly ? weekStudy : currentBoard.days[clockDay - monday].study);
+  byId("study-weekly").textContent = numberLabel.format(weekStudy) + " hrs/wk";
+  renderTerm(currentBoard, anchor);
+  renderDays(currentBoard, clockDay);
+  updateProgress(currentBoard);
+  renderFilteredProgress(term, courses);
+  renderHistory(liveMonday);
+  renderStreak(liveMonday);
+  renderFocusMode();
+  renderTimer();
+  renderInlineCalendar();
+}
+
+function refreshDate() {
+  if (clockDay !== localDay()) {
+    syncState();
+    render();
+    commit(prepareCurrentWeek, () => renderStreak(mondayOf(clockDay)));
+  }
+}
+
+function scheduleMidnight() {
+  clearTimeout(midnightTimer);
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  midnightTimer = setTimeout(wakeClock, next - now + 20);
+}
+
+function wakeClock() {
+  refreshDate();
+  scheduleMidnight();
+  tickTimer();
+}
+
+byId("preview").addEventListener("change", (event) => {
+  syncState();
+  const term = state.schedule.find((entry) => entry.id === event.target.value);
+  event.target.value = "";
+  if (term) showCalendarMonth(dayFromISO(term.startDate));
+});
+
+function showBoardWeek(monday) {
+  viewedMonday = monday === mondayOf(localDay()) ? null : monday;
+  syncState();
+  render();
+}
+
+byId("previous-week").addEventListener("click", () => showBoardWeek(currentBoard.monday - 7));
+byId("next-week").addEventListener("click", () => showBoardWeek(currentBoard.monday + 7));
+byId("current-week").addEventListener("click", () => {
+  hiddenCourses.clear();
+  viewedTermId = "";
+  showBoardWeek(mondayOf(localDay()));
+  byId("next-week").focus();
+});
+
+const actionMenu = byId("action-menu");
+const actionMenuToggle = actionMenu.querySelector("summary");
+actionMenu.addEventListener("click", (event) => {
+  if (!event.target.closest(".action-menu-panel button:not(:disabled)")) return;
+  actionMenu.open = false;
+  actionMenuToggle.focus({ preventScroll: true });
+}, true);
+actionMenu.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !actionMenu.open) return;
+  event.preventDefault();
+  actionMenu.open = false;
+  actionMenuToggle.focus();
+});
+document.addEventListener("click", (event) => {
+  if (actionMenu.open && !actionMenu.contains(event.target)) actionMenu.open = false;
+});
+
+byId("board-filters").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-filter]");
+  if (!button) return;
+  const { filter } = button.dataset;
+  const term = currentBoard.filterTerm;
+  const ids = filter.startsWith("session:") ? term.courses
+    .filter((course) => course.session === filter.slice(8)).map(courseIdentity) : [filter.slice(7)];
+  const hide = ids.some((id) => !hiddenCourses.has(id));
+  for (const id of ids) {
+    if (hide) hiddenCourses.add(id);
+    else hiddenCourses.delete(id);
+  }
+  syncState();
+  render();
+  [...byId("board-filters").querySelectorAll("[data-filter]")].find((pill) => pill.dataset.filter === filter)?.focus();
+});
+
+byId("board").addEventListener("change", (event) => {
+  const input = event.target;
+  if (currentBoard.readOnly || !input.matches("input[data-task]")) return;
+  if (localDay() !== clockDay) {
+    refreshDate();
+    return;
+  }
+  const { checked, dataset: { task } } = input;
+  const key = currentBoard.key;
+  commit(() => {
+    const live = buildBoard(localDay());
+    if (live.key !== key) return recordWeek(live, currentChecks(live));
+    const checks = { ...currentChecks(live) };
+    if (checked) checks[task] = true;
+    else delete checks[task];
+    recordWeek(live, checks);
+    return true;
+  }, () => {
+    if (clockDay !== localDay() || currentBoard.readOnly || currentBoard.key !== key) {
+      render();
+      return;
+    }
+    const checks = currentChecks(currentBoard);
+    for (const checkbox of byId("board").querySelectorAll("[data-task]")) checkbox.checked = checks[checkbox.dataset.task] === true;
+    updateProgress(currentBoard);
+    renderFilteredProgress(currentBoard.filterTerm, visibleCourses(currentBoard.filterTerm));
+    renderStreak(mondayOf(clockDay));
+    if (selectedCalendarDay !== null) renderDayInspector();
+  });
+});
+
+let resetTarget;
+byId("reset").addEventListener("click", () => {
+  refreshDate();
+  resetTarget = currentBoard;
+  byId("reset-description").textContent = "Clear this week’s checkboxes? Past weeks will stay in your history.";
+  byId("reset-dialog").returnValue = "cancel";
+  byId("reset-dialog").showModal();
+});
+byId("reset-dialog").addEventListener("close", (event) => {
+  if (event.target.returnValue !== "reset") return;
+  const key = resetTarget.key;
+  commit(() => {
+    const live = buildBoard(localDay());
+    if (live.key !== key) return false;
+    recordWeek(live, {});
+    return true;
+  }, render);
+});
+
+window.addEventListener("focus", wakeClock);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) wakeClock();
+});
+window.addEventListener("storage", (event) => {
+  if (event.key === STORAGE_KEY || event.key === null) {
+    syncState();
+    render();
+    if (pendingRecovery !== null) commit(prepareCurrentWeek);
+  }
+});
+
+let draftSchedule = [];
+let editingId = "";
+let editingJSON = false;
+const editor = byId("editor");
+
+function selectedTerm() { return draftSchedule.find((term) => term.id === editingId); }
+
+function field(label, name, value, type = "text") {
+  const limits = type === "number" ? ' min="0.5" step="0.5"' : "";
+  return '<label class="field">' + label + '<input type="' + type + '" data-field="' +
+    name + '" value="' + escapeHTML(value ?? "") + '"' + limits + "></label>";
+}
+
+function showError(message = "") {
+  byId("form-error").textContent = message;
+  byId("form-error").hidden = !message;
+}
+
+function renderEditor() {
+  const term = selectedTerm();
+  byId("form-pane").hidden = editingJSON || !term;
+  byId("json-pane").hidden = !editingJSON;
+  for (const id of ["edit-term", "add-term", "remove-term"]) byId(id).hidden = editingJSON;
+  byId("edit-term").disabled = !term;
+  byId("remove-term").disabled = !term;
+  byId("switch-editor").textContent = editingJSON ? "Use form" : "Edit JSON";
+  if (editingJSON) return;
+  byId("edit-term").innerHTML = draftSchedule.map((entry) => '<option value="' + escapeHTML(entry.id) + '">' +
+    escapeHTML(entry.term || "Untitled term") + "</option>").join("");
+  byId("edit-term").value = editingId;
+  if (!term) return;
+  byId("term-fields").innerHTML = [
+    field("Term name", "term", term.term),
+    field("Start date", "startDate", term.startDate, "date"),
+    field("Session B starts", "sessionAMidpoint", term.sessionAMidpoint, "date"),
+    field("End date", "endDate", term.endDate, "date"),
+    field("Session A ends (optional)", "sessionAEndDate", term.sessionAEndDate, "date"),
+    '<label class="field">Planning template<input type="checkbox" data-field="planned"' + (term.planned ? " checked" : "") + "></label>"
+  ].join("");
+  byId("term-note").textContent = term.planned ? "Planning dates and session assignments are editable." : "";
+  byId("course-fields").innerHTML = term.courses.map((course, index) => {
+    const options = Object.entries(SESSION_WEEKS).map(([session, weeks]) => '<option value="' + session + '"' +
+      (course.session === session ? " selected" : "") + ">" + session + " (" + weeks + "w)</option>").join("");
+    return '<div class="course-row" data-index="' + index + '">' +
+      field("Course code", "code", course.code) + field("Course name", "name", course.name) +
+      field("Credits", "credits", course.credits, "number") +
+      '<label class="field">Session<select data-field="session" aria-label="Session">' + options + "</select></label>" +
+      '<button type="button" class="danger" data-remove aria-label="Remove course ' + (index + 1) + '">Remove</button></div>';
+  }).join("");
+  byId("suggestions").value = "";
+}
+
+function normalizeSchedule(input) {
+  if (!Array.isArray(input)) throw new Error("The schedule must be an array of terms.");
+  const ids = new Set();
+  const normalized = input.map((term, index) => {
+    const name = String(term?.term ?? "").trim();
+    if (!name) throw new Error("Enter a name for term " + (index + 1) + ".");
+    const id = String(term.id ?? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")).trim();
+    if (!/^[a-z0-9][a-z0-9-]*$/i.test(id) || ids.has(id)) throw new Error(name + " needs a unique ID using only letters, numbers, and hyphens.");
+    ids.add(id);
+    const { startDate, endDate, sessionAMidpoint, sessionAEndDate } = term;
+    const [start, midpoint, end] = [startDate, sessionAMidpoint, endDate].map(dayFromISO);
+    if (![start, midpoint, end].every(Number.isFinite) || !(start < midpoint && midpoint <= end)) {
+      throw new Error(name + " needs valid dates with the Session B start after the term start and on or before the term end.");
+    }
+    if (sessionAEndDate) {
+      const aEnd = dayFromISO(sessionAEndDate);
+      if (!(start <= aEnd && aEnd < midpoint)) throw new Error(name + " needs Session A to end before Session B starts.");
+    }
+    if (!Array.isArray(term.courses)) throw new Error(name + " needs a courses array.");
+    const codes = new Set();
+    const trackIds = new Set();
+    const courses = term.courses.map((course) => {
+      const code = String(course?.code ?? "").trim().toUpperCase().replace(/\s+/g, " ");
+      const courseName = String(course?.name ?? "").trim();
+      const credits = Number(course?.credits);
+      const session = String(course?.session ?? "").toUpperCase();
+      if (!code || !courseName || !Number.isFinite(credits) || credits <= 0 || !Object.hasOwn(SESSION_WEEKS, session)) {
+        throw new Error(name + " has a course missing a code, name, positive credit amount, or A/B/C session.");
+      }
+      if (codes.has(code)) throw new Error(name + " lists " + code + " more than once.");
+      codes.add(code);
+      const trackId = course.trackId ?? code;
+      if (typeof trackId !== "string" || !trackId.trim() || trackIds.has(trackId)) {
+        throw new Error(name + " needs a unique tracking ID for " + code + ".");
+      }
+      trackIds.add(trackId);
+      return { code, name: courseName, credits, session, trackId };
+    });
+    return { id, term: name, startDate, endDate, sessionAMidpoint, ...(sessionAEndDate ? { sessionAEndDate } : {}), planned: Boolean(term.planned), courses };
+  }).sort((left, right) => left.startDate.localeCompare(right.startDate));
+  for (let index = 1; index < normalized.length; index++) {
+    if (normalized[index].startDate <= normalized[index - 1].endDate) {
+      throw new Error(normalized[index - 1].term + " and " + normalized[index].term + " overlap. Adjust their term dates.");
+    }
+  }
+  return normalized;
+}
+
+byId("edit").addEventListener("click", () => {
+  syncState();
+  draftSchedule = JSON.parse(JSON.stringify(state.schedule));
+  const next = draftSchedule.find((term) => dayFromISO(term.startDate) > localDay());
+  editingId = currentBoard.term?.id ?? next?.id ?? draftSchedule[0]?.id ?? "";
+  if (!selectedTerm()) editingId = draftSchedule[0]?.id ?? "";
+  editingJSON = false;
+  showError();
+  renderEditor();
+  editor.showModal();
+});
+
+for (const id of ["cancel-editor", "close-editor"]) {
+  byId(id).addEventListener("click", () => editor.close());
+}
+
+byId("edit-term").addEventListener("change", (event) => {
+  editingId = event.target.value;
+  showError();
+  renderEditor();
+});
+
+function updateDraftField(event) {
+  const input = event.target;
+  if (!input.dataset.field) return;
+  const term = selectedTerm();
+  const row = input.closest("[data-index]");
+  const target = row ? term.courses[Number(row.dataset.index)] : term;
+  target[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+  if (input.dataset.field === "term") byId("edit-term").selectedOptions[0].textContent = input.value || "Untitled term";
+}
+byId("term-fields").addEventListener("input", updateDraftField);
+byId("course-fields").addEventListener("input", updateDraftField);
+
+function newIdentity(prefix) {
+  const [random] = crypto.getRandomValues(new Uint32Array(1));
+  return prefix + "-" + Date.now().toString(36) + "-" + random.toString(36);
+}
+
+function newCourse(code, name, session) {
+  return { code, name, credits: 3, session, trackId: newIdentity("course") };
+}
+
+byId("add-course").addEventListener("click", () => {
+  selectedTerm().courses.push(newCourse("", "", "A"));
+  renderEditor();
+  byId("course-fields").lastElementChild.querySelector("input").focus();
+});
+
+byId("suggestions").addEventListener("change", (event) => {
+  const code = event.target.value;
+  if (!code) return;
+  if (selectedTerm().courses.some((course) => course.code.trim().toUpperCase() === code)) {
+    showError(code + " is already in this term.");
+    event.target.value = "";
+    return;
+  }
+  showError();
+  selectedTerm().courses.push(newCourse(code, COURSE_OPTIONS[code], "B"));
+  renderEditor();
+  byId("course-fields").lastElementChild.querySelector("select").focus();
+});
+
+byId("course-fields").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove]");
+  if (!button) return;
+  selectedTerm().courses.splice(Number(button.closest("[data-index]").dataset.index), 1);
+  renderEditor();
+  byId("add-course").focus();
+});
+
+byId("add-term").addEventListener("click", () => {
+  const dates = draftSchedule.map((term) => dayFromISO(term.endDate)).filter(Number.isFinite);
+  const start = Math.max(localDay(), ...dates) + 7;
+  editingId = "term-" + Date.now().toString(36);
+  draftSchedule.push({ id: editingId, term: "New term", startDate: isoDate(start), endDate: isoDate(start + 110),
+    sessionAMidpoint: isoDate(start + 55), planned: true, courses: [] });
+  renderEditor();
+  byId("term-fields").querySelector("input").select();
+});
+
+byId("remove-term").addEventListener("click", () => {
+  const index = draftSchedule.findIndex((term) => term.id === editingId);
+  draftSchedule.splice(index, 1);
+  editingId = draftSchedule[Math.min(index, draftSchedule.length - 1)]?.id ?? "";
+  showError();
+  renderEditor();
+});
+
+byId("switch-editor").addEventListener("click", () => {
+  showError();
+  try {
+    if (editingJSON) {
+      draftSchedule = normalizeSchedule(JSON.parse(byId("json-input").value));
+      if (!selectedTerm()) editingId = draftSchedule[0]?.id ?? "";
+    } else {
+      byId("json-input").value = JSON.stringify(draftSchedule, null, 2);
+    }
+    editingJSON = !editingJSON;
+    renderEditor();
+    if (editingJSON) byId("json-input").focus();
+  } catch (error) {
+    showError(error.message);
+  }
+});
+
+byId("editor-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  try {
+    const schedule = normalizeSchedule(editingJSON ? JSON.parse(byId("json-input").value) : draftSchedule);
+    commit(() => {
+      state.schedule = schedule;
+      prepareCurrentWeek();
+      return true;
+    }, () => {
+      editor.close();
+      render();
+    });
+  } catch (error) {
+    showError(error.message);
+  }
+});
+
+function renderFocusMode() {
+  const focused = state.focus && !currentBoard.readOnly;
+  byId("board").classList.toggle("focus-mode", focused);
+  byId("focus-toggle").setAttribute("aria-pressed", String(focused));
+  byId("focus-toggle").textContent = focused ? "Show full week" : "Today Focus";
+  const pill = byId("board").querySelector("[data-toggle-focus]");
+  if (pill) {
+    pill.setAttribute("aria-pressed", String(focused));
+    pill.textContent = focused ? "Today · Exit" : "Today";
+  }
+  byId("board-title").textContent = focused ? "Today’s checklist" : "Daily checklist";
+}
+
+function toggleTodayFocus() {
+  if (currentBoard.readOnly) return;
+  commit(() => {
+    state.focus = !state.focus;
+    return true;
+  }, renderFocusMode);
+}
+
+byId("focus-toggle").addEventListener("click", toggleTodayFocus);
+
+const backupDialog = byId("backup-dialog");
+let pendingBackup = null;
+let backupAttempt = 0;
+
+function downloadFile(name, contents) {
+  const url = URL.createObjectURL(new Blob([contents], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function backupStatus(message, pending = null) {
+  pendingBackup = pending;
+  byId("restore-actions").hidden = !pending;
+  byId("backup-message").textContent = message;
+}
+
+byId("backup").addEventListener("click", () => {
+  syncState();
+  backupAttempt++;
+  backupStatus("");
+  byId("export-recovery").hidden = recoveryRaw === null;
+  backupDialog.showModal();
+});
+
+byId("close-backup").addEventListener("click", () => backupDialog.close());
+
+byId("export-backup").addEventListener("click", () => {
+  syncState();
+  const backup = { format: "studyboard-backup", data: { ...state, timer: null } };
+  downloadFile("studyboard-" + isoDate(localDay()) + ".json", JSON.stringify(backup, null, 2));
+});
+
+byId("export-recovery").addEventListener("click", () => {
+  if (recoveryRaw !== null) downloadFile("studyboard-original.json", recoveryRaw);
+});
+
+byId("select-backup").addEventListener("click", () => {
+  byId("backup-file").value = "";
+  byId("backup-file").click();
+});
+
+byId("backup-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const attempt = ++backupAttempt;
+  backupStatus("Reading backup…");
+  try {
+    const input = JSON.parse(await file.text());
+    if (attempt !== backupAttempt || !backupDialog.open) return;
+    if (input?.format !== "studyboard-backup") throw new Error("Choose a Studyboard backup exported from the Backups menu.");
+    const { result } = decodeState(input.data, true);
+    const terms = countLabel(result.schedule.length, "term");
+    const weeks = countLabel(Object.keys(result.weeks).length, "saved week");
+    backupStatus(terms + " and " + weeks + ". Restoring replaces your roadmap, checkmarks, habits, and calendar.", result);
+  } catch (error) {
+    if (attempt === backupAttempt && backupDialog.open) backupStatus(error.message);
+  }
+});
+
+byId("restore-backup").addEventListener("click", () => {
+  if (!pendingBackup) return;
+  const data = pendingBackup;
+  commit(() => {
+    state = data;
+    repairedStorage = false;
+    prepareCurrentWeek();
+    return true;
+  }, () => {
+    backupStatus(storageFailed ? "Backup loaded for this visit. Browser storage is unavailable." : "Backup restored.");
+    render();
+  });
+});
+
+const timerDialog = byId("timer-dialog");
+const habitsDialog = byId("habits-dialog");
+let calendarAttempt = 0;
+let calendarMonth = monthStart(localDay());
+let selectedCalendarDay = null;
+let calendarFocusDay = localDay();
+let confirmCalendarClear = false;
+let requestedCourse = null;
+let timerFinishing = false;
+let audioContext;
+const audioOwner = newIdentity("audio");
+let chimedTimerId;
+
+function habitRow(habit) {
+  const days = DAY_NAMES.map((day, index) => '<label class="habit-day"><input type="checkbox" value="' + index +
+    '" aria-label="' + day + '"' + (habit.days.includes(index) ? " checked" : "") + '><span>' + day.slice(0, 3) + "</span></label>").join("");
+  return '<div class="habit-row" data-habit="' + escapeHTML(habit.id) + '"><div class="habit-row-head">' +
+    field("Habit name", "name", habit.name) + '<button type="button" class="danger" data-remove-habit>Remove</button></div>' +
+    '<div class="habit-days" role="group" aria-label="Repeat on">' + days + "</div></div>";
+}
+
+function habitError(message = "") {
+  setText("habit-error", message);
+  byId("habit-error").hidden = !message;
+}
+
+byId("manage-habits").addEventListener("click", () => {
+  syncState();
+  byId("habit-list").innerHTML = state.habits.map(habitRow).join("");
+  habitError();
+  habitsDialog.showModal();
+});
+
+byId("close-habits").addEventListener("click", () => habitsDialog.close());
+byId("add-habit").addEventListener("click", () => {
+  const list = byId("habit-list");
+  list.insertAdjacentHTML("beforeend", habitRow({ id: newIdentity("habit"), name: "", days: [0, 1, 2, 3, 4, 5, 6] }));
+  list.lastElementChild.querySelector("input").focus();
+});
+byId("habit-list").addEventListener("click", (event) => {
+  const remove = event.target.closest("[data-remove-habit]");
+  if (!remove) return;
+  remove.closest("[data-habit]").remove();
+  byId("add-habit").focus();
+});
+byId("habits-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  try {
+    const habits = normalizeHabits([...byId("habit-list").children].map((row) => ({
+      id: row.dataset.habit,
+      name: row.querySelector("[data-field=name]").value,
+      days: [...row.querySelectorAll("input:checked")].map((input) => Number(input.value))
+    })));
+    commit(() => {
+      state.habits = habits;
+      prepareCurrentWeek();
+      return true;
+    }, () => {
+      habitsDialog.close();
+      render();
+    });
+  } catch (error) {
+    habitError(error.message);
+  }
+});
+
+function monthStart(day, offset = 0) {
+  const date = new Date(day * DAY_MS);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + offset, 1) / DAY_MS;
+}
+
+function nearbyEventDate(monday, preferred, events) {
+  const rows = matchingCalendarWeek(monday, events);
+  const candidates = rows.flatMap((items, index) => items.length ? [monday + index] : []);
+  return candidates.find((date) => date >= preferred) ?? candidates.at(-1) ?? preferred;
+}
+
+function suggestedCalendarDate(events, day) {
+  const monday = initialCalendarWeek(events, day);
+  return nearbyEventDate(monday, monday === mondayOf(day) ? day : monday, events);
+}
+
+function calendarMilestones(start, end) {
+  const dates = new Map();
+  for (const term of state.schedule) {
+    const markers = [
+      [term.startDate, "Term start"],
+      [term.sessionAEndDate, "Session A ends"],
+      [term.sessionAMidpoint, "Session B starts"],
+      [term.endDate, "Term end"]
+    ];
+    for (const [date, label] of markers) {
+      const day = dayFromISO(date);
+      if (!(day >= start && day <= end)) continue;
+      const text = term.term + " · " + label;
+      dates.set(day, [...(dates.get(day) ?? []), text]);
+    }
+  }
+  return dates;
+}
+
+function calendarHeading(start, next) {
+  const term = planForDate(start + 14).term ??
+    state.schedule.find((entry) => dayFromISO(entry.startDate) >= start && dayFromISO(entry.startDate) < next);
+  const year = String(new Date(start * DAY_MS).getUTCFullYear()).slice(-2);
+  const termLabel = !term ? "Break " + year : /\b\d{4}$/.test(term.term)
+    ? term.term.replace(/\d{4}$/, (value) => value.slice(-2)) : term.term + " " + year;
+  return dateLabel(start, monthLabel) + " · " + termLabel;
+}
+
+function renderInlineCalendar(focusDay = false) {
+  byId("clear-calendar").disabled = !state.events.length;
+  const today = localDay();
+  const start = calendarMonth;
+  const next = monthStart(start, 1);
+  const milestones = calendarMilestones(mondayOf(start), mondayOf(next - 1) + 6);
+  const grid = byId("calendar-grid");
+  const keepFocus = focusDay || grid.contains(document.activeElement);
+  setText("calendar-month", calendarHeading(start, next));
+  const cells = [];
+  for (let monday = mondayOf(start); monday < next; monday += 7) {
+    const rows = state.events.length ? matchingCalendarWeek(monday, state.events) : Array.from({ length: 7 }, () => []);
+    rows.forEach((events, index) => {
+      const day = monday + index;
+      const selected = day === selectedCalendarDay;
+      const markers = milestones.get(day) ?? [];
+      const date = new Date(day * DAY_MS).getUTCDate();
+      const label = [dateLabel(day, fullDate), events.length ? countLabel(events.length, "event") : "", ...markers].filter(Boolean).join(", ");
+      cells.push('<div class="calendar-cell"><button type="button" class="calendar-date-cell' + (day < start || day >= next ? " outside-month" : "") +
+        '" data-calendar-date="' + day + '" aria-label="' + escapeHTML(label) + '" aria-pressed="' + selected +
+        '" tabindex="' + (day === calendarFocusDay ? "0" : "-1") + '"' + (day === today ? ' aria-current="date"' : "") +
+        '>' + date + '</button><span class="calendar-dots" aria-hidden="true">' +
+        (events.length ? '<span class="calendar-event-dot"></span>' : "") +
+        (markers.length ? '<span class="calendar-milestone-dot"></span>' : "") + "</span></div>");
+    });
+  }
+  grid.innerHTML = cells.join("");
+  if (keepFocus) grid.querySelector('[tabindex="0"]')?.focus({ preventScroll: true });
+  renderDayInspector();
+}
+
+function inspectorTasks(tasks, checks, upcoming) {
+  return tasks.map((task) => {
+    const status = checks[task.id] === true ? "Completed" : upcoming ? "Upcoming" : "Incomplete";
+    const description = task.type === "course"
+      ? '<strong>' + escapeHTML(task.code) + " " + badge(task.session, true) + '</strong><small>' +
+        escapeHTML(task.name) + '</small><small>' + studyLabel(weeklyHours(task)) + "/day</small>"
+      : '<span>' + escapeHTML(task.title) + '</span>';
+    return '<li><div class="inspector-task-copy">' + description + '</div><span class="inspector-status ' +
+      status.toLowerCase() + '">' + status + "</span></li>";
+  }).join("");
+}
+
+function renderDayInspector() {
+  const day = selectedCalendarDay;
+  const inspector = byId("day-inspector");
+  inspector.hidden = day === null;
+  byId("inline-calendar-body").classList.toggle("has-selection", day !== null);
+  if (day === null) return;
+
+  const board = buildBoard(day);
+  const index = day - board.monday;
+  const entry = board.days[index];
+  const events = matchingCalendarWeek(board.monday, state.events)[index];
+  const checks = currentChecks(board);
+  const upcoming = day > localDay();
+  const milestones = calendarMilestones(day, day).get(day) ?? [];
+  setText("inspector-date", dateLabel(day, fullDate));
+  setText("inspector-term", board.term ? board.term.term + " · " + sessionLabel(board.phase, board.courses) : "Semester break");
+  setText("inspector-study", studyLabel(entry.study) + " study");
+  byId("inspector-milestones").innerHTML = milestones.map((label) => "<li>" + escapeHTML(label) + "</li>").join("");
+  byId("inspector-milestones").hidden = !milestones.length;
+  byId("inspector-events").innerHTML = events.length ? "<ul>" + calendarItems(events) + "</ul>" : '<p>No events scheduled</p>';
+  const habits = entry.tasks.filter((task) => task.type !== "course");
+  const courses = entry.tasks.filter((task) => task.type === "course");
+  byId("inspector-habits").innerHTML = habits.length ? "<ul>" + inspectorTasks(habits, checks, upcoming) + "</ul>" : "<p>No habits scheduled</p>";
+  byId("inspector-courses").innerHTML = courses.length ? "<ul>" + inspectorTasks(courses, checks, upcoming) + "</ul>" : "<p>No courses scheduled</p>";
+}
+
+function calendarStatus(message) {
+  setText("calendar-message", message);
+  setText("clear-calendar", confirmCalendarClear ? "Confirm clear" : "Clear .ics");
+}
+
+function showCalendarMonth(day, focusDay = false) {
+  calendarMonth = monthStart(day);
+  calendarFocusDay = day;
+  selectedCalendarDay = null;
+  renderInlineCalendar(focusDay);
+}
+
+function moveCalendarMonth(offset, focusDay = false) {
+  const next = monthStart(calendarMonth, offset);
+  const lastDay = monthStart(calendarMonth, offset + 1) - 1;
+  showCalendarMonth(Math.min(next + calendarFocusDay - calendarMonth, lastDay), focusDay);
+}
+
+function closeDayInspector() {
+  if (selectedCalendarDay === null) return;
+  selectedCalendarDay = null;
+  renderInlineCalendar(true);
+}
+
+byId("calendar-grid").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-calendar-date]");
+  if (!button) return;
+  const day = Number(button.dataset.calendarDate);
+  calendarMonth = monthStart(day);
+  calendarFocusDay = day;
+  selectedCalendarDay = selectedCalendarDay === day ? null : day;
+  renderInlineCalendar(true);
+});
+byId("calendar-grid").addEventListener("keydown", (event) => {
+  if (!event.target.matches("[data-calendar-date]") || event.altKey || event.ctrlKey || event.metaKey) return;
+  const offsets = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+  if (Object.hasOwn(offsets, event.key)) {
+    event.preventDefault();
+    const day = Number(event.target.dataset.calendarDate) + offsets[event.key];
+    if (monthStart(day) !== calendarMonth) showCalendarMonth(day, true);
+    else {
+      calendarFocusDay = day;
+      renderInlineCalendar(true);
+    }
+  } else if (event.key === "PageUp" || event.key === "PageDown") {
+    event.preventDefault();
+    moveCalendarMonth(event.key === "PageUp" ? -1 : 1, true);
+  }
+});
+byId("calendar-prev").addEventListener("click", () => moveCalendarMonth(-1));
+byId("calendar-next").addEventListener("click", () => moveCalendarMonth(1));
+byId("calendar-today").addEventListener("click", () => showCalendarMonth(localDay()));
+byId("close-inspector").addEventListener("click", closeDayInspector);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !event.defaultPrevented && selectedCalendarDay !== null &&
+      !document.querySelector("dialog[open]") && !actionMenu.open) closeDayInspector();
+});
+byId("jump-board-week").addEventListener("click", () => {
+  const targetDay = selectedCalendarDay;
+  if (targetDay === null) return;
+  if (targetDay !== clockDay) {
+    commit(() => {
+      if (!state.focus) return false;
+      state.focus = false;
+      return true;
+    });
+  }
+  showBoardWeek(mondayOf(targetDay));
+  const column = byId("board").querySelector('.day[data-day="' + targetDay + '"]');
+  if (!column) return;
+  column.classList.add("jump-flash");
+  setTimeout(() => column.classList.remove("jump-flash"), 1800);
+  column.setAttribute("tabindex", "-1");
+  column.focus({ preventScroll: true });
+  column.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start", inline: "nearest" });
+});
+byId("choose-calendar").addEventListener("click", () => {
+  byId("calendar-file").value = "";
+  byId("calendar-file").click();
+});
+byId("calendar-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const attempt = ++calendarAttempt;
+  confirmCalendarClear = false;
+  calendarStatus("Reading calendar…");
+  try {
+    const parsed = parseCalendar(await file.text());
+    if (attempt !== calendarAttempt) return;
+    const skipped = parsed.skipped ? " Skipped " + parsed.skipped + " unsupported or invalid " +
+      (parsed.skipped === 1 ? "entry." : "entries.") : "";
+    if (!parsed.events.length) {
+      calendarStatus("No supported events found." + skipped);
+      return;
+    }
+    commit(() => {
+      if (attempt !== calendarAttempt) return false;
+      state.events = [...new Map([...state.events, ...parsed.events].map((entry) => [entry.id, entry])).values()];
+      const ids = new Set(parsed.events.map((entry) => entry.id));
+      const uids = new Set(parsed.events.map((entry) => entry.uid).filter(Boolean));
+      const imported = state.events.filter((entry) => ids.has(entry.id) ||
+        (entry.cancelled && uids.has(entry.uid)));
+      calendarFocusDay = suggestedCalendarDate(imported, localDay());
+      calendarMonth = monthStart(calendarFocusDay);
+      selectedCalendarDay = null;
+      return true;
+    }, () => {
+      if (attempt !== calendarAttempt) return;
+      const message = "Imported or updated " + parsed.events.length + (parsed.events.length === 1 ? " entry." : " entries.");
+      calendarStatus(message + (storageFailed ? " Available for this visit. Browser storage is unavailable." : "") + skipped);
+      render();
+    });
+  } catch (error) {
+    if (attempt === calendarAttempt) calendarStatus(error.message);
+  }
+});
+byId("clear-calendar").addEventListener("click", () => {
+  if (!confirmCalendarClear) {
+    confirmCalendarClear = true;
+    calendarStatus("Clear all imported events from the tracker?");
+    return;
+  }
+  calendarAttempt++;
+  commit(() => {
+    state.events = [];
+    return true;
+  }, () => {
+    confirmCalendarClear = false;
+    calendarStatus("Imported events cleared.");
+    render();
+  });
+});
+
+function normalizeTimer(timer) {
+  const valid = isRecord(timer) && typeof timer.course === "string" && timer.course.length > 0 &&
+    Number.isSafeInteger(timer.duration) && timer.duration >= 60000 && timer.duration <= TIMER_MAX_MINUTES * 60000 &&
+    Number.isSafeInteger(timer.remaining) && timer.remaining >= 0 && timer.remaining <= timer.duration &&
+    (timer.endsAt === null || (Number.isSafeInteger(timer.endsAt) && timer.endsAt > 0 && timer.endsAt <= 8640000000000000)) &&
+    (timer.courseKey == null || typeof timer.courseKey === "string") &&
+    (timer.autoCheck === undefined || typeof timer.autoCheck === "boolean") &&
+    (timer.id === undefined || typeof timer.id === "string") &&
+    (timer.audioOwner == null || typeof timer.audioOwner === "string");
+  if (!valid) throw new Error("The saved study timer is invalid.");
+  return {
+    id: timer.id ?? "legacy-timer", course: timer.course, courseKey: timer.courseKey ?? null,
+    duration: timer.duration, remaining: timer.remaining, endsAt: timer.endsAt, autoCheck: timer.autoCheck ?? false,
+    completion: ["checked", "unavailable", "manual"].includes(timer.completion) ? timer.completion : null,
+    audioOwner: timer.audioOwner ?? null
+  };
+}
+
+function timeRemaining(timer) {
+  return timer.endsAt === null ? timer.remaining : Math.max(0, Math.min(timer.remaining, timer.endsAt - Date.now()));
+}
+
+function clockLabel(ms) {
+  const seconds = Math.ceil(ms / 1000);
+  return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+}
+
+function unlockTimerAudio() {
+  try {
+    const Audio = window.AudioContext ?? window.webkitAudioContext;
+    if (!Audio) return;
+    audioContext ??= new Audio();
+    audioContext.resume().catch(() => {});
+  } catch {
+    // The timer and optional desktop notification still work without audio.
+  }
+}
+
+function playFinishedChime(timer) {
+  if (!timer?.completion || timer.audioOwner !== audioOwner || timer.id === chimedTimerId || audioContext?.state !== "running") return;
+  chimedTimerId = timer.id;
+  const start = audioContext.currentTime + 0.03;
+  [523.25, 659.25, 783.99].forEach((frequency, index) => {
+    const at = start + index * 0.15;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, at);
+    gain.gain.setValueAtTime(0.001, at);
+    gain.gain.exponentialRampToValueAtTime(0.15, at + 0.035);
+    gain.gain.exponentialRampToValueAtTime(0.001, at + 0.45);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    oscillator.start(at);
+    oscillator.stop(at + 0.46);
+  });
+}
+
+function notificationStatus() {
+  const button = byId("timer-notification");
+  const permission = window.Notification?.permission;
+  button.disabled = !permission || permission === "granted" || permission === "denied";
+  button.textContent = !permission ? "Desktop notifications unavailable" : permission === "granted"
+    ? "Desktop notifications enabled" : permission === "denied" ? "Desktop notifications blocked" : "Enable desktop notifications";
+}
+
+byId("timer-notification").addEventListener("click", async () => {
+  try { await window.Notification?.requestPermission(); } catch { /* Browser policy can block local-file notifications. */ }
+  notificationStatus();
+});
+
+function notifyCompletion(timer) {
+  if (window.Notification?.permission !== "granted" || (!document.hidden && document.hasFocus())) return;
+  try { new window.Notification("Study timer complete", { body: timer.course, tag: timer.id }); } catch { /* Keep the in-app alert. */ }
+}
+
+function completeTimerTask(timer) {
+  if (!timer.autoCheck) return "manual";
+  const day = localDay(new Date(timer.endsAt));
+  const board = buildBoard(day);
+  const task = board.days[day - board.monday].tasks.find((entry) => entry.courseKey && entry.courseKey === timer.courseKey);
+  if (!task) return "unavailable";
+  recordWeek(board, { ...currentChecks(board), [task.id]: true });
+  return "checked";
+}
+
+function tickTimer() {
+  const timer = state.timer;
+  if (timer?.endsAt && !timeRemaining(timer) && !timerFinishing) {
+    timerFinishing = true;
+    let completed;
+    commit(() => {
+      const active = state.timer;
+      if (active?.id !== timer.id || !active.endsAt || timeRemaining(active)) return false;
+      const completion = completeTimerTask(active);
+      state.timer = completed = { ...active, endsAt: null, remaining: 0, completion };
+      return true;
+    }, () => {
+      timerFinishing = false;
+      render();
+      if (completed) notifyCompletion(completed);
+    });
+  } else {
+    renderTimer();
+  }
+}
+
+function updateDurationPills() {
+  const target = requestedCourse?.target;
+  const full = byId("timer-target");
+  full.hidden = !target || target > TIMER_MAX_MINUTES;
+  full.textContent = target ? "Full target · " + target + "m" : "Full target";
+  const input = byId("timer-minutes");
+  for (const button of byId("duration-options").querySelectorAll("[data-duration]")) {
+    const duration = button.dataset.duration === "target" ? target : Number(button.dataset.duration);
+    button.setAttribute("aria-pressed", String(Number(input.value) === duration));
+  }
+}
+
+function renderTimer() {
+  const timer = state.timer;
+  const chip = byId("timer-chip");
+  const remaining = timer ? timeRemaining(timer) : 0;
+  chip.hidden = !timer;
+  if (timer) setText("timer-chip", timer.course + " · " + (remaining ? clockLabel(remaining) : "Done"));
+  playFinishedChime(timer);
+  if (!timerDialog.open) return;
+  byId("timer-setup").hidden = Boolean(timer);
+  byId("start-timer").hidden = Boolean(timer);
+  byId("start-timer").disabled = !requestedCourse;
+  byId("timer-display").hidden = !timer;
+  byId("pause-timer").hidden = !remaining;
+  byId("clear-timer").hidden = !timer;
+  const auto = byId("timer-auto-check");
+  auto.disabled = Boolean(timer && !remaining) || !(timer?.courseKey ?? requestedCourse?.courseKey);
+  setText("timer-course", timer?.course ?? requestedCourse?.code ?? "Open a timer from today’s course checklist.");
+  if (!timer) return;
+  auto.checked = timer.autoCheck;
+  setText("timer-display", clockLabel(remaining));
+  setText("pause-timer", timer.endsAt === null ? "Resume" : "Pause");
+  const doneMessage = timer.completion === "checked" ? "Study timer complete. Class checked off." :
+    timer.completion === "unavailable" ? "Study timer complete. This class was outside its session on the finish date." : "Study timer complete.";
+  setText("timer-message", remaining ? (timer.endsAt === null ? "Paused" : "") : doneMessage);
+}
+
+function openTimer(course) {
+  requestedCourse = course ? { ...course, target: Math.max(1, Math.round(weeklyHours(course) * 60 / 7)) } : null;
+  byId("timer-minutes").value = "25";
+  byId("timer-auto-check").checked = true;
+  updateDurationPills();
+  notificationStatus();
+  setText("timer-message", "");
+  timerDialog.showModal();
+  tickTimer();
+}
+
+byId("board").addEventListener("click", (event) => {
+  if (event.target.closest("[data-toggle-focus]")) {
+    toggleTodayFocus();
+    return;
+  }
+  const button = event.target.closest("[data-timer]");
+  const day = currentBoard.days.find((entry) => entry.date === clockDay);
+  if (button) openTimer(day?.tasks.find((task) => task.id === button.dataset.timer));
+});
+byId("timer-chip").addEventListener("click", () => {
+  if (!state.timer) return;
+  const day = buildBoard(localDay()).days.find((entry) => entry.date === localDay());
+  openTimer(day?.tasks.find((task) => task.courseKey && task.courseKey === state.timer.courseKey));
+});
+byId("close-timer").addEventListener("click", () => timerDialog.close());
+byId("timer-minutes").max = String(TIMER_MAX_MINUTES);
+byId("timer-minutes").addEventListener("input", updateDurationPills);
+byId("duration-options").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-duration]");
+  if (!button) return;
+  byId("timer-minutes").value = button.dataset.duration === "target" ? requestedCourse.target : button.dataset.duration;
+  updateDurationPills();
+});
+byId("timer-auto-check").addEventListener("change", (event) => {
+  const id = state.timer?.id;
+  const checked = event.target.checked;
+  if (!id) return;
+  commit(() => {
+    if (state.timer?.id !== id || state.timer.completion) return false;
+    state.timer = { ...state.timer, autoCheck: checked };
+    return true;
+  }, renderTimer);
+});
+
+byId("start-timer").addEventListener("click", () => {
+  const input = byId("timer-minutes");
+  if (!input.checkValidity() || !input.value) {
+    setText("timer-message", "Enter a whole number from 1 to " + TIMER_MAX_MINUTES + ".");
+    input.focus();
+    return;
+  }
+  const duration = Number(input.value) * 60000;
+  const course = requestedCourse;
+  if (!course) return;
+  const id = newIdentity("timer");
+  const autoCheck = byId("timer-auto-check").checked;
+  unlockTimerAudio();
+  commit(() => {
+    if (state.timer) return false;
+    state.timer = { id, course: course.code, courseKey: course.courseKey, duration, remaining: duration,
+      endsAt: Date.now() + duration, autoCheck, completion: null, audioOwner };
+    return true;
+  }, () => {
+    renderTimer();
+    if (timerDialog.open) byId("pause-timer").focus();
+  });
+});
+
+byId("pause-timer").addEventListener("click", () => {
+  const resume = state.timer?.endsAt === null;
+  if (resume) unlockTimerAudio();
+  commit(() => {
+    const timer = state.timer;
+    if (!timer || resume !== (timer.endsAt === null)) return false;
+    const remaining = timeRemaining(timer);
+    if (!remaining) return false;
+    state.timer = { ...timer, remaining, endsAt: resume ? Date.now() + remaining : null,
+      audioOwner: resume ? audioOwner : timer.audioOwner };
+    return true;
+  }, renderTimer);
+});
+
+byId("clear-timer").addEventListener("click", () => {
+  commit(() => {
+    state.timer = null;
+    return true;
+  }, () => {
+    setText("timer-message", "");
+    byId("timer-auto-check").checked = true;
+    renderTimer();
+    if (timerDialog.open) byId("timer-minutes").focus();
+  });
+});
+
+syncState();
+renderStorageStatus();
+render();
+commit(prepareCurrentWeek);
+scheduleMidnight();
+tickTimer();
+setInterval(() => {
+  if (localDay() !== clockDay) wakeClock();
+  else if (state.timer) tickTimer();
+}, 1000);
+
+</script>
+</body>
+</html>
+
